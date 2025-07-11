@@ -1,0 +1,44 @@
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.venv/
+
+# Flask instance folder (contains databases, logs, snapshots)
+instance/
+
+# Logs
+*.log
+!app.log # Keep app.log for now if you want to explicitly track it, otherwise remove this line
+         # For now, let's keep it in .gitignore as it's causing issues.
+         # If you want to keep tracking app.log, we'd need to force-remove it from Git's index first.
+         # For simplicity, let's just ignore it.
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# OS generated files
+.DS_Store # macOS specific
+.vscode/ # VS Code specific settings, usually ignored
+.env # Environment variables, should not be committed
+
+# Temporary files
+*.tmp
+*.bak
+dump.rdb # Redis dump file
+SELECT # This seems like a temporary file from a query, should be ignored.
+.tables # This also seems like a temporary file from a query, should be ignored.
+
+# Migrations generated files (if not managed by Alembic correctly)
+# If you are using Flask-Migrate/Alembic, you usually commit the migration scripts
+# but not the auto-generated environment files or cache within migrations folders.
+# Given your previous issues, let's ignore the top-level migrations folder for now.
+# If you later want to manage migrations properly, we'd adjust this.
+migrations/
+
