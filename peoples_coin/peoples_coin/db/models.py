@@ -1,20 +1,15 @@
-# /Users/donfeeney/peoples_coin/peoples_coin/db/models.py
+# peoples_coin/peoples_coin/db/models.py
 
 from datetime import datetime, timezone
 from typing import Dict, Any
-# Import specific types from SQLAlchemy if needed directly, but prefer db.Column etc.
-# from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, Index, event
-from sqlalchemy import Index, event # Only import non-column related types directly
+from sqlalchemy import Index
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.dialects.sqlite import JSON # Explicitly import JSON for SQLite
+from sqlalchemy.dialects.sqlite import JSON
+from decimal import Decimal
 
-# CRITICAL: Import the db instance from the same package (db.py)
-# This assumes db.py defines `db = SQLAlchemy()`
 from .db import db
 
-# --- MODEL DEFINITIONS ---
-
-class DataEntry(db.Model): # Inherit from db.Model
+class DataEntry(db.Model):
     """
     SQLAlchemy model for data entries with processing status and timestamps.
     """
@@ -27,18 +22,11 @@ class DataEntry(db.Model): # Inherit from db.Model
     value = db.Column(db.String(255), nullable=True)
     processed = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc), nullable=False)
     deleted_at = db.Column(db.DateTime, nullable=True)
 
-    def __repr__(self) -> str:
-        return (f"<DataEntry(id={self.id}, value={self.value!r}, "
-                        f"processed={self.processed}, created_at={self.created_at}, "
-                        f"updated_at={self.updated_at}, deleted_at={self.deleted_at})>")
-
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Serialize the object to a dictionary.
-        """
+        """Serializes the object to a dictionary."""
         return {
             'id': self.id,
             'value': self.value,
@@ -48,63 +36,26 @@ class DataEntry(db.Model): # Inherit from db.Model
             'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
         }
 
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DataEntry":
-        """
-        Create a DataEntry instance from a dictionary.
-        """
-        return cls(
-            value=data.get('value'),
-            processed=data.get('processed', False),
-            created_at=data.get('created_at', datetime.now(timezone.utc)),
-            updated_at=data.get('updated_at', datetime.now(timezone.utc)),
-            deleted_at=data.get('deleted_at')
-        )
-
-    def validate(self):
-        """
-        Validate model constraints before database operations.
-        """
-        if self.value and len(self.value) > 255:
-            raise ValueError("Value exceeds maximum allowed length (255).")
-
-    @hybrid_property
-    def is_active(self) -> bool:
-        """
-        Returns True if the entry is active (not processed and not deleted).
-        """
-        return not self.processed and self.deleted_at is None
-
-# --- NEW GoodwillAction Model for the Metabolic System ---
-class GoodwillAction(db.Model): # Inherit from db.Model
+class GoodwillAction(db.Model):
     """
     Represents a verified goodwill action, serving as the input for the Metabolic System.
-    This action will be processed by AILEE to determine its resonance and lead to token minting.
     """
     __tablename__ = 'goodwill_actions'
+    __table_args__ = (
+        db.Index('idx_goodwill_status', 'status'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String(255), nullable=False, index=True)
     action_type = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    # JSON type for contextual_data allows flexible storage of additional details
-    contextual_data = db.Column(JSON, default={}) # Use JSON from sqlalchemy.dialects.sqlite
-    
-    # Fields to be populated after AILEE processing
-    raw_goodwill_score = db.Column(db.Integer, default=0, nullable=False) # e.g., 1-100, before resonance
-    resonance_score = db.Column(db.Integer, default=0, nullable=False)    # 0-100, AILEE's final score for minting
-    
-    # --- ADDED FOR ASYNCHRONOUS PROCESSING ---
-    status = db.Column(db.String(50), default='pending', nullable=False) # e.g., 'pending', 'processing', 'completed', 'failed'
-    processed_at = db.Column(db.DateTime, nullable=True) # Timestamp when AILEE processed it
-    
-    minted_token_id = db.Column(db.String(255), nullable=True, unique=True) # Link to the token minted
-
-    def __repr__(self):
-        return (f"<GoodwillAction(id={self.id}, user_id='{self.user_id}', "
-                        f"action_type='{self.action_type}', resonance_score={self.resonance_score}, "
-                        f"status='{self.status}')>")
+    contextual_data = db.Column(JSON, default=dict)
+    raw_goodwill_score = db.Column(db.Integer, default=0, nullable=False)
+    resonance_score = db.Column(db.Integer, default=0, nullable=False)
+    status = db.Column(db.String(50), default='pending', nullable=False)
+    processed_at = db.Column(db.DateTime, nullable=True)
+    minted_token_id = db.Column(db.String(255), nullable=True, unique=True)
 
     def to_dict(self):
         return {
@@ -121,14 +72,15 @@ class GoodwillAction(db.Model): # Inherit from db.Model
             "minted_token_id": self.minted_token_id
         }
 
-class EventLog(db.Model): # Inherits from db.Model for consistency
-    """
-    Logs significant events within the system.
-    """
-    __tablename__ = 'event_logs' # Changed to plural for consistency
+class EventLog(db.Model):
+    """Logs significant events within the system."""
+    __tablename__ = 'event_logs'
+    __table_args__ = (
+        db.Index('idx_event_type_timestamp', 'event_type', 'timestamp'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    event_type = db.Column(db.String(64), nullable=False)
+    event_type = db.Column(db.String(64), nullable=False, index=True)
     message = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
@@ -140,24 +92,68 @@ class EventLog(db.Model): # Inherits from db.Model for consistency
             "timestamp": self.timestamp.isoformat() if self.timestamp else None
         }
 
-    def __repr__(self):
-        return f"<EventLog(id={self.id}, event_type={self.event_type}, timestamp={self.timestamp})>"
-
-# --- SQLAlchemy Event Listeners for DataEntry ---
-# These are correctly placed after the model definitions they apply to.
-@event.listens_for(DataEntry, 'before_update', propagate=True)
-def receive_before_update(mapper, connection, target):
+class UserAccount(db.Model):
     """
-    Automatically update the 'updated_at' timestamp before update.
+    Represents a user's account, holding their balance in 'Loves'.
     """
-    target.updated_at = datetime.now(timezone.utc)
+    __tablename__ = 'user_accounts'
 
-@event.listens_for(DataEntry, 'before_insert', propagate=True)
-def receive_before_insert(mapper, connection, target):
+    user_id = db.Column(db.String(255), primary_key=True, nullable=False)
+    balance = db.Column(db.Numeric(precision=18, scale=4), default=Decimal('0.0'), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc), nullable=False)
+
+    def to_dict(self):
+        return {
+            "user_id": self.user_id,
+            "balance": str(self.balance),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+# ===== NEW MODELS FOR CONSENSUS SYSTEM =====
+
+class ConsensusNode(db.Model):
     """
-    Validate model before insert.
+    Represents a registered node in the consensus network.
+    This replaces the in-memory `self.nodes` dictionary.
     """
-    target.validate()
+    __tablename__ = 'consensus_nodes'
 
+    id = db.Column(db.String(255), primary_key=True)
+    address = db.Column(db.String(255), unique=True, nullable=False)
+    registered_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "address": self.address,
+            "registered_at": self.registered_at.isoformat() if self.registered_at else None
+        }
 
+class ChainBlock(db.Model):
+    """
+    Represents a single block in the blockchain, stored in the database.
+    This replaces the `chain.json` file.
+    """
+    __tablename__ = 'chain_blocks'
+
+    # The block's index is the primary key
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.Float, nullable=False)
+    # Use the JSON type for flexible transaction storage
+    transactions = db.Column(JSON, nullable=False)
+    previous_hash = db.Column(db.String(64), nullable=False)
+    nonce = db.Column(db.Integer, default=0, nullable=False)
+    # The block's own hash must be unique
+    hash = db.Column(db.String(64), unique=True, nullable=False, index=True)
+
+    def to_dict(self):
+        return {
+            "index": self.id,
+            "timestamp": self.timestamp,
+            "transactions": self.transactions,
+            "previous_hash": self.previous_hash,
+            "nonce": self.nonce,
+            "hash": self.hash
+        }
