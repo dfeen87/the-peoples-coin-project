@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+# Python bytecode
 __pycache__/
 *.py[cod]
 *$py.class
@@ -19,6 +19,10 @@ instance/
 *.log
 # Uncomment below if you want to ignore all logs including app.log
 # app.log
+
+# IDE/editor folders (VS Code, JetBrains, etc.)
+.idea/
+.vscode/
 
 # Database files
 *.db
@@ -41,10 +45,6 @@ node_modules/
 .coverage
 .pytest_cache/
 
-# IDE/editor folders
-.idea/
-.vscode/
-
-# Migrations folder (usually keep migrations in version control)
-#migrations/
+# Migrations folder (optional — uncomment if you don’t want to track migrations)
+# migrations/
 
