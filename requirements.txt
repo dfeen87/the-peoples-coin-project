@@ -3,14 +3,10 @@ Flask==2.3.3
 gunicorn==23.0.0
 python-dotenv==1.0.1
 
-# Database
+# Database and migrations
 Flask-SQLAlchemy>=3.1
 alembic>=1.13
-
-# Optional DB drivers (uncomment one if needed)
-# psycopg2-binary>=2.9    # PostgreSQL
-# PyMySQL>=1.1            # MySQL
-# sqlite3 — comes with Python
+Flask-Migrate>=4.0
 
 # Validation & Utilities
 pydantic>=2.7
@@ -26,6 +22,6 @@ Flask-Limiter>=3.5
 # Task Queue
 celery>=5.3
 
-# Google Cloud SDK (optional — if interacting with Firestore)
+# Optional for Google Cloud Firestore integration
 google-cloud-firestore>=2.14
 

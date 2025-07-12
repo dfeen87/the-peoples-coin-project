@@ -1,33 +1,19 @@
-<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
-=======
-k# Ignore Python bytecode files
-*.pyc
->>>>>>> a6880b9 (Add peoples-coin folder contents to main repo)
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
 
 # Virtual environment folders
 venv/
 .venv/
 env/
 
-<<<<<<< HEAD
-# Flask instance folder (contains databases, logs, config)
-instance/
-=======
-# Ignore instance folder (local config, databases)
+# Flask instance folder (local config, databases)
 instance/
 
-# Ignore environment variable files
+# Environment variable files
 .env
-
-# IDE files (for VS Code, JetBrains, etc.)
-.idea/
-.vscode/
->>>>>>> a6880b9 (Add peoples-coin folder contents to main repo)
+.env.*
 
 # Logs
 *.log
@@ -42,10 +28,6 @@ instance/
 # OS generated files
 .DS_Store
 Thumbs.db
-
-# Environment variable files
-.env*
-# Add other environment config files if needed
 
 # Temporary files
 *.tmp
@@ -63,6 +45,6 @@ node_modules/
 .idea/
 .vscode/
 
-# Migrations folder (usually keep migrations in version control, so commented)
+# Migrations folder (usually keep migrations in version control)
 #migrations/
 
