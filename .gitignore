@@ -1,10 +1,10 @@
-# Python bytecode
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Virtual environments
+# Virtual environment folders
 venv/
 .venv/
 env/
@@ -24,7 +24,9 @@ instance/
 
 # OS generated files
 .DS_Store
-.vscode/
+Thumbs.db
+
+# Environment variable files
 .env*
 # Add other environment config files if needed
 
@@ -32,9 +34,6 @@ instance/
 *.tmp
 *.bak
 dump.rdb
-
-# Migrations (usually you want to keep migration scripts under version control)
-#migrations/
 
 # Node modules (if you have frontend JS)
 node_modules/
@@ -46,4 +45,7 @@ node_modules/
 # IDE/editor folders
 .idea/
 .vscode/
+
+# Migrations folder (usually keep migrations in version control, so commented)
+#migrations/
 
