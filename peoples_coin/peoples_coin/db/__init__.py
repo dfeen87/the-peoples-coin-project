@@ -1,3 +1,2 @@
-# peoples_coin/peoples_coin/db/__init__.py
+from peoples_coin.db import db, Base
 
-from .db import db, Base

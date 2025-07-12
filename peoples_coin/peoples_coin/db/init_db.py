@@ -7,8 +7,8 @@ import traceback
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 
-# Import Base and db from centralized db module inside peoples_coin package
-from peoples_coin import db, Base
+# Import Base and db from your package's db module
+from peoples_coin.db import db, Base
 
 try:
     from dotenv import load_dotenv
@@ -33,15 +33,18 @@ def init_db(drop: bool = False) -> int:
     """
     Initialize the database: create all tables, optionally drop existing tables.
 
+    Args:
+        drop (bool): If True, drop all tables before creating.
+
     Returns:
         int: Exit code (0=success, >0=failure)
     """
     db_url = os.getenv('DATABASE_URL', 'sqlite:///instance/peoples_coin.db')
     logger.info(f"Using database URL: {db_url}")
 
-    # Ensure SQLite folder exists
+    # Ensure SQLite folder exists if needed
     if db_url.startswith('sqlite:///'):
-        db_path = db_url.replace('sqlite:///', '', 1)  # safer replace
+        db_path = db_url.replace('sqlite:///', '', 1)
         folder = os.path.dirname(db_path)
         if folder and not os.path.exists(folder):
             logger.info(f"Creating missing folder: {folder}")
@@ -63,7 +66,7 @@ def init_db(drop: bool = False) -> int:
         Base.metadata.create_all(engine)
         logger.info("✅ Database tables created successfully.")
 
-        # Report table info
+        # Report tables created
         insp = inspect(engine)
         tables = insp.get_table_names()
         logger.info(f"Tables in database: {tables or 'None'}")
