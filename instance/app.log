@@ -1,0 +1,887 @@
+2025-07-12 23:55:38 [INFO] peoples_coin: Creating main Flask application...
+2025-07-12 23:55:38 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-12 23:55:38 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-12 23:55:38 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-12 23:55:38 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-12 23:55:38 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-12 23:55:38 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-12 23:55:47 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-12 23:55:47 [INFO] cognitive_system: 🐇 Starting RabbitMQ consumer loop.
+2025-07-12 23:55:47 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: Using KQueuePoller
+2025-07-12 23:55:47 [INFO] cognitive_system: 🧠 Cognitive System initialized.
+2025-07-12 23:55:47 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-12 23:55:47 [INFO] peoples_coin.consensus: Consensus system configured.
+2025-07-12 23:55:47 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized and ready to start.
+2025-07-12 23:55:47 [INFO] peoples_coin: All systems initialized.
+2025-07-12 23:55:47 [DEBUG] pika.adapters.base_connection: Created default connection workflow <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x103c73b50>
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.connection_workflow: Starting AMQP Connection workflow asynchronously.
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x103c73b80> with deadline=9.5554475 and callback=functools.partial(<bound method AMQPConnectionWorkflow._start_new_cycle_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x103c73b50>>, first=True); now=9.5554475; delay=0
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.connection_workflow: Beginning a new AMQP connection workflow cycle; attempts remaining after this: 0
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x103c592b0> with deadline=9.555905541 and callback=<bound method AMQPConnectionWorkflow._try_next_config_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x103c73b50>>; now=9.555905541; delay=0
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: 'localhost':5672
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x103c592e0>>
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x103c592e0>>
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: Invoking asynchronous getaddrinfo() completion callback; host='localhost'
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.connection_workflow: getaddrinfo returned 2 records
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-12 23:55:47 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x103c85f40>>
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x103ce8640> with deadline=19.561375124999998 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x103c73f10>>; now=9.561375125; delay=10.0
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x103ce8520> with deadline=24.561459749999997 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x103c73f10>>; now=9.56145975; delay=15.0
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x103c85f40>>
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(12, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x103c85f40>>)
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(12, _) added handler Wr
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57692, 0, 0)>.
+2025-07-12 23:55:47 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57692, 0, 0)>; error=61 (Connection refused)
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57692, 0, 0)>
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(12)
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(12) removed handler
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x103ce8640> with deadline=19.561375124999998 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x103c73f10>>
+2025-07-12 23:55:47 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-12 23:55:47 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x103ce8520> with deadline=24.561459749999997 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x103c73f10>>
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-12 23:55:47 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x103ce86a0>>
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x103cf7c10> with deadline=19.570805625 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x103ce8610>>; now=9.570805625; delay=10.0
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x103d87850> with deadline=24.570861416 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x103ce8610>>; now=9.570861416; delay=15.0
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x103ce86a0>>
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(8, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x103ce86a0>>)
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(8, _) added handler Wr
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=8, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57693)>.
+2025-07-12 23:55:47 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=8, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57693)>; error=61 (Connection refused)
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=8, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57693)>
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(8)
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(8) removed handler
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x103cf7c10> with deadline=19.570805625 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x103ce8610>>
+2025-07-12 23:55:47 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-12 23:55:47 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:55:47 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x103d87850> with deadline=24.570861416 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x103ce8610>>
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_resolved_address: continuing with next config.
+2025-07-12 23:55:47 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: starting a new cycle.
+2025-07-12 23:55:47 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-12 23:55:47 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:55:47 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:55:47 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-12 23:55:47 [ERROR] cognitive_system: 🐇 Consumer connection failed: . Retrying in 10 seconds...
+2025-07-12 23:55:47 [INFO] peoples_coin: All blueprints registered.
+2025-07-12 23:55:47 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-12 23:55:47 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-12 23:55:47 [INFO] cognitive_system: 🧠 Sending stop signal to cognitive background loop...
+2025-07-12 23:55:47 [INFO] cognitive_system: 🧠 Cognitive background loop stopped.
+2025-07-12 23:55:47 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-12 23:55:47 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-12 23:55:47 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 00:02:44 [INFO] peoples_coin: Creating main Flask application...
+2025-07-13 00:02:44 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 00:02:44 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 00:02:44 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 00:02:44 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 00:02:44 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 00:02:44 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 00:02:53 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 00:02:53 [INFO] cognitive_system: 🐇 Starting RabbitMQ consumer loop.
+2025-07-13 00:02:53 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: Using KQueuePoller
+2025-07-13 00:02:53 [INFO] cognitive_system: 🧠 Cognitive System initialized.
+2025-07-13 00:02:53 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 00:02:53 [INFO] peoples_coin.consensus: Consensus system configured.
+2025-07-13 00:02:53 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized and ready to start.
+2025-07-13 00:02:53 [INFO] peoples_coin: All systems initialized.
+2025-07-13 00:02:53 [DEBUG] pika.adapters.base_connection: Created default connection workflow <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x1081ae220>
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.connection_workflow: Starting AMQP Connection workflow asynchronously.
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1081ae250> with deadline=9.553842958 and callback=functools.partial(<bound method AMQPConnectionWorkflow._start_new_cycle_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x1081ae220>>, first=True); now=9.553842958; delay=0
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.connection_workflow: Beginning a new AMQP connection workflow cycle; attempts remaining after this: 0
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1081ae460> with deadline=9.555018083 and callback=<bound method AMQPConnectionWorkflow._try_next_config_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x1081ae220>>; now=9.555018083; delay=0
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: 'localhost':5672
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x1081ae700>>
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x1081ae700>>
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: Invoking asynchronous getaddrinfo() completion callback; host='localhost'
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.connection_workflow: getaddrinfo returned 2 records
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 00:02:53 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x1081aefa0>>
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x10820d0d0> with deadline=19.559610333000002 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x108183c10>>; now=9.559610333; delay=10.0
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1081aef40> with deadline=24.559885082999998 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x108183c10>>; now=9.559885083; delay=15.0
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x1081aefa0>>
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(11, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x1081aefa0>>)
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(11, _) added handler Wr
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=11, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57710, 0, 0)>.
+2025-07-13 00:02:53 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=11, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57710, 0, 0)>; error=61 (Connection refused)
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=11, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57710, 0, 0)>
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(11)
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(11) removed handler
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x10820d0d0> with deadline=19.559610333000002 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x108183c10>>
+2025-07-13 00:02:53 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 00:02:53 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x1081aef40> with deadline=24.559885082999998 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x108183c10>>
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-13 00:02:53 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x10820d0a0>>
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x10820dd90> with deadline=19.567931541 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1081aeee0>>; now=9.567931541; delay=10.0
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x10820de20> with deadline=24.568013791 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1081aeee0>>; now=9.568013791; delay=15.0
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x10820d0a0>>
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(11, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x10820d0a0>>)
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(11, _) added handler Wr
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57711)>.
+2025-07-13 00:02:53 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57711)>; error=61 (Connection refused)
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57711)>
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(11)
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(11) removed handler
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x10820dd90> with deadline=19.567931541 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1081aeee0>>
+2025-07-13 00:02:53 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-13 00:02:53 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 00:02:53 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x10820de20> with deadline=24.568013791 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1081aeee0>>
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_resolved_address: continuing with next config.
+2025-07-13 00:02:53 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: starting a new cycle.
+2025-07-13 00:02:53 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-13 00:02:53 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 00:02:53 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 00:02:53 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-13 00:02:53 [ERROR] cognitive_system: 🐇 Consumer connection failed: . Retrying in 10 seconds...
+2025-07-13 00:02:53 [INFO] peoples_coin: All blueprints registered.
+2025-07-13 00:02:53 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 00:02:53 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 00:02:53 [INFO] cognitive_system: 🧠 Sending stop signal to cognitive background loop...
+2025-07-13 00:02:53 [INFO] cognitive_system: 🧠 Cognitive background loop stopped.
+2025-07-13 00:02:53 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 00:02:53 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 00:02:53 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 10:42:16 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 10:42:16 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 10:42:16 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 10:42:16 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 10:42:16 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 10:42:16 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 10:42:16 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 10:42:25 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 10:42:25 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 10:42:25 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 10:42:25 [INFO] src.peoples_coin.consensus: Consensus system configured.
+2025-07-13 10:42:25 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 10:42:25 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 10:42:25 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 10:42:25 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 10:42:25 [INFO] src.peoples_coin: Attempting to initialize database at: sqlite:///instance/peoples_coin.db
+2025-07-13 10:42:25 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 10:42:25 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 10:42:25 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 10:42:25 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 10:46:20 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 10:46:20 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 10:46:20 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 10:46:20 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 10:46:20 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 10:46:20 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 10:46:20 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 10:46:29 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 10:46:29 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 10:46:29 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 10:46:29 [INFO] src.peoples_coin.consensus: Consensus system configured.
+2025-07-13 10:46:29 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 10:46:29 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 10:46:29 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 10:46:29 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 10:46:29 [INFO] src.peoples_coin: Attempting to initialize database at: sqlite:///instance/peoples_coin.db
+2025-07-13 10:46:29 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 10:46:29 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 10:46:29 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 10:46:29 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 10:46:29 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 10:46:29 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 10:50:17 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 10:50:17 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 10:50:17 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 10:50:17 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 10:50:17 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 10:50:17 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 10:50:17 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 10:50:26 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 10:50:26 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 10:50:26 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 10:50:26 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 10:50:26 [ERROR] src.peoples_coin.db.db_utils: Database transaction failed. Rolling back. Error: (sqlite3.OperationalError) no such table: chain_blocks
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT chain_blocks.id AS chain_blocks_id, chain_blocks.timestamp AS chain_blocks_timestamp, chain_blocks.transactions AS chain_blocks_transactions, chain_blocks.previous_hash AS chain_blocks_previous_hash, chain_blocks.nonce AS chain_blocks_nonce, chain_blocks.hash AS chain_blocks_hash 
+FROM chain_blocks) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: chain_blocks
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/db/db_utils.py", line 39, in get_session_scope
+    yield db_instance.session # Use the passed db_instance
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/consensus.py", line 54, in _create_genesis_block_if_needed
+    if session.query(ChainBlock).count() == 0:
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 3146, in count
+    self._legacy_from_self(col).enable_eagerloads(False).scalar()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2835, in scalar
+    ret = self.one()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2808, in one
+    return self._iter().one()  # type: ignore
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: chain_blocks
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT chain_blocks.id AS chain_blocks_id, chain_blocks.timestamp AS chain_blocks_timestamp, chain_blocks.transactions AS chain_blocks_transactions, chain_blocks.previous_hash AS chain_blocks_previous_hash, chain_blocks.nonce AS chain_blocks_nonce, chain_blocks.hash AS chain_blocks_hash 
+FROM chain_blocks) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-13 10:59:34 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 10:59:34 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 10:59:34 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 10:59:34 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 10:59:34 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 10:59:34 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 10:59:34 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 10:59:43 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 10:59:43 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 10:59:43 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 10:59:43 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 10:59:43 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 10:59:43 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 10:59:44 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 10:59:44 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 10:59:44 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 10:59:44 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 10:59:44 [DEBUG] src.peoples_coin: Disposed of SQLAlchemy engine to release DB file lock.
+2025-07-13 10:59:44 [WARNING] src.peoples_coin: Deleted existing database file: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db
+2025-07-13 10:59:44 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 10:59:44 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 10:59:44 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 10:59:44 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 11:01:12 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 11:01:12 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 11:01:12 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 11:01:12 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 11:01:12 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 11:01:12 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 11:01:12 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 11:01:21 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 11:01:21 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 11:01:21 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 11:01:21 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 11:01:21 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 11:01:21 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 11:01:21 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 11:01:21 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 11:01:21 [ERROR] src.peoples_coin.db.db_utils: Database transaction failed. Rolling back. Error: (sqlite3.OperationalError) no such table: chain_blocks
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT chain_blocks.id AS chain_blocks_id, chain_blocks.timestamp AS chain_blocks_timestamp, chain_blocks.transactions AS chain_blocks_transactions, chain_blocks.previous_hash AS chain_blocks_previous_hash, chain_blocks.nonce AS chain_blocks_nonce, chain_blocks.hash AS chain_blocks_hash 
+FROM chain_blocks) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: chain_blocks
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/db/db_utils.py", line 39, in get_session_scope
+    yield db_instance.session # Use the passed db_instance
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/consensus.py", line 56, in _create_genesis_block_if_needed
+    if session.query(ChainBlock).count() == 0:
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 3146, in count
+    self._legacy_from_self(col).enable_eagerloads(False).scalar()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2835, in scalar
+    ret = self.one()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2808, in one
+    return self._iter().one()  # type: ignore
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: chain_blocks
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT chain_blocks.id AS chain_blocks_id, chain_blocks.timestamp AS chain_blocks_timestamp, chain_blocks.transactions AS chain_blocks_transactions, chain_blocks.previous_hash AS chain_blocks_previous_hash, chain_blocks.nonce AS chain_blocks_nonce, chain_blocks.hash AS chain_blocks_hash 
+FROM chain_blocks) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-13 11:01:21 [ERROR] src.peoples_coin: Error creating genesis block: (sqlite3.OperationalError) no such table: chain_blocks
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT chain_blocks.id AS chain_blocks_id, chain_blocks.timestamp AS chain_blocks_timestamp, chain_blocks.transactions AS chain_blocks_transactions, chain_blocks.previous_hash AS chain_blocks_previous_hash, chain_blocks.nonce AS chain_blocks_nonce, chain_blocks.hash AS chain_blocks_hash 
+FROM chain_blocks) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: chain_blocks
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/__init__.py", line 145, in create_genesis_block_command
+    consensus._create_genesis_block_if_needed()
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/consensus.py", line 56, in _create_genesis_block_if_needed
+    if session.query(ChainBlock).count() == 0:
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 3146, in count
+    self._legacy_from_self(col).enable_eagerloads(False).scalar()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2835, in scalar
+    ret = self.one()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2808, in one
+    return self._iter().one()  # type: ignore
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: chain_blocks
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT chain_blocks.id AS chain_blocks_id, chain_blocks.timestamp AS chain_blocks_timestamp, chain_blocks.transactions AS chain_blocks_transactions, chain_blocks.previous_hash AS chain_blocks_previous_hash, chain_blocks.nonce AS chain_blocks_nonce, chain_blocks.hash AS chain_blocks_hash 
+FROM chain_blocks) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-13 11:01:21 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 11:01:21 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 11:01:21 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 11:01:21 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 11:14:26 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 11:14:26 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 11:14:26 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 11:14:26 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 11:14:26 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 11:14:26 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 11:14:26 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 11:14:35 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 11:14:35 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 11:14:35 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 11:14:35 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 11:14:35 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 11:14:35 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 11:14:35 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 11:14:35 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 11:14:35 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 11:14:35 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 11:14:35 [DEBUG] src.peoples_coin: Disposed of SQLAlchemy engine to release DB file lock.
+2025-07-13 11:14:35 [WARNING] src.peoples_coin: Deleted existing database file: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db
+2025-07-13 11:14:35 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 11:14:35 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 11:14:35 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 11:14:35 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 11:21:18 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 11:21:18 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 11:21:18 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 11:21:18 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 11:21:18 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 11:21:18 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 11:21:18 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 11:21:28 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 11:21:28 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 11:21:28 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 11:21:28 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 11:21:28 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 11:21:28 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 11:21:28 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 11:21:28 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 11:21:28 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 11:21:28 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 11:21:28 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 11:21:28 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 11:21:28 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 11:21:28 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 11:21:28 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 11:26:33 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 11:26:33 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 11:26:33 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 11:26:33 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 11:26:33 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 11:26:33 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 11:26:33 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 11:26:42 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 11:26:42 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 11:26:42 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 11:26:42 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 11:26:42 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 11:26:42 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 11:26:42 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 11:26:42 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 11:26:42 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 11:26:42 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 11:26:42 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 11:26:42 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 11:26:42 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 11:26:42 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 11:26:42 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 11:28:45 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 11:28:45 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 11:28:45 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 11:28:45 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 11:28:45 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 11:28:45 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 11:28:45 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 11:28:54 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 11:28:54 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 11:28:54 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 11:28:54 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 11:28:54 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 11:28:54 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 11:28:54 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 11:28:54 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 11:28:54 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 11:28:54 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 11:28:54 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 11:28:54 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 11:28:54 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 11:28:54 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 11:28:54 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 11:31:32 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 11:31:32 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 11:31:32 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 11:31:32 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 11:31:32 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 11:31:32 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 11:31:32 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 11:31:41 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 11:31:41 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 11:31:41 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 11:31:41 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 11:31:41 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 11:31:41 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 11:31:41 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 11:31:41 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 11:31:41 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 11:31:41 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 11:31:41 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 11:31:41 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 11:31:41 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 11:31:41 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 11:31:41 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 11:36:03 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 11:36:03 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 11:36:03 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 11:36:03 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 11:36:03 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 11:36:03 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 11:36:03 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 11:36:12 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 11:36:12 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 11:36:12 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 11:36:12 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 11:36:12 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 11:36:12 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 11:36:12 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 11:36:12 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 11:36:12 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 11:36:12 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 11:36:12 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 11:36:12 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 11:36:12 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 11:36:12 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 11:36:12 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 11:38:32 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 11:38:33 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 11:38:33 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 11:38:33 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 11:38:33 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 11:38:33 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 11:38:33 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 11:38:42 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 11:38:42 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 11:38:42 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 11:38:42 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 11:38:42 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 11:38:42 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 11:38:42 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 11:38:42 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 11:38:42 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 11:38:42 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 11:38:42 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 11:38:42 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 11:38:42 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 11:38:42 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 11:38:42 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 11:47:59 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 11:47:59 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 11:47:59 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 11:47:59 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 11:47:59 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 11:47:59 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 11:47:59 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-13 11:48:08 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-13 11:48:08 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 11:48:08 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 11:48:08 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 11:48:08 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 11:48:08 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 11:48:08 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 11:48:08 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 11:48:08 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 11:48:08 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 11:48:08 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 11:48:08 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 11:48:08 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 11:48:08 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 11:48:08 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 11:51:07 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 11:51:07 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 11:51:07 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 11:51:07 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 11:51:07 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 11:51:07 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 11:51:07 [WARNING] google.auth._default: No project ID could be determined. Consider running `gcloud config set project` or setting the GOOGLE_CLOUD_PROJECT environment variable
+2025-07-13 11:51:07 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Project was not passed and could not be determined from the environment.
+2025-07-13 11:51:07 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 11:51:07 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 11:51:07 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 11:51:07 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 11:51:07 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 11:51:07 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 11:51:07 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 11:51:07 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 11:51:07 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 11:51:07 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 11:51:07 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 11:51:07 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 11:51:07 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 11:51:07 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 12:01:27 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 12:01:27 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 12:01:27 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 12:01:27 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 12:01:27 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:01:27 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:01:27 [WARNING] google.auth._default: No project ID could be determined. Consider running `gcloud config set project` or setting the GOOGLE_CLOUD_PROJECT environment variable
+2025-07-13 12:01:27 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Project was not passed and could not be determined from the environment.
+2025-07-13 12:01:27 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 12:01:27 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 12:01:27 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 12:01:27 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 12:01:27 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 12:01:27 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 12:01:27 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 12:01:27 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 12:01:27 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 12:01:27 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 12:01:27 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 12:01:27 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 12:01:27 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 12:01:27 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 12:06:08 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 12:06:08 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 12:06:08 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 12:06:08 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 12:06:08 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:06:08 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:06:08 [WARNING] google.auth._default: No project ID could be determined. Consider running `gcloud config set project` or setting the GOOGLE_CLOUD_PROJECT environment variable
+2025-07-13 12:06:08 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Project was not passed and could not be determined from the environment.
+2025-07-13 12:06:08 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 12:06:08 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 12:06:08 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 12:06:08 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 12:06:08 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 12:06:08 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 12:06:08 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 12:06:08 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 12:06:08 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 12:06:08 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 12:06:08 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 12:06:08 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 12:06:08 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 12:06:08 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 12:28:24 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 12:28:24 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 12:28:24 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 12:28:24 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 12:28:24 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:28:24 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:28:24 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:28:24 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:28:25 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 12:28:25 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 12:28:25 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 12:28:25 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 12:28:25 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 12:28:25 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 12:28:25 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 12:28:25 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 12:28:25 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 12:28:25 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 12:28:25 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 12:28:25 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 12:28:25 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 12:28:25 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 12:28:25 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 12:31:58 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 12:31:58 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 12:31:58 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 12:31:58 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 12:31:58 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:31:58 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:31:58 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:31:58 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:31:59 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 12:31:59 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 12:31:59 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 12:31:59 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 12:31:59 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 12:31:59 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 12:31:59 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 12:31:59 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 12:31:59 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 12:31:59 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 12:31:59 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 12:31:59 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 12:31:59 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 12:31:59 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 12:31:59 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 12:34:03 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 12:34:03 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 12:34:03 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 12:34:03 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 12:34:03 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:34:03 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:34:03 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:34:03 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:34:03 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 12:34:03 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 12:34:03 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 12:34:03 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 12:34:03 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 12:34:03 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 12:34:03 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 12:34:03 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 12:34:03 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 12:34:03 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 12:34:03 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 12:34:03 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 12:34:03 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 12:34:03 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 12:34:03 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 12:35:58 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 12:35:58 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 12:35:58 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 12:35:58 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 12:35:58 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:35:58 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:35:58 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:35:58 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:35:58 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 12:35:58 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 12:35:58 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 12:35:58 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 12:35:58 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 12:35:58 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 12:35:58 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 12:35:58 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 12:39:22 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 12:39:22 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 12:39:22 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 12:39:22 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 12:39:22 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:39:22 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:39:22 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:39:22 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:39:23 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 12:39:23 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 12:39:23 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 12:39:23 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 12:39:23 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 12:39:23 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 12:39:23 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 12:39:23 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 12:39:23 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 12:39:23 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 12:39:23 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 12:39:23 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 12:39:23 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 12:39:23 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 12:39:23 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 12:51:04 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 12:51:04 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 12:51:04 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 12:51:04 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 12:51:04 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:51:04 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:51:04 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:51:04 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:51:04 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 12:51:04 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 12:51:04 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 12:51:04 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 12:51:04 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 12:51:04 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 12:51:04 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 12:51:04 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 12:51:04 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 12:51:04 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 12:51:04 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 12:51:04 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 12:51:04 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 12:51:04 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 12:51:04 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 12:53:13 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 12:53:13 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 12:53:13 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 12:53:13 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 12:53:13 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:53:13 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:53:14 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 12:53:14 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 12:53:14 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 12:53:14 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 12:53:14 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 12:53:14 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 12:53:14 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 12:53:14 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 12:53:14 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 12:53:14 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 12:53:14 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 12:53:14 [INFO] src.peoples_coin: Ensured database directory exists: /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance
+2025-07-13 12:53:14 [INFO] src.peoples_coin: No existing database file found at /Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/instance/peoples_coin.db to delete.
+2025-07-13 12:53:14 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 12:53:14 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 12:53:14 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 12:53:14 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 13:04:35 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 13:04:35 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 13:04:35 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 13:04:35 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 13:04:35 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 13:04:35 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 13:04:35 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 13:04:35 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 13:04:36 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 13:04:36 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 13:04:36 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 13:04:36 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 13:04:36 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 13:04:36 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 13:04:36 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 13:04:36 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 13:04:36 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 13:04:36 [INFO] src.peoples_coin: Ensured database directory exists: instance
+2025-07-13 13:04:36 [DEBUG] src.peoples_coin: Disposed of SQLAlchemy engine to release DB file lock.
+2025-07-13 13:04:36 [WARNING] src.peoples_coin: Deleted existing database file: instance/peoples_coin.db
+2025-07-13 13:04:36 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 13:04:36 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 13:04:36 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 13:04:36 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 13:11:49 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 13:11:49 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 13:11:49 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 13:11:49 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 13:11:49 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 13:11:49 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 13:11:49 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 13:11:49 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 13:11:49 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 13:11:49 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 13:11:49 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 13:11:49 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 13:11:49 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 13:11:49 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 13:11:49 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 13:11:49 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 13:11:49 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 13:11:49 [INFO] src.peoples_coin: Ensured database directory exists: instance
+2025-07-13 13:11:49 [INFO] src.peoples_coin: No existing database file found at instance/peoples_coin.db to delete.
+2025-07-13 13:11:49 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 13:11:49 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 13:11:49 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 13:11:49 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 13:27:25 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 13:27:25 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 13:27:25 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 13:27:25 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 13:27:25 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 13:27:25 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 13:27:25 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 13:27:25 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 13:27:25 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 13:27:25 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 13:27:25 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 13:27:25 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 13:27:25 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 13:27:25 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 13:27:25 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 13:27:25 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 13:27:25 [INFO] src.peoples_coin: Attempting to prepare database for migrations at: sqlite:///instance/peoples_coin.db
+2025-07-13 13:27:25 [INFO] src.peoples_coin: Ensured database directory exists: instance
+2025-07-13 13:27:25 [DEBUG] src.peoples_coin: Disposed of SQLAlchemy engine to release DB file lock.
+2025-07-13 13:27:25 [WARNING] src.peoples_coin: Deleted existing database file: instance/peoples_coin.db
+2025-07-13 13:27:25 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 13:27:25 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 13:27:25 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 13:27:25 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
