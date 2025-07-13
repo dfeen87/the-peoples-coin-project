@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from sqlalchemy.orm import Session
 
 # Use a relative import, which is more robust within a package structure.
-from . import db
+from .db import db
 
 logger = logging.getLogger(__name__)
 

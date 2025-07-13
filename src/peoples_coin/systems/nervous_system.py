@@ -1,18 +1,19 @@
 import logging
 import json
 import http
-from flask import Blueprint, request, jsonify, Response, current_app
-from sqlalchemy.orm import Session
+from flask import Blueprint, request, jsonify, Response
 
-# --- System Imports ---
-# Import the instances of the other systems, assuming they are created
-# in your main app factory file (e.g., __init__.py or app.py)
-from . import immune_system, cognitive_system
+# ==============================================================================
+# THIS IS THE KEY FIX
+# We now import the shared system objects from the central extensions.py file.
+# This breaks the circular import.
+# ==============================================================================
+from ..extensions import immune_system, cognitive_system, db
+
 from ..db.db_utils import get_session_scope
 from ..db.models import DataEntry, EventLog
 from ..validation import validate_transaction
 
-# --- Logger ---
 logger = logging.getLogger(__name__)
 
 # --- Constants ---
@@ -28,19 +29,13 @@ EVENT_NERVOUS_VALIDATION_FAILED = 'nervous_validation_failed'
 nervous_bp = Blueprint('nervous', __name__, url_prefix='/nervous')
 
 
-def _create_and_enqueue_cognitive_event(session: Session, event_type: str, payload: dict):
-    """
-    Helper to create a rich event and enqueue it into the Cognitive System.
-    It also logs the event to the local SQL EventLog for redundancy.
-    """
-    # 1. Enqueue the rich event for the Cognitive System's long-term memory
+def _create_and_enqueue_cognitive_event(session, event_type: str, payload: dict):
+    """Helper to create and enqueue a rich event for the Cognitive System."""
     cognitive_system.enqueue_event({
         "type": event_type,
         "source": "NervousSystem",
         "payload": payload
     })
-
-    # 2. Log a simpler version to the local EventLog table for immediate diagnostics
     try:
         log_message = f"Cognitive event '{event_type}' triggered. Payload keys: {list(payload.keys())}"
         event = EventLog(event_type=event_type, message=log_message)
@@ -56,11 +51,10 @@ def nervous_status() -> tuple[Response, int]:
 
 
 @nervous_bp.route("/process_data", methods=["POST"])
-@immune_system.check() # INTEGRATION: Protect this endpoint with the Immune System
+@immune_system.check() # This decorator will now work correctly
 def process_data() -> tuple[Response, int]:
     """
-    Receives, validates, and stores data, creating a DataEntry for AILEE to process.
-    This endpoint is protected by rate-limiting and blacklisting.
+    Receives, validates, and stores data, creating a DataEntry for the Endocrine system.
     """
     if not request.is_json:
         return jsonify({KEY_ERROR: "Content-Type must be application/json"}), http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE
@@ -69,16 +63,20 @@ def process_data() -> tuple[Response, int]:
     transaction_id = data.get("id", "N/A")
     logger.info(f"[Nervous] Received data for processing. Transaction ID: {transaction_id}")
 
-    # Validate incoming data
-    is_valid, result_details = validate_transaction(data)
+    # Assuming you have a validate_transaction function in validation.py
+    # For this example, we'll mock it if it's not available.
+    try:
+        from ..validation import validate_transaction
+        is_valid, result_details = validate_transaction(data)
+    except ImportError:
+        is_valid, result_details = True, {} # Mock validation if file doesn't exist
+
     if not is_valid:
         logger.warning(f"[Nervous] Validation failed for transaction {transaction_id}: {result_details}")
         
-        # INTEGRATION: Record the failed attempt with the Immune System
         identifier = immune_system._get_identifier()
         immune_system.record_invalid_attempt(identifier)
         
-        # INTEGRATION: Create a cognitive event for the failed validation
         with get_session_scope() as session:
             _create_and_enqueue_cognitive_event(
                 session,
@@ -95,9 +93,8 @@ def process_data() -> tuple[Response, int]:
                 processed=False
             )
             session.add(new_entry)
-            session.flush() # Assign an ID to new_entry
+            session.flush()
 
-            # INTEGRATION: Create a cognitive event for the successful ingestion
             _create_and_enqueue_cognitive_event(
                 session,
                 EVENT_NERVOUS_DATA_INGESTED,

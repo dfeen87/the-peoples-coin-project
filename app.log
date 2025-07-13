@@ -1,0 +1,660 @@
+2025-07-12 23:07:16 [INFO] peoples_coin: Creating main Flask application...
+2025-07-12 23:07:16 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-12 23:07:16 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-12 23:07:16 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-12 23:07:16 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-12 23:07:16 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-12 23:07:16 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-12 23:07:25 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-12 23:07:25 [INFO] cognitive_system: 🐇 Starting RabbitMQ consumer loop.
+2025-07-12 23:07:25 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: Using KQueuePoller
+2025-07-12 23:07:25 [INFO] cognitive_system: 🧠 Cognitive System initialized.
+2025-07-12 23:07:25 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-12 23:07:25 [DEBUG] pika.adapters.base_connection: Created default connection workflow <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x105dad6d0>
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.connection_workflow: Starting AMQP Connection workflow asynchronously.
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x105dad700> with deadline=9.21036525 and callback=functools.partial(<bound method AMQPConnectionWorkflow._start_new_cycle_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x105dad6d0>>, first=True); now=9.21036525; delay=0
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.connection_workflow: Beginning a new AMQP connection workflow cycle; attempts remaining after this: 0
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x105dad760> with deadline=9.210914541 and callback=<bound method AMQPConnectionWorkflow._try_next_config_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x105dad6d0>>; now=9.210914541; delay=0
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: 'localhost':5672
+2025-07-12 23:07:25 [ERROR] peoples_coin.db.db_utils: Database transaction failed. Rolling back. Error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    self._dbapi_connection = engine.raw_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3297, in raw_connection
+    return self.pool.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 713, in checkout
+    rec = pool._do_get()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 180, in _do_get
+    self._dec_overflow()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    return self._create_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 675, in __init__
+    self.__connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 902, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 897, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/create.py", line 646, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 625, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+sqlite3.OperationalError: unable to open database file
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/db/db_utils.py", line 35, in get_session_scope
+    yield db.session
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/consensus.py", line 96, in _load_nodes_from_db
+    nodes_from_db = session.query(ConsensusNode).all()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2241, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2110, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+  File "<string>", line 2, in _connection_for_bind
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 1189, in _connection_for_bind
+    conn = bind.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3273, in connect
+    return self._connection_cls(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 147, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 2436, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    self._dbapi_connection = engine.raw_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3297, in raw_connection
+    return self.pool.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 713, in checkout
+    rec = pool._do_get()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 180, in _do_get
+    self._dec_overflow()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    return self._create_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 675, in __init__
+    self.__connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 902, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 897, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/create.py", line 646, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 625, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x105dad7f0>>
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x105dad7f0>>
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: Invoking asynchronous getaddrinfo() completion callback; host='localhost'
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.connection_workflow: getaddrinfo returned 2 records
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-12 23:07:25 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x102a48430>>
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x102a48400> with deadline=19.233181791 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x102a483a0>>; now=9.233181791; delay=10.0
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x102a39e80> with deadline=24.233256333 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x102a483a0>>; now=9.233256333; delay=15.0
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x102a48430>>
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(13, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x102a48430>>)
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(13, _) added handler Wr
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=13, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57504, 0, 0)>.
+2025-07-12 23:07:25 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=13, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57504, 0, 0)>; error=61 (Connection refused)
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=13, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57504, 0, 0)>
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(13)
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(13) removed handler
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x102a48400> with deadline=19.233181791 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x102a483a0>>
+2025-07-12 23:07:25 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-12 23:07:25 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x102a39e80> with deadline=24.233256333 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x102a483a0>>
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-12 23:07:25 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x102a483d0>>
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x102a39640> with deadline=19.235138499999998 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x102a48460>>; now=9.2351385; delay=10.0
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x102a39730> with deadline=24.235243541 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x102a48460>>; now=9.235243541; delay=15.0
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x102a483d0>>
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(12, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x102a483d0>>)
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(12, _) added handler Wr
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57505)>.
+2025-07-12 23:07:25 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57505)>; error=61 (Connection refused)
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57505)>
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(12)
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(12) removed handler
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x102a39640> with deadline=19.235138499999998 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x102a48460>>
+2025-07-12 23:07:25 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-12 23:07:25 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:07:25 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x102a39730> with deadline=24.235243541 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x102a48460>>
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_resolved_address: continuing with next config.
+2025-07-12 23:07:25 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: starting a new cycle.
+2025-07-12 23:07:25 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-12 23:07:25 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:07:25 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:07:25 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-12 23:07:25 [ERROR] cognitive_system: 🐇 Consumer connection failed: . Retrying in 10 seconds...
+2025-07-12 23:09:12 [INFO] peoples_coin: Creating main Flask application...
+2025-07-12 23:09:12 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-12 23:09:12 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-12 23:09:12 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-12 23:09:12 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-12 23:09:12 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-12 23:09:12 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-12 23:09:22 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-12 23:09:22 [INFO] cognitive_system: 🐇 Starting RabbitMQ consumer loop.
+2025-07-12 23:09:22 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: Using KQueuePoller
+2025-07-12 23:09:22 [INFO] cognitive_system: 🧠 Cognitive System initialized.
+2025-07-12 23:09:22 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-12 23:09:22 [DEBUG] pika.adapters.base_connection: Created default connection workflow <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x1042fa730>
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.connection_workflow: Starting AMQP Connection workflow asynchronously.
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1042fa760> with deadline=9.466558666 and callback=functools.partial(<bound method AMQPConnectionWorkflow._start_new_cycle_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x1042fa730>>, first=True); now=9.466558666; delay=0
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.connection_workflow: Beginning a new AMQP connection workflow cycle; attempts remaining after this: 0
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1042fa7c0> with deadline=9.467303291 and callback=<bound method AMQPConnectionWorkflow._try_next_config_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x1042fa730>>; now=9.467303291; delay=0
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: 'localhost':5672
+2025-07-12 23:09:22 [ERROR] peoples_coin.db.db_utils: Database transaction failed. Rolling back. Error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    self._dbapi_connection = engine.raw_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3297, in raw_connection
+    return self.pool.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 713, in checkout
+    rec = pool._do_get()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 180, in _do_get
+    self._dec_overflow()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    return self._create_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 675, in __init__
+    self.__connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 902, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 897, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/create.py", line 646, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 625, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+sqlite3.OperationalError: unable to open database file
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/db/db_utils.py", line 35, in get_session_scope
+    yield db.session
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/consensus.py", line 96, in _load_nodes_from_db
+    nodes_from_db = session.query(ConsensusNode).all()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2241, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2110, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+  File "<string>", line 2, in _connection_for_bind
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 1189, in _connection_for_bind
+    conn = bind.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3273, in connect
+    return self._connection_cls(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 147, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 2436, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    self._dbapi_connection = engine.raw_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3297, in raw_connection
+    return self.pool.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 713, in checkout
+    rec = pool._do_get()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 180, in _do_get
+    self._dec_overflow()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    return self._create_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 675, in __init__
+    self.__connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 902, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 897, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/create.py", line 646, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 625, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x1042fa850>>
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x1042fa850>>
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: Invoking asynchronous getaddrinfo() completion callback; host='localhost'
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.connection_workflow: getaddrinfo returned 2 records
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-12 23:09:22 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x100f74460>>
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x100f74400> with deadline=19.489991957999997 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100f743a0>>; now=9.489991958; delay=10.0
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x100f65e80> with deadline=24.490061750000002 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100f743a0>>; now=9.49006175; delay=15.0
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x100f74460>>
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(13, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x100f74460>>)
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(13, _) added handler Wr
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=13, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57515, 0, 0)>.
+2025-07-12 23:09:22 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=13, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57515, 0, 0)>; error=61 (Connection refused)
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=13, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57515, 0, 0)>
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(13)
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(13) removed handler
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x100f74400> with deadline=19.489991957999997 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100f743a0>>
+2025-07-12 23:09:22 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-12 23:09:22 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x100f65e80> with deadline=24.490061750000002 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100f743a0>>
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-12 23:09:22 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x100f743d0>>
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x100f65880> with deadline=19.492023041 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100f74430>>; now=9.492023041; delay=10.0
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x100f65730> with deadline=24.492072291 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100f74430>>; now=9.492072291; delay=15.0
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x100f743d0>>
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(12, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x100f743d0>>)
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(12, _) added handler Wr
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57516)>.
+2025-07-12 23:09:22 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57516)>; error=61 (Connection refused)
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57516)>
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(12)
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(12) removed handler
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x100f65880> with deadline=19.492023041 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100f74430>>
+2025-07-12 23:09:22 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-12 23:09:22 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:09:22 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x100f65730> with deadline=24.492072291 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100f74430>>
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_resolved_address: continuing with next config.
+2025-07-12 23:09:22 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: starting a new cycle.
+2025-07-12 23:09:22 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-12 23:09:22 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:09:22 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:09:22 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-12 23:09:22 [ERROR] cognitive_system: 🐇 Consumer connection failed: . Retrying in 10 seconds...
+2025-07-12 23:10:57 [INFO] peoples_coin: Creating main Flask application...
+2025-07-12 23:10:57 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-12 23:10:57 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-12 23:10:57 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-12 23:10:57 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-12 23:10:57 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-12 23:10:57 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-12 23:11:06 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-12 23:11:06 [INFO] cognitive_system: 🐇 Starting RabbitMQ consumer loop.
+2025-07-12 23:11:06 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: Using KQueuePoller
+2025-07-12 23:11:06 [INFO] cognitive_system: 🧠 Cognitive System initialized.
+2025-07-12 23:11:06 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-12 23:11:06 [DEBUG] pika.adapters.base_connection: Created default connection workflow <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x1086fc640>
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.connection_workflow: Starting AMQP Connection workflow asynchronously.
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1086fc670> with deadline=9.317146958 and callback=functools.partial(<bound method AMQPConnectionWorkflow._start_new_cycle_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x1086fc640>>, first=True); now=9.317146958; delay=0
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.connection_workflow: Beginning a new AMQP connection workflow cycle; attempts remaining after this: 0
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1086fc6d0> with deadline=9.31779425 and callback=<bound method AMQPConnectionWorkflow._try_next_config_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x1086fc640>>; now=9.31779425; delay=0
+2025-07-12 23:11:06 [ERROR] peoples_coin.db.db_utils: Database transaction failed. Rolling back. Error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    self._dbapi_connection = engine.raw_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3297, in raw_connection
+    return self.pool.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 713, in checkout
+    rec = pool._do_get()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 180, in _do_get
+    self._dec_overflow()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    return self._create_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 675, in __init__
+    self.__connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 902, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 897, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/create.py", line 646, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 625, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+sqlite3.OperationalError: unable to open database file
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/db/db_utils.py", line 35, in get_session_scope
+    yield db.session
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/consensus.py", line 96, in _load_nodes_from_db
+    nodes_from_db = session.query(ConsensusNode).all()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2241, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2110, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+  File "<string>", line 2, in _connection_for_bind
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 1189, in _connection_for_bind
+    conn = bind.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3273, in connect
+    return self._connection_cls(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 147, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 2436, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    self._dbapi_connection = engine.raw_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3297, in raw_connection
+    return self.pool.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 713, in checkout
+    rec = pool._do_get()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 180, in _do_get
+    self._dec_overflow()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    return self._create_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 675, in __init__
+    self.__connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 902, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 897, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/create.py", line 646, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 625, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: 'localhost':5672
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x105040940>>
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x105040940>>
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: Invoking asynchronous getaddrinfo() completion callback; host='localhost'
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.connection_workflow: getaddrinfo returned 2 records
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-12 23:11:06 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x1050b9e20>>
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1050b9760> with deadline=19.343057666 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1050b9fd0>>; now=9.343057666; delay=10.0
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x10869b5e0> with deadline=24.343120791 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1050b9fd0>>; now=9.343120791; delay=15.0
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x1050b9e20>>
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(12, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x1050b9e20>>)
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(12, _) added handler Wr
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57524, 0, 0)>.
+2025-07-12 23:11:06 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57524, 0, 0)>; error=61 (Connection refused)
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57524, 0, 0)>
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(12)
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(12) removed handler
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x1050b9760> with deadline=19.343057666 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1050b9fd0>>
+2025-07-12 23:11:06 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-12 23:11:06 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x10869b5e0> with deadline=24.343120791 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1050b9fd0>>
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-12 23:11:06 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x10869b4f0>>
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1050c8430> with deadline=19.344929999999998 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x10869b520>>; now=9.34493; delay=10.0
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1050b9dc0> with deadline=24.344991041 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x10869b520>>; now=9.344991041; delay=15.0
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x10869b4f0>>
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(12, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x10869b4f0>>)
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(12, _) added handler Wr
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57525)>.
+2025-07-12 23:11:06 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57525)>; error=61 (Connection refused)
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57525)>
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(12)
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(12) removed handler
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x1050c8430> with deadline=19.344929999999998 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x10869b520>>
+2025-07-12 23:11:06 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-12 23:11:06 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:11:06 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x1050b9dc0> with deadline=24.344991041 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x10869b520>>
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_resolved_address: continuing with next config.
+2025-07-12 23:11:06 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: starting a new cycle.
+2025-07-12 23:11:06 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-12 23:11:06 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:11:06 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:11:06 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-12 23:11:06 [ERROR] cognitive_system: 🐇 Consumer connection failed: . Retrying in 10 seconds...
+2025-07-12 23:13:09 [INFO] peoples_coin: Creating main Flask application...
+2025-07-12 23:13:09 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-12 23:13:09 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-12 23:13:09 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-12 23:13:09 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-12 23:13:09 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-12 23:13:09 [DEBUG] google.auth._default: Cloud SDK credentials not found on disk; not using them
+2025-07-12 23:13:18 [WARNING] cognitive_system: ☁️ Google Cloud Firestore client failed to initialize: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-07-12 23:13:18 [INFO] cognitive_system: 🐇 Starting RabbitMQ consumer loop.
+2025-07-12 23:13:18 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: Using KQueuePoller
+2025-07-12 23:13:18 [INFO] cognitive_system: 🧠 Cognitive System initialized.
+2025-07-12 23:13:18 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-12 23:13:18 [DEBUG] pika.adapters.base_connection: Created default connection workflow <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x103c7d4f0>
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.connection_workflow: Starting AMQP Connection workflow asynchronously.
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x103c7d520> with deadline=9.281011458 and callback=functools.partial(<bound method AMQPConnectionWorkflow._start_new_cycle_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x103c7d4f0>>, first=True); now=9.281011458; delay=0
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.connection_workflow: Beginning a new AMQP connection workflow cycle; attempts remaining after this: 0
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x103c7d580> with deadline=9.28121075 and callback=<bound method AMQPConnectionWorkflow._try_next_config_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x103c7d4f0>>; now=9.28121075; delay=0
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: 'localhost':5672
+2025-07-12 23:13:18 [ERROR] peoples_coin.db.db_utils: Database transaction failed. Rolling back. Error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    self._dbapi_connection = engine.raw_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3297, in raw_connection
+    return self.pool.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 713, in checkout
+    rec = pool._do_get()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 180, in _do_get
+    self._dec_overflow()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    return self._create_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 675, in __init__
+    self.__connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 902, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 897, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/create.py", line 646, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 625, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+sqlite3.OperationalError: unable to open database file
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/db/db_utils.py", line 35, in get_session_scope
+    yield db.session
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/consensus.py", line 96, in _load_nodes_from_db
+    nodes_from_db = session.query(ConsensusNode).all()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2241, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 2110, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+  File "<string>", line 2, in _connection_for_bind
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 1189, in _connection_for_bind
+    conn = bind.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3273, in connect
+    return self._connection_cls(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 147, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 2436, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    self._dbapi_connection = engine.raw_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py", line 3297, in raw_connection
+    return self.pool.connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 713, in checkout
+    rec = pool._do_get()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 180, in _do_get
+    self._dec_overflow()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    return self._create_connection()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 675, in __init__
+    self.__connect()
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 902, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/pool/base.py", line 897, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/create.py", line 646, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py", line 625, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x103c7d610>>
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x103c7d610>>
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: Invoking asynchronous getaddrinfo() completion callback; host='localhost'
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.connection_workflow: getaddrinfo returned 2 records
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-12 23:13:18 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x1006343d0>>
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x100634460> with deadline=19.299051041 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1006343a0>>; now=9.299051041; delay=10.0
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1006252e0> with deadline=24.299199041 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1006343a0>>; now=9.299199041; delay=15.0
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x1006343d0>>
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(12, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x1006343d0>>)
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(12, _) added handler Wr
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57533, 0, 0)>.
+2025-07-12 23:13:18 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57533, 0, 0)>; error=61 (Connection refused)
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 57533, 0, 0)>
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(12)
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(12) removed handler
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x100634460> with deadline=19.299051041 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1006343a0>>
+2025-07-12 23:13:18 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-12 23:13:18 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x1006252e0> with deadline=24.299199041 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x1006343a0>>
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.connection_workflow: Attempting to connect using address record (<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-12 23:13:18 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: add_callback_threadsafe: added callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x100634430>>
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x1006255b0> with deadline=19.30111775 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100634400>>; now=9.30111775; delay=10.0
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x100625730> with deadline=24.301163875 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100634400>>; now=9.301163875; delay=15.0
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: process_timeouts: invoking callback=<bound method _AsyncSocketConnector._start_async of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x100634430>>
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.set_writer(12, <bound method _AsyncSocketConnector._on_writable of <pika.adapters.utils.io_services_utils._AsyncSocketConnector object at 0x100634430>>)
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: set_writer(12, _) added handler Wr
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.io_services_utils: Connection-establishment is in progress for <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57534)>.
+2025-07-12 23:13:18 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57534)>; error=61 (Connection refused)
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.io_services_utils: _AsyncSocketConnector._report_completion(ConnectionRefusedError(61, 'Connection refused')); <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 57534)>
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: SelectorIOServicesAdapter.remove_writer(12)
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.selector_ioloop_adapter: remove_writer(12) removed handler
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x1006255b0> with deadline=19.30111775 and callback=<bound method AMQPConnector._on_tcp_connection_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100634400>>
+2025-07-12 23:13:18 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-12 23:13:18 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:13:18 [DEBUG] pika.adapters.select_connection: remove_timeout: removing timeout <pika.adapters.select_connection._Timeout object at 0x100625730> with deadline=24.301163875 and callback=<bound method AMQPConnector._on_overall_timeout of <pika.adapters.utils.connection_workflow.AMQPConnector object at 0x100634400>>
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.connection_workflow: Connection attempt completed with AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_resolved_address: continuing with next config.
+2025-07-12 23:13:18 [DEBUG] pika.adapters.utils.connection_workflow: _try_next_config_async: starting a new cycle.
+2025-07-12 23:13:18 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-12 23:13:18 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:13:18 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-12 23:13:18 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-12 23:13:18 [ERROR] cognitive_system: 🐇 Consumer connection failed: . Retrying in 10 seconds...

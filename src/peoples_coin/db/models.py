@@ -3,7 +3,7 @@ from typing import Dict, Any
 from decimal import Decimal
 
 # Correctly import the db instance from your dedicated database file.
-from .database import db
+from .db import db
 
 # Helper function to ensure all default timestamps are timezone-aware (UTC).
 def utcnow():

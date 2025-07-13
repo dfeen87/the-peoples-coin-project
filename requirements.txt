@@ -1,7 +1,25 @@
-flask>=2.2.2
-flask_sqlalchemy>=3.0.2
-flask_limiter>=2.9.1
-redis>=4.5.5
-pydantic>=1.10.7
+# Flask and Web Server
+flask
 python-dotenv
-Flask-Migrate
+gunicorn
+
+# Database
+flask-sqlalchemy
+# psycopg2-binary  # Or the driver for your DB
+
+# Validation & Utilities
+pydantic
+validators
+
+# API Documentation
+flasgger
+
+# Security & Rate Limiting
+redis
+flask-limiter
+
+# Message Queue
+pika
+
+# Google Cloud (Optional)
+google-cloud-firestore
