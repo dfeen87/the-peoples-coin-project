@@ -5,216 +5,233 @@ import threading
 import time
 from datetime import datetime
 from queue import Queue, Empty
-from contextlib import contextmanager
+from typing import Optional
 
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, Flask, current_app
 
-from ..db import db
+# Assuming these utilities exist from previous files
+from ..db.db_utils import get_session_scope
 from ..db.models import CognitiveEvent
 
+# Conditionally import optional dependencies
 try:
     import pika
     RABBIT_AVAILABLE = True
 except ImportError:
+    pika = None
     RABBIT_AVAILABLE = False
 
 try:
     from google.cloud import firestore
     GCP_AVAILABLE = True
 except ImportError:
+    firestore = None
     GCP_AVAILABLE = False
 
 logger = logging.getLogger("cognitive_system")
-cognitive_bp = Blueprint('cognitive_bp', __name__)
 
-# --- Configuration ---
-_LOOP_DELAY = float(os.getenv("COGNITIVE_LOOP_DELAY", 5))
-_REFLECTION_INTERVAL = float(os.getenv("COGNITIVE_REFLECTION_INTERVAL", 30))
-_RABBITMQ_URL = os.getenv("COGNITIVE_RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
-_RABBIT_QUEUE = os.getenv("COGNITIVE_RABBIT_QUEUE", "cognitive_events")
-_FIRESTORE_COLLECTION = os.getenv("COGNITIVE_FIRESTORE_COLLECTION", "cognitive_memory")
+class CognitiveSystem:
+    """
+    A resilient event processing system with a background worker, message queue
+    (RabbitMQ with in-memory fallback), and multi-backend persistence.
+    """
 
-# --- State ---
-_thought_loop_running = False
-_loop_thread = None
-_loop_lock = threading.Lock()
-_event_queue = Queue() if not RABBIT_AVAILABLE else None
+    def __init__(self):
+        self.app: Optional[Flask] = None
+        self.config = {}
+        
+        # External clients
+        self.firestore_client: Optional[firestore.Client] = None
+        
+        # State and concurrency
+        self._stop_event = threading.Event()
+        self._loop_thread: Optional[threading.Thread] = None
+        self._in_memory_queue = Queue()
+        self._initialized = False
 
-# --- GCP Client Initialization ---
-_firestore_client = None
-if GCP_AVAILABLE:
-    try:
-        _firestore_client = firestore.Client()
-        logger.info("☁️ Google Cloud Firestore client initialized.")
-    except Exception as e:
-        logger.warning(f"☁️ Google Cloud Firestore client failed to initialize: {e}")
-        _firestore_client = None
-
-# --- Database Session Context Manager ---
-@contextmanager
-def session_scope():
-    """Provide a transactional scope around a series of operations."""
-    session = db.session
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
-
-
-# --- Event Queueing ---
-def enqueue_event(event: dict):
-    if RABBIT_AVAILABLE:
-        try:
-            with pika.BlockingConnection(pika.URLParameters(_RABBITMQ_URL)) as conn:
-                channel = conn.channel()
-                channel.queue_declare(queue=_RABBIT_QUEUE, durable=True)
-                channel.basic_publish(
-                    exchange='',
-                    routing_key=_RABBIT_QUEUE,
-                    body=json.dumps(event),
-                    properties=pika.BasicProperties(delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE)
-                )
-            logger.info(f"🐇 Event enqueued to RabbitMQ: {event.get('type')}")
+    def init_app(self, app: Flask):
+        """Initializes the Cognitive System with the Flask app context."""
+        if self._initialized:
             return
-        except pika.exceptions.AMQPConnectionError as e:
-            logger.warning(f"🐇 RabbitMQ connection failed ({e}), falling back to in-memory queue.")
-    _event_queue.put(event)
-    logger.info(f"🧠 Event enqueued (in-memory): {event.get('type')}")
+        
+        self.app = app
+        self.config = app.config
+        
+        # Default config values
+        self.config.setdefault("COGNITIVE_LOOP_DELAY", 5.0)
+        self.config.setdefault("COGNITIVE_REFLECTION_INTERVAL", 30.0)
+        self.config.setdefault("COGNITIVE_RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
+        self.config.setdefault("COGNITIVE_RABBIT_QUEUE", "cognitive_events")
+        self.config.setdefault("COGNITIVE_FIRESTORE_COLLECTION", "cognitive_memory")
 
+        self._initialize_firestore_client()
+        self.start_background_loop()
+        self._initialized = True
+        logger.info("🧠 Cognitive System initialized.")
 
-# --- Core Logic & Background Thread ---
-def _persist_event(event: dict):
-    """Persist event to SQL DB and optionally Firestore."""
-    try:
-        with session_scope() as session:
-            ev = CognitiveEvent(
-                event_type=event.get("type", "unknown"),
-                payload=json.dumps(event.get("payload", {})),
-                timestamp=event.get("timestamp", datetime.utcnow().isoformat())
-            )
-            session.add(ev)
-        logger.info(f"🧠 Event persisted in database: {ev.event_type}")
-    except Exception as e:
-        logger.error(f"Failed to persist event: {e}", exc_info=True)
+    def _initialize_firestore_client(self):
+        """Initializes the Firestore client if GCP is available."""
+        if GCP_AVAILABLE and not self.firestore_client:
+            try:
+                self.firestore_client = firestore.Client()
+                logger.info("☁️ Google Cloud Firestore client initialized.")
+            except Exception as e:
+                logger.warning(f"☁️ Google Cloud Firestore client failed to initialize: {e}")
+                self.firestore_client = None
 
-    if _firestore_client:
-        try:
-            doc_ref = _firestore_client.collection(_FIRESTORE_COLLECTION).document()
-            doc_ref.set(event)
-            logger.debug(f"☁️ Event persisted to Firestore: {event.get('type')}")
-        except Exception as e:
-            logger.error(f"☁️ Firestore persist error: {e}")
+    # --- Public Methods ---
 
+    def enqueue_event(self, event: dict):
+        """
+        Enqueues an event for processing, preferring RabbitMQ if available.
+        """
+        # Add a default timestamp if not present
+        event.setdefault("timestamp", datetime.utcnow().isoformat())
 
-def reflect():
-    """Periodically log a summary of cognitive events."""
-    try:
-        with session_scope() as session:
-            counts = session.query(
-                CognitiveEvent.event_type,
-                db.func.count(CognitiveEvent.id)
-            ).group_by(CognitiveEvent.event_type).all()
-            summary = {k: v for k, v in counts}
-        logger.info(f"🧠 Reflection: {json.dumps(summary, indent=2)}")
-    except Exception as e:
-        logger.error(f"Failed to perform reflection: {e}", exc_info=True)
-
-
-def _thought_loop():
-    logger.info("🧠 Thought loop starting.")
-    last_reflection = 0
-
-    def process_event(event_data):
-        logger.info(f"🧠 Processing event: {event_data.get('type')}")
-        _persist_event(event_data)
-
-    while _thought_loop_running:
-        processed_event = False
         if RABBIT_AVAILABLE:
             try:
-                with pika.BlockingConnection(pika.URLParameters(_RABBITMQ_URL)) as conn:
-                    channel = conn.channel()
-                    method_frame, _, body = channel.basic_get(queue=_RABBIT_QUEUE)
-                    if method_frame:
-                        process_event(json.loads(body))
-                        channel.basic_ack(method_frame.delivery_tag)
-                        processed_event = True
+                # For web requests, short-lived connections are simpler than pooling.
+                # In very high-throughput scenarios, a connection pool (e.g., kombu) would be better.
+                params = pika.URLParameters(self.config["COGNITIVE_RABBITMQ_URL"])
+                with pika.BlockingConnection(params) as conn:
+                    ch = conn.channel()
+                    ch.queue_declare(queue=self.config["COGNITIVE_RABBIT_QUEUE"], durable=True)
+                    ch.basic_publish(
+                        exchange='',
+                        routing_key=self.config["COGNITIVE_RABBIT_QUEUE"],
+                        body=json.dumps(event),
+                        properties=pika.BasicProperties(delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE)
+                    )
+                logger.info(f"🐇 Event enqueued to RabbitMQ: {event.get('type')}")
+                return
             except pika.exceptions.AMQPConnectionError as e:
-                logger.error(f"🐇 Consumer connection failed: {e}")
-                time.sleep(10)
-        else:
+                logger.warning(f"🐇 RabbitMQ connection failed ({e}), falling back to in-memory queue.")
+        
+        self._in_memory_queue.put(event)
+        logger.info(f"🧠 Event enqueued (in-memory): {event.get('type')}")
+
+    def start_background_loop(self):
+        """Starts the main background worker thread."""
+        if not self._loop_thread or not self._loop_thread.is_alive():
+            self._stop_event.clear()
+            target_loop = self._rabbit_consumer_loop if RABBIT_AVAILABLE else self._in_memory_consumer_loop
+            self._loop_thread = threading.Thread(target=target_loop, daemon=True, name="CognitiveLoop")
+            self._loop_thread.start()
+            logger.info("🧠 Cognitive background loop started.")
+
+    def stop_background_loop(self):
+        """Signals the background worker to stop and waits for it to exit."""
+        if self._loop_thread and self._loop_thread.is_alive():
+            logger.info("🧠 Sending stop signal to cognitive background loop...")
+            self._stop_event.set()
+            self._loop_thread.join(timeout=10)
+            if self._loop_thread.is_alive():
+                logger.warning("🧠 Cognitive loop did not exit gracefully.")
+            else:
+                logger.info("🧠 Cognitive background loop stopped.")
+
+    # --- Core Logic & Background Loops ---
+
+    def _persist_event(self, event: dict):
+        """Persists a single event to both SQL and Firestore."""
+        with self.app.app_context():
+            # Persist to SQL DB
             try:
-                event = _event_queue.get(block=False)
-                process_event(event)
-                processed_event = True
+                with get_session_scope() as session:
+                    ev = CognitiveEvent(
+                        event_type=event.get("type", "unknown"),
+                        payload=json.dumps(event.get("payload", {})),
+                        timestamp=datetime.fromisoformat(event.get("timestamp"))
+                    )
+                    session.add(ev)
+                logger.info(f"💾 Event persisted in database: {ev.event_type}")
+            except Exception as e:
+                logger.error(f"💾 SQL persist error: {e}", exc_info=True)
+
+            # Persist to Firestore
+            if self.firestore_client:
+                try:
+                    doc_ref = self.firestore_client.collection(self.config["COGNITIVE_FIRESTORE_COLLECTION"]).document()
+                    doc_ref.set(event)
+                    logger.debug(f"☁️ Event persisted to Firestore: {event.get('type')}")
+                except Exception as e:
+                    logger.error(f"☁️ Firestore persist error: {e}")
+
+    def _in_memory_consumer_loop(self):
+        """Worker loop for processing events from the in-memory queue."""
+        logger.info("🧠 Starting in-memory queue consumer loop.")
+        while not self._stop_event.is_set():
+            try:
+                event = self._in_memory_queue.get(timeout=self.config["COGNITIVE_LOOP_DELAY"])
+                self._persist_event(event)
+                self._in_memory_queue.task_done()
             except Empty:
-                pass
+                continue # No events, loop will check stop_event
+            except Exception as e:
+                logger.error(f"🧠 Error in in-memory loop: {e}", exc_info=True)
+                time.sleep(5)
 
-        now = time.time()
-        if now - last_reflection >= _REFLECTION_INTERVAL:
-            reflect()
-            last_reflection = now
+    def _rabbit_consumer_loop(self):
+        """Worker loop for consuming events from RabbitMQ with reconnect logic."""
+        logger.info("🐇 Starting RabbitMQ consumer loop.")
+        while not self._stop_event.is_set():
+            try:
+                params = pika.URLParameters(self.config["COGNITIVE_RABBITMQ_URL"])
+                connection = pika.BlockingConnection(params)
+                channel = connection.channel()
+                channel.queue_declare(queue=self.config["COGNITIVE_RABBIT_QUEUE"], durable=True)
+                
+                logger.info("🐇 Consumer connected, waiting for messages...")
+                for method_frame, properties, body in channel.consume(self.config["COGNITIVE_RABBIT_QUEUE"]):
+                    if self._stop_event.is_set():
+                        break
+                    try:
+                        event = json.loads(body)
+                        self._persist_event(event)
+                        channel.basic_ack(method_frame.delivery_tag)
+                    except json.JSONDecodeError:
+                        logger.error("🐇 Failed to decode message body. Discarding.")
+                        channel.basic_nack(method_frame.delivery_tag, requeue=False)
+                    except Exception as e:
+                        logger.error(f"🐇 Error processing message: {e}. Re-queueing.")
+                        channel.basic_nack(method_frame.delivery_tag, requeue=True)
+                        # To prevent rapid re-processing of a poison pill message
+                        time.sleep(5)
 
-        if not processed_event:
-            time.sleep(_LOOP_DELAY)
+                channel.cancel()
+                connection.close()
+                logger.info("🐇 Consumer loop finished gracefully.")
 
-    logger.info("🧠 Thought loop stopped.")
+            except pika.exceptions.AMQPConnectionError as e:
+                logger.error(f"🐇 Consumer connection failed: {e}. Retrying in 10 seconds...")
+                self._stop_event.wait(10)
+            except Exception as e:
+                logger.error(f"🐇 Unhandled error in consumer loop: {e}", exc_info=True)
+                self._stop_event.wait(10)
 
-
-# --- Public API & Flask Routes ---
-def start_thought_loop():
-    global _thought_loop_running, _loop_thread
-    with _loop_lock:
-        if not _thought_loop_running:
-            _thought_loop_running = True
-            _loop_thread = threading.Thread(target=_thought_loop, daemon=True, name="CognitiveLoop")
-            _loop_thread.start()
-            logger.info("🧠 Thought loop start signal sent.")
-
-
-def stop_thought_loop():
-    global _thought_loop_running
-    if _thought_loop_running:
-        _thought_loop_running = False
-        if _loop_thread:
-            _loop_thread.join(timeout=10)
-        logger.info("🧠 Thought loop stop signal sent.")
-
+# --- Blueprint and Routes ---
+cognitive_bp = Blueprint('cognitive_bp', __name__)
 
 @cognitive_bp.route('/cognitive/status', methods=['GET'])
 def cognitive_status():
-    pending_events = "N/A"
-    if _event_queue:
-        pending_events = _event_queue.qsize()
-    return jsonify({
-        "status": "running" if _thought_loop_running else "stopped",
-        "event_queue": "RabbitMQ" if RABBIT_AVAILABLE else "In-Memory",
-        "pending_events": pending_events,
-    })
+    from . import cognitive_system # Local import to access instance
+    pending_events = "N/A (Using RabbitMQ)"
+    if not RABBIT_AVAILABLE:
+        pending_events = cognitive_system._in_memory_queue.qsize()
 
+    return jsonify({
+        "status": "running" if cognitive_system._loop_thread.is_alive() else "stopped",
+        "event_queue_backend": "RabbitMQ" if RABBIT_AVAILABLE else "In-Memory",
+        "pending_events_in_memory": pending_events,
+    })
 
 @cognitive_bp.route('/cognitive/event', methods=['POST'])
 def cognitive_event():
+    from . import cognitive_system # Local import to access instance
     event = request.get_json()
     if not event or not isinstance(event, dict) or "type" not in event:
-        return jsonify({"error": "Event must be a JSON object with a 'type' field."}), 400
+        return jsonify({"error": "Event must be a JSON object with a 'type' field."}), http.HTTPStatus.BAD_REQUEST
 
-    event.setdefault("timestamp", datetime.utcnow().isoformat())
-    event.setdefault("payload", {})
-
-    enqueue_event(event)
-    return jsonify({"message": "Event accepted."}), 202
-
-
-# --- App Integration ---
-def register_cognitive_system(app):
-    """Registers the blueprint."""
-    app.register_blueprint(cognitive_bp)
-    logger.info("🧠 Cognitive system blueprint registered.")
-
-    # The start_thought_loop() call is now handled by run.py
+    cognitive_system.enqueue_event(event)
+    return jsonify({"message": "Event accepted for processing."}), http.HTTPStatus.ACCEPTED
 

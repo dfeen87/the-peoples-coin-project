@@ -1,100 +1,107 @@
-"""
-validation.py
-Provides data validation utilities for The People’s Coin skeleton system using Pydantic.
-"""
-
-from pydantic import BaseModel, ValidationError, Field, Extra, validator
-from typing import List, Tuple, Union
-import time
+kimport time
 import logging
+from typing import List, Union, Dict, Any
 
-# Configurable max allowed future drift
-MAX_FUTURE_DRIFT_SECONDS = 60
+from pydantic import BaseModel, ValidationError, Field, field_validator, Extra
 
 logger = logging.getLogger(__name__)
 
+# --- Configuration ---
+# This can be loaded from Flask app.config for more flexibility
+MAX_FUTURE_DRIFT_SECONDS = 60
+
+
+# ==============================================================================
+# 1. Core Data Schema
+# ==============================================================================
 
 class Contribution(BaseModel):
     """
     Represents a validated act of kindness or transaction.
+    Uses Pydantic v2 syntax and features.
     """
-    contributor: str = Field(..., min_length=1, description="Contributor name must not be empty")
-    tags: List[str] = Field(..., min_items=1, description="At least one tag is required")
-    value: float = Field(..., gt=0, le=1000, description="Value must be > 0 and ≤ 1000")
+    contributor: str = Field(..., min_length=1, description="Contributor name must not be empty.")
+    tags: List[str] = Field(..., min_items=1, description="At least one tag is required.")
+    value: float = Field(..., gt=0, le=1000, description="Value must be > 0 and ≤ 1000.")
     timestamp: float = Field(..., ge=0, description="A valid UNIX timestamp.")
 
-    @validator('timestamp')
+    @field_validator('timestamp')
+    @classmethod
     def timestamp_must_not_be_in_the_future(cls, v: float) -> float:
-        """
-        Validates that the timestamp is not further in the future than the allowed drift.
-        This validator runs at the time of validation, not at definition time.
-        """
+        """Validates that the timestamp is not further in the future than allowed."""
         allowed_future_time = time.time() + MAX_FUTURE_DRIFT_SECONDS
         if v > allowed_future_time:
-            raise ValueError(f"Timestamp is too far in the future")
+            raise ValueError(f"Timestamp is too far in the future.")
         return v
 
     class Config:
-        # Enforce strict schema (no extra fields allowed) by default
+        # Enforce strict schema (no extra fields allowed).
         extra = Extra.forbid
 
 
-def _format_error(e: ValidationError) -> str:
-    """Returns a JSON string from a Pydantic ValidationError."""
-    return e.json(indent=2)
+# ==============================================================================
+# 2. Explicit and Unambiguous Return Models
+# ==============================================================================
+
+class ValidationResult(BaseModel):
+    """A self-describing result for a single validation attempt."""
+    is_valid: bool
+    data: Union[Contribution, None] = None
+    errors: Union[List[Dict], None] = None
 
 
-def validate_transaction(
-    data: dict,
-    log_errors: bool = True,
-    strict: bool = True
-) -> Tuple[bool, Union[Contribution, str]]:
+class BatchValidationResult(BaseModel):
+    """A self-describing result for a batch validation attempt."""
+    all_valid: bool
+    valid_items: List[Contribution] = []
+    invalid_items: List[Dict] = [] # Holds original data plus error details
+
+
+# ==============================================================================
+# 3. Refined Validation Functions
+# ==============================================================================
+
+def validate_contribution(data: dict) -> ValidationResult:
     """
-    Validates incoming transaction data against the Contribution schema.
+    Validates a single contribution against the schema.
 
     Returns:
-        A tuple of (bool, result). If valid, result is a Contribution object.
-        If invalid, result is a JSON string of the errors.
+        A ValidationResult object that is unambiguous and easy to use.
     """
-    schema = Contribution
-    if not strict:
-        # Create a temporary relaxed version of the schema if not strict
-        class ContributionRelaxed(Contribution):
-            class Config:
-                extra = Extra.allow
-        schema = ContributionRelaxed
-
     try:
-        contribution = schema(**data)
-        return True, contribution
+        # Pydantic v2's model_validate handles the parsing and validation.
+        validated_contribution = Contribution.model_validate(data)
+        return ValidationResult(is_valid=True, data=validated_contribution)
     except ValidationError as e:
-        error_details = _format_error(e)
-        if log_errors:
-            logger.warning(f"Validation failed for transaction: {error_details}")
-        return False, error_details
+        logger.warning(f"Validation failed for contribution: {e.errors()}")
+        return ValidationResult(is_valid=False, errors=e.errors())
 
 
-def validate_transactions(
-    transactions: List[dict],
-    log_errors: bool = True,
-    strict: bool = True
-) -> Tuple[bool, List[Contribution], List[str]]:
+def validate_contributions_batch(transactions: List[dict]) -> BatchValidationResult:
     """
-
-    Validates a list of transactions, separating valid and invalid results.
+    Validates a list of contributions, separating valid and invalid results.
 
     Returns:
-        A tuple of (all_valid_bool, list_of_valid_contributions, list_of_errors).
+        A BatchValidationResult object containing categorized lists.
     """
-    valid_contributions = []
-    errors = []
+    valid_items = []
+    invalid_items = []
 
-    for i, tx in enumerate(transactions):
-        is_valid, result = validate_transaction(tx, log_errors=log_errors, strict=strict)
-        if is_valid:
-            valid_contributions.append(result)
+    for i, tx_data in enumerate(transactions):
+        result = validate_contribution(tx_data)
+        if result.is_valid:
+            valid_items.append(result.data)
         else:
-            errors.append(f"Transaction index {i}: {result}")
+            # Append the original data along with the errors for context.
+            invalid_items.append({
+                "index": i,
+                "original_data": tx_data,
+                "errors": result.errors
+            })
 
-    all_are_valid = not errors
-    return all_are_valid, valid_contributions, errors
+    return BatchValidationResult(
+        all_valid=not invalid_items,
+        valid_items=valid_items,
+        invalid_items=invalid_items
+    )
+

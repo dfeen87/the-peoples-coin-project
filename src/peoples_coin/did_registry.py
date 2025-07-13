@@ -1,106 +1,98 @@
-"""
-did_registry.py
-Provides DID (Decentralized Identifier) registry utilities.
-This module acts as a clean interface between the API layer and the core
-database-backed consensus logic.
-"""
-
 import logging
-from typing import Dict, List, Any
-from flask import current_app
+from typing import Dict, List, Any, Union
+
+from pydantic import BaseModel, Field, ValidationError, field_validator
 import validators
 
-# --- Import the singleton accessor from the consensus module ---
-from .consensus import get_consensus_instance
+# --- Import the application's consensus system instance ---
+# This follows the Flask extension pattern for a decoupled, testable architecture.
+from .. import consensus
 
 logger = logging.getLogger(__name__)
 
-def register_node(node_info: Dict[str, Any]) -> Dict[str, Any]:
+# ==============================================================================
+# 1. Pydantic Models for Robust Input Validation and Standardized Responses
+# ==============================================================================
+
+class NodeRegistrationModel(BaseModel):
+    """Defines the schema for registering a new node."""
+    id: str = Field(..., min_length=3, max_length=64, description="The unique identifier for the node.")
+    address: str = Field(..., description="The network address (URL) of the node.")
+
+    @field_validator('address')
+    @classmethod
+    def validate_address_url(cls, v: str) -> str:
+        """Validates that the node address is a valid URL."""
+        if not validators.url(v):
+            raise ValueError("Node address must be a valid URL.")
+        return v
+
+class ServiceResponse(BaseModel):
+    """A standardized response model for service layer functions."""
+    success: bool
+    message: str
+    data: Any = None
+
+
+# ==============================================================================
+# 2. Service Layer Functions
+# ==============================================================================
+
+def register_node(node_info: Dict[str, Any]) -> ServiceResponse:
     """
-    Validates node info and registers a new node via the consensus system.
-
-    Args:
-        node_info (dict): Information about the node.
-
-    Returns:
-        dict: Standardized response with success status, message, and optional data.
+    Validates node info using Pydantic and registers a new node via the consensus system.
     """
-    if not isinstance(node_info, dict):
-        return {"success": False, "message": "Node information must be a valid JSON object."}
-
-    node_id = str(node_info.get("id", "")).strip()
-    node_address = str(node_info.get("address", "")).strip()
-
-    if not node_id or not node_address:
-        return {"success": False, "message": "Both 'id' and 'address' are required fields."}
-
-    if not validators.url(node_address):
-        return {"success": False, "message": "Invalid 'address' format; must be a valid URL."}
+    try:
+        # Use Pydantic for robust, declarative validation.
+        node_data = NodeRegistrationModel(**node_info)
+    except ValidationError as e:
+        logger.warning(f"Node registration validation failed: {e.errors()}")
+        return ServiceResponse(success=False, message="Invalid node data provided.", data=e.errors())
 
     try:
-        consensus_instance = get_consensus_instance(app=current_app)
-        result = consensus_instance.register_node(node_id, {"address": node_address})
-
-        # Assume consensus returns a dict with 'success' key or adapt here accordingly
-        if isinstance(result, dict) and result.get("success", True):
-            return {"success": True, "message": f"Node '{node_id}' registered successfully.", "data": result}
+        # Call the consensus system to perform the core logic.
+        result = consensus.register_node(node_id=node_data.id, address=node_data.address)
+        
+        if result.get("status") == "registered":
+            return ServiceResponse(success=True, message=f"Node '{node_data.id}' registered successfully.", data=result)
         else:
-            return {"success": False, "message": f"Failed to register node '{node_id}'.", "data": result}
+            return ServiceResponse(success=False, message=f"Node '{node_data.id}' may already exist or an error occurred.", data=result)
 
     except Exception as e:
-        logger.error(f"Error registering node '{node_id}': {e}", exc_info=True)
-        return {"success": False, "message": "Internal server error during node registration."}
+        logger.error(f"Error registering node '{node_data.id}': {e}", exc_info=True)
+        return ServiceResponse(success=False, message="An internal server error occurred during node registration.")
 
 
-def get_all_nodes(include_metadata: bool = False) -> Dict[str, Any]:
+def get_all_nodes() -> ServiceResponse:
     """
     Returns the list of all registered nodes from the consensus system.
-
-    Args:
-        include_metadata (bool): If True, includes any available node metadata.
-
-    Returns:
-        dict: Standardized response with success status, message, and node list.
     """
     try:
-        consensus_instance = get_consensus_instance(app=current_app)
-        status = consensus_instance.get_consensus_status()
+        status = consensus.get_consensus_status()
         nodes = status.get("nodes", [])
 
         if not nodes:
-            return {"success": True, "message": "No nodes registered.", "data": []}
+            return ServiceResponse(success=True, message="No nodes are currently registered.", data=[])
 
-        if include_metadata:
-            node_list = [
-                {
-                    "id": node_id,
-                    "info": consensus_instance.nodes.get(node_id, {})
-                }
-                for node_id in nodes
-            ]
-        else:
-            node_list = [{"id": node_id} for node_id in nodes]
-
-        return {"success": True, "message": f"Retrieved {len(node_list)} nodes.", "data": node_list}
+        return ServiceResponse(success=True, message=f"Retrieved {len(nodes)} registered nodes.", data=nodes)
 
     except Exception as e:
         logger.error(f"Error retrieving nodes: {e}", exc_info=True)
-        return {"success": False, "message": "Internal server error while retrieving nodes.", "data": []}
+        return ServiceResponse(success=False, message="An internal server error occurred while retrieving nodes.")
 
 
-def reset_nodes() -> Dict[str, Any]:
+def reset_all_nodes() -> ServiceResponse:
     """
-    Clears the node registry in the consensus system.
-
-    Returns:
-        dict: Confirmation message with success status.
+    Resets the consensus system by clearing all nodes and re-electing a leader.
+    This is a destructive operation intended for testing or administrative purposes.
     """
     try:
-        consensus_instance = get_consensus_instance(app=current_app)
-        consensus_instance.reset_nodes()
+        # The core logic is now encapsulated in the Consensus class.
+        consensus.reset_nodes_and_elect_leader()
         logger.info("All nodes have been reset in the consensus system.")
-        return {"success": True, "message": "All nodes have been reset."}
+        return ServiceResponse(success=True, message="All nodes have been successfully reset.")
     except Exception as e:
         logger.error(f"Error resetting nodes: {e}", exc_info=True)
-        return {"success": False, "message": "Internal server error during nodes reset."}
+        return ServiceResponse(success=False, message="An internal server error occurred during the node reset.")
+
 
