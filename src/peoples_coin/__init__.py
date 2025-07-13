@@ -10,7 +10,7 @@ from flask import Flask, jsonify
 from flask.cli import with_appcontext
 
 from .config import Config
-from .extensions import db, immune_system, cognitive_system, endocrine_system, circulatory_system, consensus
+from .extensions import db, immune_system, cognitive_system, endocrine_system, circulatory_system
 from .db.models import GoodwillAction, ChainBlock  # Ensure ChainBlock imported for CLI
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,6 @@ def create_app(config_class=Config):
     immune_system.init_app(app)
     cognitive_system.init_app(app)
     circulatory_system.init_app(app, db)
-    consensus.init_app(app, db)
     endocrine_system.init_app(
         app,
         loop_delay=app.config.get("AILEE_LOOP_DELAY", 5),

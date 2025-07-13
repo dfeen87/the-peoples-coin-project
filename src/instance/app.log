@@ -7359,3 +7359,71 @@ TypeError: get_session_scope() missing 1 required positional argument: 'db_insta
 2025-07-13 15:03:41 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
 2025-07-13 15:03:41 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
 2025-07-13 15:03:41 [INFO] alembic.runtime.migration: Running upgrade 90e53ab6e209 -> 9fd17fff9321, Add new workload and compute fields to GoodwillAction
+2025-07-13 17:13:07 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-13 17:13:07 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 17:13:07 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 17:13:07 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 17:13:07 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 17:13:07 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 17:13:07 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 17:21:37 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-13 17:21:37 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 17:21:37 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 17:21:37 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 17:21:38 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 17:21:38 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 17:21:38 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 17:21:38 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 17:21:38 [INFO] peoples_coin: All systems initialized.
+2025-07-13 17:21:38 [INFO] peoples_coin: All blueprints registered.
+2025-07-13 17:21:38 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 17:21:38 [INFO] __main__: Starting Endocrine System...
+2025-07-13 17:21:38 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Starting worker pool...
+2025-07-13 17:21:38 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_0] Worker thread started.
+2025-07-13 17:21:38 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_1] Worker thread started.
+2025-07-13 17:21:38 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker tasks submitted to the pool.
+2025-07-13 17:21:38 [INFO] __main__: Starting Cognitive System background loop...
+2025-07-13 17:21:38 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-13 17:21:38 [INFO] __main__: Starting Flask server on 0.0.0.0:5000
+2025-07-13 17:21:38 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 17:21:38 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=16, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 59463, 0, 0)>; error=61 (Connection refused)
+2025-07-13 17:21:38 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 17:21:38 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 17:21:38 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 17:21:38 [INFO] pika.adapters.utils.io_services_utils: Socket connected: <socket.socket fd=16, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 59464), raddr=('127.0.0.1', 5672)>
+2025-07-13 17:21:38 [INFO] pika.adapters.utils.connection_workflow: Streaming transport linked up: (<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103e2e280>, _StreamingProtocolShim: <SelectConnection PROTOCOL transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103e2e280> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>).
+2025-07-13 17:21:38 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.0.137:5000
+2025-07-13 17:21:38 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2025-07-13 17:21:38 [INFO] pika.adapters.utils.connection_workflow: AMQPConnector - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103e2e280> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 17:21:38 [INFO] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103e2e280> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 17:21:38 [INFO] pika.adapters.blocking_connection: Connection workflow succeeded: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103e2e280> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 17:21:38 [INFO] pika.adapters.blocking_connection: Created channel=1
+2025-07-13 17:21:38 [INFO] pika.adapters.blocking_connection: Created new queue consumer generator <_QueueConsumerGeneratorInfo params=('cognitive_events', False, False) consumer_tag='ctag1.3fdab4506bf14d1caf482f53877471ff'>
+2025-07-13 17:22:11 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 17:22:11] "[33mGET / HTTP/1.1[0m" 404 -
+2025-07-13 17:22:23 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 17:22:23] "GET /health HTTP/1.1" 200 -
+2025-07-13 17:23:09 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 17:23:09] "[33mGET / HTTP/1.1[0m" 404 -
+2025-07-13 17:29:42 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 17:29:42] "GET /health HTTP/1.1" 200 -
+2025-07-13 17:31:26 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 17:31:26] "[33mPOST /nervous/process HTTP/1.1[0m" 404 -
+2025-07-13 17:44:10 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 17:44:10] "GET /health HTTP/1.1" 200 -
+2025-07-13 17:44:49 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 17:44:49] "[33mGET / HTTP/1.1[0m" 404 -
+2025-07-13 17:46:19 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 17:46:19] "[33mPOST /goodwill-actions HTTP/1.1[0m" 404 -
+2025-07-13 17:48:49 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 17:48:49] "[33mPOST /goodwill-actions HTTP/1.1[0m" 404 -
+2025-07-13 17:51:17 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 17:51:17] "GET /health HTTP/1.1" 200 -
+2025-07-13 17:51:27 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 17:51:27] "[33mPOST /goodwill-actions HTTP/1.1[0m" 404 -
+2025-07-13 18:44:50 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 18:44:50 [INFO] cognitive_system: 🧠 Sending stop signal to cognitive background loop...
+2025-07-13 18:45:00 [INFO] cognitive_system: 🧠 Cognitive background loop stopped.
+2025-07-13 18:45:00 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 18:45:00 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_1] Worker thread exiting.
+2025-07-13 18:45:00 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_0] Worker thread exiting.
+2025-07-13 18:45:00 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 18:45:00 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 18:45:00 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 18:45:00 [INFO] cognitive_system: 🧠 Sending stop signal to cognitive background loop...
+2025-07-13 18:45:10 [INFO] cognitive_system: 🧠 Cognitive background loop stopped.
+2025-07-13 18:45:10 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 18:45:10 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 18:45:10 [INFO] peoples_coin: ✅ All background systems shut down successfully.
