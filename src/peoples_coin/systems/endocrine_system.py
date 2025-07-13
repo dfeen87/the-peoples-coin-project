@@ -1,14 +1,15 @@
+
 import threading
 import logging
-import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 from flask import Flask
 
-# Assuming these utilities and models exist from previous files
+from ..extensions import db
 from ..db.db_utils import get_session_scope, retry_db_operation
 from ..db.models import GoodwillAction
+from ..ai_processor.processor import process_goodwill_action_with_ailee_and_love
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class EndocrineSystem:
             thread_name_prefix='EndocrineWorker'
         )
         self._initialized = True
-        logger.info("[Endocrine] System initialized and ready to start.")
+        logger.info(f"[Endocrine] System initialized with {self.max_workers} workers and loop delay {self.loop_delay}s. Ready to start.")
         # NOTE: self.start() is now called explicitly from run.py
 
     def start(self):
@@ -68,6 +69,7 @@ class EndocrineSystem:
         thread_name = threading.current_thread().name
         logger.info(f"[{thread_name}] Worker thread started.")
 
+        # Each worker thread uses the app context
         with self.app.app_context():
             while not self._stop_event.is_set():
                 try:
@@ -77,35 +79,52 @@ class EndocrineSystem:
                 except Exception as e:
                     logger.error(f"[{thread_name}] Unrecoverable error in worker loop: {e}", exc_info=True)
                     self._stop_event.wait(self.loop_delay * 5)
-        
+            
         logger.info(f"[{thread_name}] Worker thread exiting.")
 
     def _process_goodwill_actions_batch(self) -> int:
         thread_name = threading.current_thread().name
+        processed_count = 0
 
-        def db_op_with_locking():
-            with get_session_scope() as session:
+        def db_op_fetch_and_process():
+            with get_session_scope(db) as session:
                 actions = (
                     session.query(GoodwillAction)
                     .filter_by(status='pending')
-                    .with_for_update(skip_locked=True)
-                    .limit(5)
+                    # .with_for_update(skip_locked=True) # uncomment if DB supports
+                    .limit(self.app.config.get("AILEE_BATCH_SIZE", 5))
                     .all()
                 )
+                
                 if not actions:
                     return 0
+
+                logger.debug(f"[{thread_name}] Found {len(actions)} pending GoodwillActions.")
+                
                 for action in actions:
-                    time.sleep(0.1)
-                    action.status = 'completed'
-                    session.add(action)
-                return len(actions)
+                    try:
+                        process_goodwill_action_with_ailee_and_love(action.id)
+                        processed_count += 1
+                        logger.debug(f"[{thread_name}] Successfully processed GoodwillAction ID: {action.id}")
+                    except Exception as e:
+                        logger.error(f"[{thread_name}] Failed to process GoodwillAction ID {action.id}: {e}", exc_info=True)
+                        action.status = 'failed'
+                        session.add(action)
+
+                return processed_count
 
         try:
-            processed_count = retry_db_operation(db_op_with_locking, retries=3, delay=2)
-            if processed_count > 0:
-                logger.info(f"[{thread_name}] Successfully processed {processed_count} action(s).")
-            return processed_count
+            actual_processed_count = retry_db_operation(
+                db_op_fetch_and_process,
+                retries=self.app.config.get("AILEE_RETRIES", 3),
+                delay=self.app.config.get("AILEE_RETRY_DELAY", 2)
+            )
+            if actual_processed_count > 0:
+                logger.info(f"[{thread_name}] Successfully processed {actual_processed_count} action(s) in batch.")
+            return actual_processed_count
         except Exception as e:
             logger.error(f"[{thread_name}] Failed to process batch after all retries: {e}", exc_info=True)
             return 0
 
+# Singleton instance of EndocrineSystem
+endocrine_system = EndocrineSystem()

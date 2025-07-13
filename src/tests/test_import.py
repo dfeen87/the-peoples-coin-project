@@ -9,7 +9,7 @@ if project_root not in sys.path:
 
 try:
     # Attempt to import the main run.py from the inner peoples_coin package
-    from peoples_coin.peoples_coin import run
+    from peoples_coin.import run
     print("Successfully imported peoples_coin.peoples_coin.run!")
 except ImportError as e:
     print(f"ImportError encountered: {e}")

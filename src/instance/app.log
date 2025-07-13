@@ -6891,3 +6891,471 @@ pika.exceptions.AMQPConnectionError
 2025-07-13 13:32:06 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
 2025-07-13 13:32:06 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
 2025-07-13 13:32:06 [INFO] alembic.runtime.migration: Running upgrade  -> 90e53ab6e209, Create initial tables and update GoodwillAction for AILEE
+2025-07-13 13:52:27 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-13 13:52:27 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 13:52:27 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 13:52:27 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 13:52:27 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 13:52:27 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 13:52:27 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 13:52:27 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 13:52:27 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 13:52:27 [INFO] peoples_coin: All systems initialized.
+2025-07-13 13:52:27 [INFO] peoples_coin: All blueprints registered.
+2025-07-13 13:52:27 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 13:52:27 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Starting worker pool...
+2025-07-13 13:52:27 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_0] Worker thread started.
+2025-07-13 13:52:27 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_1] Worker thread started.
+2025-07-13 13:52:27 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker tasks submitted to the pool.
+2025-07-13 13:52:27 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-13 13:52:27 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 13:52:27 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=14, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 58647, 0, 0)>; error=61 (Connection refused)
+2025-07-13 13:52:27 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 13:52:27 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:27 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 13:52:27 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 58648)>; error=61 (Connection refused)
+2025-07-13 13:52:27 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-13 13:52:27 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:27 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-13 13:52:27 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:27 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:27 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-13 13:52:27 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.0.137:5000
+2025-07-13 13:52:27 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2025-07-13 13:52:37 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 13:52:37 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 58651, 0, 0)>; error=61 (Connection refused)
+2025-07-13 13:52:37 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 13:52:37 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:37 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 13:52:37 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 58652)>; error=61 (Connection refused)
+2025-07-13 13:52:37 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-13 13:52:37 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:37 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-13 13:52:37 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:37 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:37 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-13 13:52:47 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 13:52:47 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 58655, 0, 0)>; error=61 (Connection refused)
+2025-07-13 13:52:47 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 13:52:47 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:47 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 13:52:47 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 58656)>; error=61 (Connection refused)
+2025-07-13 13:52:47 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-13 13:52:47 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:47 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-13 13:52:47 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:47 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:47 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-13 13:52:57 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 13:52:57 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 58659, 0, 0)>; error=61 (Connection refused)
+2025-07-13 13:52:57 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 13:52:57 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:57 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 13:52:57 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 58660)>; error=61 (Connection refused)
+2025-07-13 13:52:57 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-13 13:52:57 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:57 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-13 13:52:57 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:57 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:52:57 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-13 13:53:07 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 13:53:07 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 58663, 0, 0)>; error=61 (Connection refused)
+2025-07-13 13:53:07 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 13:53:07 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:53:07 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 13:53:07 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 58664)>; error=61 (Connection refused)
+2025-07-13 13:53:07 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-13 13:53:07 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:53:07 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-13 13:53:07 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:53:07 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:53:07 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-13 13:53:17 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 13:53:17 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 58667, 0, 0)>; error=61 (Connection refused)
+2025-07-13 13:53:17 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 13:53:17 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:53:17 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 13:53:17 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 58668)>; error=61 (Connection refused)
+2025-07-13 13:53:17 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('127.0.0.1', 5672))
+2025-07-13 13:53:17 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:53:17 [ERROR] pika.adapters.utils.connection_workflow: AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused').
+2025-07-13 13:53:17 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:53:17 [ERROR] pika.adapters.blocking_connection: Connection workflow failed: AMQPConnectionWorkflowFailed: 2 exceptions in all; last exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused'); first exception - AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:53:17 [ERROR] pika.adapters.blocking_connection: Error in _create_connection().
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/pika/adapters/blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+pika.exceptions.AMQPConnectionError
+2025-07-13 13:53:18 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 13:53:18 [INFO] cognitive_system: 🧠 Sending stop signal to cognitive background loop...
+2025-07-13 13:53:18 [INFO] cognitive_system: 🧠 Cognitive background loop stopped.
+2025-07-13 13:53:18 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 13:53:18 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 13:53:18 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 13:55:23 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-13 13:55:23 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 13:55:23 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 13:55:23 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 13:55:23 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 13:55:23 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 13:55:23 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 13:55:23 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 13:55:23 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 13:55:23 [INFO] peoples_coin: All systems initialized.
+2025-07-13 13:55:23 [INFO] peoples_coin: All blueprints registered.
+2025-07-13 13:55:23 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 13:55:23 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Starting worker pool...
+2025-07-13 13:55:23 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_0] Worker thread started.
+2025-07-13 13:55:23 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_1] Worker thread started.
+2025-07-13 13:55:23 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker tasks submitted to the pool.
+2025-07-13 13:55:23 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-13 13:55:23 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 13:55:23 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 58739, 0, 0)>; error=61 (Connection refused)
+2025-07-13 13:55:23 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 13:55:23 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 13:55:23 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 13:55:23 [INFO] pika.adapters.utils.io_services_utils: Socket connected: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 58740), raddr=('127.0.0.1', 5672)>
+2025-07-13 13:55:23 [INFO] pika.adapters.utils.connection_workflow: Streaming transport linked up: (<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x1034cc4f0>, _StreamingProtocolShim: <SelectConnection PROTOCOL transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x1034cc4f0> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>).
+2025-07-13 13:55:23 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.0.137:5000
+2025-07-13 13:55:23 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2025-07-13 13:55:23 [INFO] pika.adapters.utils.connection_workflow: AMQPConnector - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x1034cc4f0> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 13:55:23 [INFO] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x1034cc4f0> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 13:55:23 [INFO] pika.adapters.blocking_connection: Connection workflow succeeded: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x1034cc4f0> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 13:55:23 [INFO] pika.adapters.blocking_connection: Created channel=1
+2025-07-13 13:55:23 [INFO] pika.adapters.blocking_connection: Created new queue consumer generator <_QueueConsumerGeneratorInfo params=('cognitive_events', False, False) consumer_tag='ctag1.2df9c593c985470c95fd7040cbb1ba14'>
+2025-07-13 14:03:04 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-13 14:03:04 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 14:03:04 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 14:03:04 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 14:03:04 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 14:03:04 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 14:03:04 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 14:03:04 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 14:03:04 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 14:03:04 [INFO] peoples_coin: All systems initialized.
+2025-07-13 14:03:04 [INFO] peoples_coin: All blueprints registered.
+2025-07-13 14:03:04 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 14:03:04 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Starting worker pool...
+2025-07-13 14:03:04 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_0] Worker thread started.
+2025-07-13 14:03:04 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_0] Worker thread started.
+2025-07-13 14:03:04 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker tasks submitted to the pool.
+2025-07-13 14:03:04 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-13 14:03:04 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 14:03:04 [INFO] cognitive_system: 🧠 Sending stop signal to cognitive background loop...
+2025-07-13 14:03:04 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 14:03:04 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=9, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 58772, 0, 0)>; error=61 (Connection refused)
+2025-07-13 14:03:04 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 14:03:04 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 14:03:04 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 14:03:04 [INFO] pika.adapters.utils.io_services_utils: Socket connected: <socket.socket fd=9, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 58773), raddr=('127.0.0.1', 5672)>
+2025-07-13 14:03:04 [INFO] pika.adapters.utils.connection_workflow: Streaming transport linked up: (<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103aeb280>, _StreamingProtocolShim: <SelectConnection PROTOCOL transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103aeb280> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>).
+2025-07-13 14:03:04 [INFO] pika.adapters.utils.connection_workflow: AMQPConnector - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103aeb280> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:03:04 [INFO] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103aeb280> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:03:04 [INFO] pika.adapters.blocking_connection: Connection workflow succeeded: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103aeb280> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:03:04 [INFO] pika.adapters.blocking_connection: Created channel=1
+2025-07-13 14:03:04 [INFO] pika.adapters.blocking_connection: Created new queue consumer generator <_QueueConsumerGeneratorInfo params=('cognitive_events', False, False) consumer_tag='ctag1.c509e085142142c0b744306fc4bbe708'>
+2025-07-13 14:03:14 [INFO] cognitive_system: 🧠 Cognitive background loop stopped.
+2025-07-13 14:03:14 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 14:03:14 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 14:03:14 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 14:04:12 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-13 14:04:12 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 14:04:12 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 14:04:12 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 14:04:12 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 14:04:12 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 14:04:12 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 14:04:12 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 14:04:12 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 14:04:12 [INFO] peoples_coin: All systems initialized.
+2025-07-13 14:04:12 [INFO] peoples_coin: All blueprints registered.
+2025-07-13 14:04:12 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 14:04:12 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Starting worker pool...
+2025-07-13 14:04:12 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_0] Worker thread started.
+2025-07-13 14:04:12 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_0] Worker thread started.
+2025-07-13 14:04:12 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker tasks submitted to the pool.
+2025-07-13 14:04:12 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-13 14:04:12 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 14:04:12 [INFO] cognitive_system: 🧠 Sending stop signal to cognitive background loop...
+2025-07-13 14:04:12 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 14:04:12 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=8, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 58782, 0, 0)>; error=61 (Connection refused)
+2025-07-13 14:04:12 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 14:04:12 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 14:04:12 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 14:04:12 [INFO] pika.adapters.utils.io_services_utils: Socket connected: <socket.socket fd=8, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 58783), raddr=('127.0.0.1', 5672)>
+2025-07-13 14:04:12 [INFO] pika.adapters.utils.connection_workflow: Streaming transport linked up: (<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x105ac4880>, _StreamingProtocolShim: <SelectConnection PROTOCOL transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x105ac4880> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>).
+2025-07-13 14:04:12 [INFO] pika.adapters.utils.connection_workflow: AMQPConnector - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x105ac4880> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:04:12 [INFO] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x105ac4880> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:04:12 [INFO] pika.adapters.blocking_connection: Connection workflow succeeded: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x105ac4880> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:04:12 [INFO] pika.adapters.blocking_connection: Created channel=1
+2025-07-13 14:04:12 [INFO] pika.adapters.blocking_connection: Created new queue consumer generator <_QueueConsumerGeneratorInfo params=('cognitive_events', False, False) consumer_tag='ctag1.dbb40cc365e74476adf4dcd0a7127b97'>
+2025-07-13 14:04:22 [INFO] cognitive_system: 🧠 Cognitive background loop stopped.
+2025-07-13 14:04:22 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 14:04:22 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 14:04:22 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 14:05:37 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-13 14:05:37 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 14:05:37 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 14:05:37 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 14:05:37 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 14:05:37 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 14:05:37 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 14:05:37 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 14:05:37 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 14:05:37 [INFO] peoples_coin: All systems initialized.
+2025-07-13 14:05:37 [INFO] peoples_coin: All blueprints registered.
+2025-07-13 14:05:37 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 14:05:37 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Starting worker pool...
+2025-07-13 14:05:37 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_0] Worker thread started.
+2025-07-13 14:05:37 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_0] Worker thread started.
+2025-07-13 14:05:37 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker tasks submitted to the pool.
+2025-07-13 14:05:37 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-13 14:05:37 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 14:05:37 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=12, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 58794, 0, 0)>; error=61 (Connection refused)
+2025-07-13 14:05:37 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 14:05:37 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 14:05:37 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 14:05:37 [INFO] pika.adapters.utils.io_services_utils: Socket connected: <socket.socket fd=12, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 58795), raddr=('127.0.0.1', 5672)>
+2025-07-13 14:05:37 [INFO] pika.adapters.utils.connection_workflow: Streaming transport linked up: (<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x107901820>, _StreamingProtocolShim: <SelectConnection PROTOCOL transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x107901820> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>).
+2025-07-13 14:05:37 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.0.137:5000
+2025-07-13 14:05:37 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2025-07-13 14:05:37 [INFO] pika.adapters.utils.connection_workflow: AMQPConnector - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x107901820> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:05:37 [INFO] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x107901820> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:05:37 [INFO] pika.adapters.blocking_connection: Connection workflow succeeded: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x107901820> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:05:37 [INFO] pika.adapters.blocking_connection: Created channel=1
+2025-07-13 14:05:37 [INFO] pika.adapters.blocking_connection: Created new queue consumer generator <_QueueConsumerGeneratorInfo params=('cognitive_events', False, False) consumer_tag='ctag1.ae9215f4b7874c5e8ec1e323d4bf3a33'>
+2025-07-13 14:09:48 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 14:09:48] "GET /metabolic/status HTTP/1.1" 200 -
+2025-07-13 14:11:31 [INFO] peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 14:11:31 [INFO] peoples_coin.systems.metabolic_system: ✅ Goodwill action schema validated for user_id: user_12345, action_type: federated_learning_update
+2025-07-13 14:11:31 [ERROR] peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: get_session_scope() missing 1 required positional argument: 'db_instance'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 116, in submit_goodwill
+    with get_session_scope() as session:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 244, in helper
+    return _GeneratorContextManager(func, args, kwds)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 87, in __init__
+    self.gen = func(*args, **kwds)
+TypeError: get_session_scope() missing 1 required positional argument: 'db_instance'
+2025-07-13 14:11:31 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 14:11:31] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 14:21:54 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
+2025-07-13 14:21:54 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
+2025-07-13 14:23:00 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-13 14:23:00 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 14:23:00 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 14:23:00 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 14:23:00 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 14:23:00 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 14:23:00 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 14:23:00 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 14:23:00 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 14:23:00 [INFO] peoples_coin: All systems initialized.
+2025-07-13 14:23:01 [INFO] peoples_coin: All blueprints registered.
+2025-07-13 14:23:01 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 14:23:01 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Starting worker pool...
+2025-07-13 14:23:01 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_0] Worker thread started.
+2025-07-13 14:23:01 [INFO] peoples_coin.systems.endocrine_system: [EndocrineWorker_1] Worker thread started.
+2025-07-13 14:23:01 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker tasks submitted to the pool.
+2025-07-13 14:23:01 [INFO] cognitive_system: 🧠 Cognitive background loop started.
+2025-07-13 14:23:01 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('::1', 5672, 0, 0)
+2025-07-13 14:23:01 [ERROR] pika.adapters.utils.io_services_utils: Socket failed to connect: <socket.socket fd=14, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::1', 58864, 0, 0)>; error=61 (Connection refused)
+2025-07-13 14:23:01 [ERROR] pika.adapters.utils.connection_workflow: TCP Connection attempt failed: ConnectionRefusedError(61, 'Connection refused'); dest=(<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5672, 0, 0))
+2025-07-13 14:23:01 [ERROR] pika.adapters.utils.connection_workflow: AMQPConnector - reporting failure: AMQPConnectorSocketConnectError: ConnectionRefusedError(61, 'Connection refused')
+2025-07-13 14:23:01 [INFO] pika.adapters.utils.connection_workflow: Pika version 1.3.2 connecting to ('127.0.0.1', 5672)
+2025-07-13 14:23:01 [INFO] pika.adapters.utils.io_services_utils: Socket connected: <socket.socket fd=14, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('127.0.0.1', 58865), raddr=('127.0.0.1', 5672)>
+2025-07-13 14:23:01 [INFO] pika.adapters.utils.connection_workflow: Streaming transport linked up: (<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103564bb0>, _StreamingProtocolShim: <SelectConnection PROTOCOL transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103564bb0> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>).
+2025-07-13 14:23:01 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.0.137:5000
+2025-07-13 14:23:01 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2025-07-13 14:23:01 [INFO] pika.adapters.utils.connection_workflow: AMQPConnector - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103564bb0> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:23:01 [INFO] pika.adapters.utils.connection_workflow: AMQPConnectionWorkflow - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103564bb0> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:23:01 [INFO] pika.adapters.blocking_connection: Connection workflow succeeded: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x103564bb0> params=<URLParameters host=localhost port=5672 virtual_host=/ ssl=False>>
+2025-07-13 14:23:01 [INFO] pika.adapters.blocking_connection: Created channel=1
+2025-07-13 14:23:01 [INFO] pika.adapters.blocking_connection: Created new queue consumer generator <_QueueConsumerGeneratorInfo params=('cognitive_events', False, False) consumer_tag='ctag1.55c5320f390f4594b72b6d3b7bb2e06b'>
+2025-07-13 14:24:31 [INFO] peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 14:24:31 [INFO] peoples_coin.systems.metabolic_system: ✅ Goodwill action schema validated for user_id: user_12345, action_type: federated_learning_update
+2025-07-13 14:24:31 [ERROR] peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: get_session_scope() missing 1 required positional argument: 'db_instance'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 116, in submit_goodwill
+    with get_session_scope() as session:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 244, in helper
+    return _GeneratorContextManager(func, args, kwds)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 87, in __init__
+    self.gen = func(*args, **kwds)
+TypeError: get_session_scope() missing 1 required positional argument: 'db_instance'
+2025-07-13 14:24:31 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 14:24:31] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 14:28:36 [INFO] peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 14:28:36 [INFO] peoples_coin.systems.metabolic_system: ✅ Goodwill action schema validated for user_id: user_12345, action_type: federated_learning_update
+2025-07-13 14:28:36 [ERROR] peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: get_session_scope() missing 1 required positional argument: 'db_instance'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 116, in submit_goodwill
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 244, in helper
+    return _GeneratorContextManager(func, args, kwds)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 87, in __init__
+    self.gen = func(*args, **kwds)
+TypeError: get_session_scope() missing 1 required positional argument: 'db_instance'
+2025-07-13 14:28:36 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 14:28:36] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 14:28:57 [INFO] peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 14:28:57 [INFO] peoples_coin.systems.metabolic_system: ✅ Goodwill action schema validated for user_id: user_67890, action_type: anomaly_detection_inference
+2025-07-13 14:28:57 [ERROR] peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: get_session_scope() missing 1 required positional argument: 'db_instance'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 116, in submit_goodwill
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 244, in helper
+    return _GeneratorContextManager(func, args, kwds)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 87, in __init__
+    self.gen = func(*args, **kwds)
+TypeError: get_session_scope() missing 1 required positional argument: 'db_instance'
+2025-07-13 14:28:57 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 14:28:57] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 14:31:36 [INFO] peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 14:31:36 [INFO] peoples_coin.systems.metabolic_system: ✅ Goodwill action schema validated for user_id: user_12345, action_type: federated_learning_update
+2025-07-13 14:31:36 [ERROR] peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: get_session_scope() missing 1 required positional argument: 'db_instance'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 116, in submit_goodwill
+    except Exception as e:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 244, in helper
+    return _GeneratorContextManager(func, args, kwds)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 87, in __init__
+    self.gen = func(*args, **kwds)
+TypeError: get_session_scope() missing 1 required positional argument: 'db_instance'
+2025-07-13 14:31:36 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 14:31:36] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 14:34:21 [INFO] peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 14:34:21 [INFO] peoples_coin.systems.metabolic_system: ✅ Goodwill action schema validated for user_id: user_12345, action_type: federated_learning_update
+2025-07-13 14:34:21 [ERROR] peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: get_session_scope() missing 1 required positional argument: 'db_instance'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 116, in submit_goodwill
+    except Exception as e:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 244, in helper
+    return _GeneratorContextManager(func, args, kwds)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 87, in __init__
+    self.gen = func(*args, **kwds)
+TypeError: get_session_scope() missing 1 required positional argument: 'db_instance'
+2025-07-13 14:34:21 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 14:34:21] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 14:40:10 [INFO] peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 14:40:10 [INFO] peoples_coin.systems.metabolic_system: ✅ Goodwill action schema validated for user_id: user_12345, action_type: federated_learning_update
+2025-07-13 14:40:10 [ERROR] peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: get_session_scope() missing 1 required positional argument: 'db_instance'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 116, in submit_goodwill
+    except Exception as e:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 244, in helper
+    return _GeneratorContextManager(func, args, kwds)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 87, in __init__
+    self.gen = func(*args, **kwds)
+TypeError: get_session_scope() missing 1 required positional argument: 'db_instance'
+2025-07-13 14:40:10 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 14:40:10] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 14:45:15 [INFO] peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 14:45:15 [INFO] peoples_coin.systems.metabolic_system: ✅ Goodwill action schema validated for user_id: user_12345, action_type: federated_learning_update
+2025-07-13 14:45:15 [ERROR] peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: get_session_scope() missing 1 required positional argument: 'db_instance'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 116, in submit_goodwill
+    logger.warning(f"🚫 Pydantic validation failed. Errors: {ve.errors()}")
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 244, in helper
+    return _GeneratorContextManager(func, args, kwds)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 87, in __init__
+    self.gen = func(*args, **kwds)
+TypeError: get_session_scope() missing 1 required positional argument: 'db_instance'
+2025-07-13 14:45:15 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 14:45:15] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 14:46:23 [INFO] peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 14:46:23 [INFO] peoples_coin.systems.metabolic_system: ✅ Goodwill action schema validated for user_id: user_12345, action_type: federated_learning_update
+2025-07-13 14:46:23 [ERROR] peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: get_session_scope() missing 1 required positional argument: 'db_instance'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 116, in submit_goodwill
+    logger.warning(f"🚫 Pydantic validation failed. Errors: {ve.errors()}")
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 244, in helper
+    return _GeneratorContextManager(func, args, kwds)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 87, in __init__
+    self.gen = func(*args, **kwds)
+TypeError: get_session_scope() missing 1 required positional argument: 'db_instance'
+2025-07-13 14:46:23 [INFO] werkzeug: 10.0.0.137 - - [13/Jul/2025 14:46:23] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 14:48:12 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
+2025-07-13 14:48:12 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
+2025-07-13 14:56:52 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-13 14:56:52 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 14:56:52 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 14:56:52 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 14:56:52 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 14:56:52 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 14:56:52 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 14:56:52 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 14:56:52 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 14:56:52 [INFO] peoples_coin: All systems initialized.
+2025-07-13 14:56:52 [INFO] peoples_coin: All blueprints registered.
+2025-07-13 14:56:52 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 14:56:52 [INFO] src.peoples_coin.systems.endocrine_system: EndocrineSystem instance created.
+2025-07-13 14:56:52 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem instance created.
+2025-07-13 14:56:52 [INFO] src.peoples_coin.consensus: Consensus system instance created.
+2025-07-13 14:56:53 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-13 14:56:53 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 14:56:53 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 14:56:53 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 14:56:53 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 14:56:53 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 14:56:53 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 14:56:53 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 14:56:53 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 14:56:53 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 14:56:53 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 14:56:53 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 14:56:53 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 14:56:53 [INFO] peoples_coin: All systems initialized.
+2025-07-13 14:56:53 [INFO] peoples_coin: All blueprints registered.
+2025-07-13 14:56:53 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 14:56:53 [INFO] src.peoples_coin.systems.endocrine_system: EndocrineSystem instance created.
+2025-07-13 14:56:53 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem instance created.
+2025-07-13 14:56:53 [INFO] src.peoples_coin.consensus: Consensus system instance created.
+2025-07-13 15:03:16 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-13 15:03:16 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 15:03:16 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 15:03:16 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 15:03:16 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 15:03:16 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 15:03:16 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 15:03:16 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 15:03:16 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 15:03:16 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 15:03:16 [INFO] peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 15:03:16 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 15:03:16 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 15:03:16 [INFO] peoples_coin: All systems initialized.
+2025-07-13 15:03:16 [INFO] peoples_coin: All blueprints registered.
+2025-07-13 15:03:16 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 15:03:16 [INFO] src.peoples_coin.systems.endocrine_system: EndocrineSystem instance created.
+2025-07-13 15:03:16 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem instance created.
+2025-07-13 15:03:16 [INFO] src.peoples_coin.consensus: Consensus system instance created.
+2025-07-13 15:03:40 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
+2025-07-13 15:03:40 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
+2025-07-13 15:03:40 [INFO] alembic.autogenerate.compare: Detected added column 'goodwill_actions.initial_model_state_v0'
+2025-07-13 15:03:40 [INFO] alembic.autogenerate.compare: Detected added column 'goodwill_actions.expected_workload_intensity_w0'
+2025-07-13 15:03:40 [INFO] alembic.autogenerate.compare: Detected added column 'goodwill_actions.client_compute_estimate'
+2025-07-13 15:03:41 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
+2025-07-13 15:03:41 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
+2025-07-13 15:03:41 [INFO] alembic.runtime.migration: Running upgrade 90e53ab6e209 -> 9fd17fff9321, Add new workload and compute fields to GoodwillAction

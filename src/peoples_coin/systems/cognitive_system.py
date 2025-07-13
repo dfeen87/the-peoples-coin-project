@@ -157,3 +157,5 @@ def cognitive_event() -> tuple[Response, int]:
     cognitive_system.enqueue_event(event)
     return jsonify({"message": "Event accepted for processing."}), http.HTTPStatus.ACCEPTED
 
+# Singleton instance of CognitiveSystem
+cognitive_system = CognitiveSystem()

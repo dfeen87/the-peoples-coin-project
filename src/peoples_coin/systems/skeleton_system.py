@@ -68,6 +68,7 @@ class NodeRegistrationModel(BaseModel):
     ip_address: str = Field(..., description="Node IP address")
     metadata: dict = Field(default_factory=dict, description="Additional metadata")
 
+
 class TransactionModel(BaseModel):
     key: str
     value: str
@@ -85,7 +86,7 @@ def require_api_key(f):
         if not api_key:
             abort(http.HTTPStatus.UNAUTHORIZED, description="Missing API key")
 
-        # Use secrets.compare_digest for constant-time comparison to prevent timing attacks
+        # Constant-time comparison for security
         is_valid = any(secrets.compare_digest(api_key, key) for key in current_app.config["API_KEYS"])
 
         if not is_valid:
@@ -95,6 +96,7 @@ def require_api_key(f):
         g.api_key = api_key
         return f(*args, **kwargs)
     return decorated
+
 
 def validate_with(model: BaseModel):
     """Decorator to validate request JSON against a Pydantic model."""
@@ -126,14 +128,17 @@ api_bp = Blueprint('api', __name__)
 def index() -> tuple[Response, int]:
     return jsonify({"message": "Welcome to The People's Coin Skeleton System"}), http.HTTPStatus.OK
 
+
 @api_bp.route("/health", methods=["GET"])
 def health() -> tuple[Response, int]:
     return jsonify(status="Skeleton System operational", timestamp=datetime.now(timezone.utc).isoformat()), http.HTTPStatus.OK
+
 
 @api_bp.route("/readiness", methods=["GET"])
 def readiness() -> tuple[Response, int]:
     # In a real app, check DB connection, Redis, etc.
     return jsonify(status="ready"), http.HTTPStatus.OK
+
 
 @api_bp.route("/register_node", methods=["POST"])
 @require_api_key
@@ -154,6 +159,7 @@ def register_node() -> tuple[Response, int]:
     logger.info(f"Node registered: {node.node_id} by API key ending in '...{g.api_key[-4:]}'")
     return jsonify({"status": "ok", "node_id": node.node_id}), http.HTTPStatus.CREATED
 
+
 @api_bp.route("/nodes", methods=["GET"])
 @require_api_key
 @swag_from({
@@ -168,6 +174,7 @@ def list_nodes() -> tuple[Response, int]:
     nodes = [{"node_id": "node1_stub", "ip": "192.168.1.1"}, {"node_id": "node2_stub", "ip": "192.168.1.2"}]
     return jsonify(nodes), http.HTTPStatus.OK
 
+
 @api_bp.route("/validate_transaction", methods=["POST"])
 @require_api_key
 @validate_with(TransactionModel)
@@ -181,10 +188,12 @@ def list_nodes() -> tuple[Response, int]:
     }
 })
 def validate_transaction_endpoint() -> tuple[Response, int]:
-    # In a real implementation, this would be imported from your project structure
+    # In a real implementation, import from your project validation module
     # from peoples_coin.validation import validate_transaction
+
+    # Mock implementation for demonstration:
     def mock_validate_transaction(data):
-        return (True, {"message": "Transaction appears valid."})
+        return True, {"message": "Transaction appears valid."}
 
     is_valid, result = mock_validate_transaction(g.validated_data.dict())
     if not is_valid:
@@ -210,7 +219,7 @@ def create_app(config_object=Config) -> Flask:
         limiter = Limiter(key_func=get_remote_address, storage_uri=app.config['REDIS_URI'])
         logger.info("Skeleton System: Using Redis backend for rate limiting.")
     except (RedisError, Exception) as e:
-        limiter = Limiter(key_func=get_remote_address) # In-memory fallback
+        limiter = Limiter(key_func=get_remote_address)  # In-memory fallback
         logger.warning(f"Skeleton System: Redis unavailable, falling back to in-memory rate limiting. Error: {e}")
     limiter.init_app(app)
 
@@ -259,4 +268,5 @@ if __name__ == "__main__":
     use_reloader = app.config['DEBUG']
     logger.info(f"Starting Skeleton System API on http://0.0.0.0:{port} (Debug: {app.config['DEBUG']})")
     app.run(host="0.0.0.0", port=port, use_reloader=use_reloader)
+
 

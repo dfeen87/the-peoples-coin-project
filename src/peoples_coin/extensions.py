@@ -2,22 +2,12 @@
 
 from flask_sqlalchemy import SQLAlchemy
 
-# Import all your system classes
-from .systems.immune_system import ImmuneSystem
-from .systems.cognitive_system import CognitiveSystem
-from .systems.endocrine_system import EndocrineSystem
-from .systems.circulatory_system import CirculatorySystem
-# ==================================================================
-# THIS IS THE CORRECTED IMPORT
-# It now correctly points to peoples_coin/consensus.py
-# ==================================================================
-from .consensus import Consensus
-
-# Create the instances of all your systems here, in one central place.
+# Initialize the shared SQLAlchemy database instance
 db = SQLAlchemy()
-immune_system = ImmuneSystem()
-cognitive_system = CognitiveSystem()
-endocrine_system = EndocrineSystem()
-circulatory_system = CirculatorySystem()
-consensus = Consensus()
+
+# Import system instances from the systems subpackage
+from .systems.immune_system import immune_system
+from .systems.cognitive_system import cognitive_system
+from .systems.endocrine_system import endocrine_system
+from .systems.circulatory_system import circulatory_system
 

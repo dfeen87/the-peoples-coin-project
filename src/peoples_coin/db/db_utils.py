@@ -4,49 +4,45 @@ import random
 from contextlib import contextmanager
 
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
-from sqlalchemy.orm import Session
-
-# Use a relative import, which is more robust within a package structure.
-from .db import db
+from flask_sqlalchemy import SQLAlchemy  # For type hinting
 
 logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def get_session_scope():
+def get_session_scope(db_instance: SQLAlchemy):
     """
     Provide a transactional scope for database operations.
 
-    This is the ONLY recommended way to interact with the database. It ensures
-    that a block of operations is treated as a single transaction, which is
-    either fully committed on success or fully rolled back on failure.
+    This ensures that a block of operations is treated as a single transaction,
+    which is either fully committed on success or fully rolled back on failure.
 
-    It works with Flask-SQLAlchemy's managed sessions and does not interfere
-    with its lifecycle, making it safe for multi-threaded applications.
+    Args:
+        db_instance (SQLAlchemy): The Flask-SQLAlchemy db instance initialized with the app.
 
     Usage:
-        with get_session_scope() as session:
-            # Your db operations using the provided session object
+        from your_app.extensions import db
+        with get_session_scope(db) as session:
             user = UserAccount(...)
             session.add(user)
     """
+    session = db_instance.session
     try:
-        # Yield the managed session object from Flask-SQLAlchemy
-        yield db.session
-        # If no exceptions were raised, commit the transaction
-        db.session.commit()
+        yield session
+        session.commit()
     except Exception as e:
-        # On any exception, log the error and roll back the transaction
         logger.error(f"Database transaction failed. Rolling back. Error: {e}", exc_info=True)
-        db.session.rollback()
-        # Re-raise the exception to allow higher-level error handlers to catch it
+        session.rollback()
         raise
+    finally:
+        session.close()
 
 
 def retry_db_operation(func, retries=3, delay=1, backoff=2, *args, **kwargs):
     """
     Retry a database operation with exponential backoff and jitter.
-    This is useful for transient errors like network issues or deadlocks.
+
+    Useful for transient errors like network issues or deadlocks.
 
     Args:
         func (callable): The DB operation function to call.
@@ -68,7 +64,6 @@ def retry_db_operation(func, retries=3, delay=1, backoff=2, *args, **kwargs):
                 logger.error(f"DB operation failed after {retries + 1} attempts: {e}", exc_info=True)
                 raise
             else:
-                # Add a small random jitter to the delay to prevent thundering herd issues
                 jitter = random.uniform(0, 0.1 * current_delay)
                 logger.warning(
                     f"DB operation failed on attempt {attempt + 1}/{retries + 1}: {e}. "
@@ -79,16 +74,4 @@ def retry_db_operation(func, retries=3, delay=1, backoff=2, *args, **kwargs):
         except Exception as e:
             logger.error(f"Unexpected non-database error during retryable operation: {e}", exc_info=True)
             raise
-
-# NOTE: The helper functions `add_and_commit`, `commit_session`, `rollback_session`,
-# and `close_session` have been intentionally removed.
-#
-# REASONING: They encourage unsafe or inefficient database patterns.
-# - `add_and_commit` leads to many small, inefficient transactions.
-# - The other functions are made obsolete and unsafe by the `get_session_scope`
-#   context manager, which handles commit, rollback, and session lifecycle
-#   correctly and automatically.
-#
-# All database code should now exclusively use `get_session_scope` to ensure
-# transaction safety and consistency.
 

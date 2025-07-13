@@ -885,3 +885,266 @@ FROM chain_blocks) AS anon_1]
 2025-07-13 13:27:25 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
 2025-07-13 13:27:25 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
 2025-07-13 13:27:25 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 14:56:52 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 14:56:52 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 14:56:52 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 14:56:52 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 14:56:52 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 14:56:52 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 14:56:52 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 14:56:52 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 14:56:53 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 14:56:53 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 14:56:53 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 14:56:53 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 14:56:53 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 14:56:53 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 14:56:53 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 14:56:53 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 14:56:53 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-07-13 14:56:53 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2025-07-13 14:56:53 [INFO] werkzeug:  * Restarting with stat
+2025-07-13 14:56:53 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 14:56:53 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 14:56:53 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 14:56:53 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 14:56:53 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 14:56:53 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 14:56:54 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 14:56:54 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 14:56:54 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 14:56:54 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 14:56:54 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 14:56:54 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 14:56:54 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 14:56:54 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 14:56:54 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 14:56:54 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 14:56:54 [WARNING] werkzeug:  * Debugger is active!
+2025-07-13 14:56:54 [INFO] werkzeug:  * Debugger PIN: 101-204-681
+2025-07-13 15:00:27 [INFO] src.peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 15:00:27 [INFO] src.peoples_coin.systems.metabolic_system: ✅ Schema validated for user_id: 123, action_type: help
+2025-07-13 15:00:27 [ERROR] src.peoples_coin.db.db_utils: Database transaction failed. Rolling back. Error: 'initial_model_state_v0' is an invalid keyword argument for GoodwillAction
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/db/db_utils.py", line 31, in get_session_scope
+    yield session
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 92, in submit_goodwill
+    goodwill_action = GoodwillAction(
+  File "<string>", line 4, in __init__
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/state.py", line 572, in _initialize_instance
+    manager.dispatch.init_failure(self, args, kwargs)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/state.py", line 569, in _initialize_instance
+    manager.original_init(*mixed[1:], **kwargs)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/decl_base.py", line 2173, in _declarative_constructor
+    raise TypeError(
+TypeError: 'initial_model_state_v0' is an invalid keyword argument for GoodwillAction
+2025-07-13 15:00:27 [ERROR] src.peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: 'initial_model_state_v0' is an invalid keyword argument for GoodwillAction
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 92, in submit_goodwill
+    goodwill_action = GoodwillAction(
+  File "<string>", line 4, in __init__
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/state.py", line 572, in _initialize_instance
+    manager.dispatch.init_failure(self, args, kwargs)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/state.py", line 569, in _initialize_instance
+    manager.original_init(*mixed[1:], **kwargs)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/decl_base.py", line 2173, in _declarative_constructor
+    raise TypeError(
+TypeError: 'initial_model_state_v0' is an invalid keyword argument for GoodwillAction
+2025-07-13 15:00:27 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 15:00:27] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 15:03:15 [INFO] werkzeug:  * Detected change in '/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/db/models.py', reloading
+2025-07-13 15:03:15 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 15:03:15 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 15:03:15 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 15:03:15 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 15:03:15 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 15:03:15 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 15:03:15 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 15:03:15 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 15:03:16 [INFO] werkzeug:  * Restarting with stat
+2025-07-13 15:03:16 [INFO] src.peoples_coin: Creating Flask application instance.
+2025-07-13 15:03:16 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Successfully connected to Redis.
+2025-07-13 15:03:16 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-13 15:03:16 [INFO] src.peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-13 15:03:16 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 15:03:16 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 15:03:17 [DEBUG] google.auth._default: Checking None for explicit credentials as part of auth process...
+2025-07-13 15:03:17 [DEBUG] google.auth._default: Checking Cloud SDK credentials as part of auth process...
+2025-07-13 15:03:17 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-13 15:03:17 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-13 15:03:17 [INFO] src.peoples_coin.systems.circulatory_system: CirculatorySystem initialized and configured.
+2025-07-13 15:03:17 [INFO] src.peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-13 15:03:17 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] System initialized with 2 workers and loop delay 5s. Ready to start.
+2025-07-13 15:03:17 [INFO] src.peoples_coin: All systems initialized.
+2025-07-13 15:03:17 [INFO] src.peoples_coin: All blueprints registered.
+2025-07-13 15:03:17 [INFO] src.peoples_coin: 🚀 Application factory setup complete.
+2025-07-13 15:03:17 [WARNING] werkzeug:  * Debugger is active!
+2025-07-13 15:03:17 [INFO] werkzeug:  * Debugger PIN: 101-204-681
+2025-07-13 15:04:15 [INFO] src.peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 15:04:15 [INFO] src.peoples_coin.systems.metabolic_system: ✅ Schema validated for user_id: 123, action_type: help
+2025-07-13 15:04:15 [ERROR] src.peoples_coin.db.db_utils: Database transaction failed. Rolling back. Error: The current Flask app is not registered with this 'SQLAlchemy' instance. Did you forget to call 'init_app', or did you create multiple 'SQLAlchemy' instances?
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/db/db_utils.py", line 31, in get_session_scope
+    yield session
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 98, in submit_goodwill
+    session.flush()
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4345, in flush
+    self._flush(objects)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4481, in _flush
+    transaction.rollback(_capture_exception=True)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4441, in _flush
+    flush_context.execute()
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 60, in save_obj
+    for (
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 223, in _organize_states_for_save
+    for state, dict_, mapper, connection in _connections_for_states(
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 1753, in _connections_for_states
+    connection = uowtransaction.transaction.connection(base_mapper)
+  File "<string>", line 2, in connection
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 1038, in connection
+    bind = self.session.get_bind(bindkey, **kwargs)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/flask_sqlalchemy/session.py", line 53, in get_bind
+    engines = self._db.engines
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/flask_sqlalchemy/extension.py", line 690, in engines
+    raise RuntimeError(
+RuntimeError: The current Flask app is not registered with this 'SQLAlchemy' instance. Did you forget to call 'init_app', or did you create multiple 'SQLAlchemy' instances?
+2025-07-13 15:04:15 [ERROR] src.peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: The current Flask app is not registered with this 'SQLAlchemy' instance. Did you forget to call 'init_app', or did you create multiple 'SQLAlchemy' instances?
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 98, in submit_goodwill
+    session.flush()
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4345, in flush
+    self._flush(objects)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4481, in _flush
+    transaction.rollback(_capture_exception=True)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4441, in _flush
+    flush_context.execute()
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 60, in save_obj
+    for (
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 223, in _organize_states_for_save
+    for state, dict_, mapper, connection in _connections_for_states(
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 1753, in _connections_for_states
+    connection = uowtransaction.transaction.connection(base_mapper)
+  File "<string>", line 2, in connection
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 1038, in connection
+    bind = self.session.get_bind(bindkey, **kwargs)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/flask_sqlalchemy/session.py", line 53, in get_bind
+    engines = self._db.engines
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/flask_sqlalchemy/extension.py", line 690, in engines
+    raise RuntimeError(
+RuntimeError: The current Flask app is not registered with this 'SQLAlchemy' instance. Did you forget to call 'init_app', or did you create multiple 'SQLAlchemy' instances?
+2025-07-13 15:04:15 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 15:04:15] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 15:16:10 [INFO] src.peoples_coin.systems.metabolic_system: 📥 Received goodwill submission request.
+2025-07-13 15:16:10 [INFO] src.peoples_coin.systems.metabolic_system: ✅ Schema validated for user_id: 123, action_type: help
+2025-07-13 15:16:10 [ERROR] src.peoples_coin.db.db_utils: Database transaction failed. Rolling back. Error: The current Flask app is not registered with this 'SQLAlchemy' instance. Did you forget to call 'init_app', or did you create multiple 'SQLAlchemy' instances?
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/db/db_utils.py", line 31, in get_session_scope
+    yield session
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 98, in submit_goodwill
+    session.flush()
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4345, in flush
+    self._flush(objects)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4481, in _flush
+    transaction.rollback(_capture_exception=True)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4441, in _flush
+    flush_context.execute()
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 60, in save_obj
+    for (
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 223, in _organize_states_for_save
+    for state, dict_, mapper, connection in _connections_for_states(
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 1753, in _connections_for_states
+    connection = uowtransaction.transaction.connection(base_mapper)
+  File "<string>", line 2, in connection
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 1038, in connection
+    bind = self.session.get_bind(bindkey, **kwargs)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/flask_sqlalchemy/session.py", line 53, in get_bind
+    engines = self._db.engines
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/flask_sqlalchemy/extension.py", line 690, in engines
+    raise RuntimeError(
+RuntimeError: The current Flask app is not registered with this 'SQLAlchemy' instance. Did you forget to call 'init_app', or did you create multiple 'SQLAlchemy' instances?
+2025-07-13 15:16:10 [ERROR] src.peoples_coin.systems.metabolic_system: 💥 Unexpected error during goodwill submission: The current Flask app is not registered with this 'SQLAlchemy' instance. Did you forget to call 'init_app', or did you create multiple 'SQLAlchemy' instances?
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/systems/metabolic_system.py", line 98, in submit_goodwill
+    session.flush()
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4345, in flush
+    self._flush(objects)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4481, in _flush
+    transaction.rollback(_capture_exception=True)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 4441, in _flush
+    flush_context.execute()
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 60, in save_obj
+    for (
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 223, in _organize_states_for_save
+    for state, dict_, mapper, connection in _connections_for_states(
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/persistence.py", line 1753, in _connections_for_states
+    connection = uowtransaction.transaction.connection(base_mapper)
+  File "<string>", line 2, in connection
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/sqlalchemy/orm/session.py", line 1038, in connection
+    bind = self.session.get_bind(bindkey, **kwargs)
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/flask_sqlalchemy/session.py", line 53, in get_bind
+    engines = self._db.engines
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/venv/lib/python3.9/site-packages/flask_sqlalchemy/extension.py", line 690, in engines
+    raise RuntimeError(
+RuntimeError: The current Flask app is not registered with this 'SQLAlchemy' instance. Did you forget to call 'init_app', or did you create multiple 'SQLAlchemy' instances?
+2025-07-13 15:16:10 [INFO] werkzeug: 127.0.0.1 - - [13/Jul/2025 15:16:10] "[35m[1mPOST /metabolic/submit_goodwill HTTP/1.1[0m" 500 -
+2025-07-13 15:21:13 [INFO] werkzeug:  * Detected change in '/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/db/db.py', reloading
+2025-07-13 15:21:13 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 15:21:13 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 15:21:13 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 15:21:13 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 15:21:13 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 15:21:13 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 15:21:13 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 15:21:13 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 15:21:13 [INFO] werkzeug:  * Restarting with stat
+2025-07-13 15:21:14 [INFO] src.peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 15:21:14 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 15:21:14 [INFO] src.peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 15:21:14 [INFO] src.peoples_coin: ✅ All background systems shut down successfully.
+2025-07-13 15:21:14 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-13 15:21:14 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
+2025-07-13 15:21:14 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
+2025-07-13 15:21:14 [INFO] peoples_coin: ✅ All background systems shut down successfully.

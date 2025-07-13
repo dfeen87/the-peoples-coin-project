@@ -3,7 +3,7 @@ from typing import Dict, Any
 from decimal import Decimal
 
 # Correctly import the db instance from your dedicated database file.
-from .db import db
+from peoples_coin.extensions import db
 
 # Helper function to ensure all default timestamps are timezone-aware (UTC).
 def utcnow():
@@ -42,7 +42,6 @@ class DataEntry(db.Model, TimestampMixin, SoftDeleteMixin):
     )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    # Use db.Text for potentially long JSON strings instead of db.String(255).
     value = db.Column(db.Text, nullable=True)
     processed = db.Column(db.Boolean, default=False, nullable=False)
 
@@ -60,9 +59,12 @@ class DataEntry(db.Model, TimestampMixin, SoftDeleteMixin):
     def __repr__(self):
         return f"<DataEntry id={self.id} processed={self.processed}>"
 
+
 class GoodwillAction(db.Model, SoftDeleteMixin):
     """
     Represents a verified goodwill action, serving as the input for the Metabolic System.
+    Enhanced to include AILEE/L resonance score and correlation ID,
+    plus additional workload and compute estimate fields.
     """
     __tablename__ = 'goodwill_actions'
     __table_args__ = (
@@ -74,13 +76,21 @@ class GoodwillAction(db.Model, SoftDeleteMixin):
     action_type = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime(timezone=True), default=utcnow, nullable=False)
-    # Use the generic db.JSON type for portability across different database systems.
     contextual_data = db.Column(db.JSON, default=dict)
     raw_goodwill_score = db.Column(db.Integer, default=0, nullable=False)
-    resonance_score = db.Column(db.Integer, default=0, nullable=False)
+    
+    resonance_score = db.Column(db.Float, nullable=True)  # Will be populated by background AILEE/L calculation
+    
+    # New fields added here:
+    initial_model_state_v0 = db.Column(db.Float, nullable=True)
+    expected_workload_intensity_w0 = db.Column(db.Float, nullable=True)
+    client_compute_estimate = db.Column(db.Float, nullable=True)
+
     status = db.Column(db.String(50), default='pending', nullable=False)
     processed_at = db.Column(db.DateTime(timezone=True), nullable=True)
     minted_token_id = db.Column(db.String(255), nullable=True, unique=True)
+    
+    correlation_id = db.Column(db.String(255), nullable=True)
 
     def to_dict(self):
         return {
@@ -92,14 +102,20 @@ class GoodwillAction(db.Model, SoftDeleteMixin):
             "contextual_data": self.contextual_data,
             "raw_goodwill_score": self.raw_goodwill_score,
             "resonance_score": self.resonance_score,
+            "initial_model_state_v0": self.initial_model_state_v0,
+            "expected_workload_intensity_w0": self.expected_workload_intensity_w0,
+            "client_compute_estimate": self.client_compute_estimate,
             "status": self.status,
             "processed_at": self.processed_at.isoformat() if self.processed_at else None,
             "minted_token_id": self.minted_token_id,
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
+            "correlation_id": self.correlation_id,
         }
 
     def __repr__(self):
-        return f"<GoodwillAction id={self.id} status={self.status} user_id={self.user_id}>"
+        return (f"<GoodwillAction id={self.id} status={self.status} "
+                f"user_id={self.user_id} correlation_id={self.correlation_id}>")
+
 
 class EventLog(db.Model):
     """Logs significant events within the system."""
@@ -124,6 +140,7 @@ class EventLog(db.Model):
     def __repr__(self):
         return f"<EventLog id={self.id} event_type={self.event_type}>"
 
+
 class UserAccount(db.Model, TimestampMixin, SoftDeleteMixin):
     """
     Represents a user's account, holding their balance in 'Loves'.
@@ -131,13 +148,11 @@ class UserAccount(db.Model, TimestampMixin, SoftDeleteMixin):
     __tablename__ = 'user_accounts'
 
     user_id = db.Column(db.String(255), primary_key=True, nullable=False)
-    # Numeric is the correct type for precise decimal values like currency.
     balance = db.Column(db.Numeric(precision=18, scale=4), default=Decimal('0.0'), nullable=False)
 
     def to_dict(self):
         return {
             "user_id": self.user_id,
-            # Always serialize Decimals as strings to prevent precision loss.
             "balance": str(self.balance),
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
@@ -170,13 +185,13 @@ class ConsensusNode(db.Model):
     def __repr__(self):
         return f"<ConsensusNode id={self.id} address={self.address}>"
 
+
 class ChainBlock(db.Model):
     """Represents a single block in the blockchain, stored in the database."""
     __tablename__ = 'chain_blocks'
 
-    id = db.Column(db.Integer, primary_key=True) # The block's index
+    id = db.Column(db.Integer, primary_key=True)  # The block's index
     timestamp = db.Column(db.Float, nullable=False)
-    # Use the generic db.JSON type for portability.
     transactions = db.Column(db.JSON, nullable=False)
     previous_hash = db.Column(db.String(64), nullable=False)
     nonce = db.Column(db.Integer, default=0, nullable=False)

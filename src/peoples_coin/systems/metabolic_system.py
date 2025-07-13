@@ -2,37 +2,41 @@ import json
 import logging
 import http
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
 from flask import Blueprint, request, jsonify, Response
 from pydantic import BaseModel, Field, ValidationError, field_validator
-from sqlalchemy.orm import Session
 
-# Assuming a db_utils file with get_session_scope exists
 from ..db.db_utils import get_session_scope
 from ..db.models import GoodwillAction
 from peoples_coin.validation.validate_transaction import validate_transaction
+from peoples_coin.extensions import db
 
-# --- Logger ---
 logger = logging.getLogger(__name__)
 
 # --- Constants ---
-# Centralizing constants reduces errors from typos and simplifies maintenance.
 KEY_STATUS = "status"
 KEY_ERROR = "error"
 KEY_DETAILS = "details"
 KEY_MESSAGE = "message"
 KEY_ACTION_ID = "action_id"
 STATUS_PENDING = 'pending'
+STATUS_ACCEPTED = 'accepted'
 
-# --- Validation Schema ---
+
 class GoodwillActionSchema(BaseModel):
-    """Schema & validation for incoming goodwill actions."""
-    user_id: str = Field(..., description="Unique identifier for the user.")
-    action_type: str = Field(..., description="Category/type of goodwill action.")
-    description: str = Field(..., min_length=10, max_length=500, description="Detailed description of the action.")
-    timestamp: datetime = Field(..., description="ISO 8601 timestamp of the action.")
-    contextual_data: Dict[str, Any] = Field(default_factory=dict, description="Optional metadata/context for the action.")
+    """
+    Schema & validation for incoming goodwill actions.
+    """
+    user_id: str
+    action_type: str
+    description: str
+    timestamp: datetime
+    contextual_data: Dict[str, Any] = Field(default_factory=dict)
+    initial_model_state_v0: Optional[float] = None
+    expected_workload_intensity_w0: Optional[float] = None
+    client_compute_estimate: Optional[float] = None
+    correlation_id: Optional[str] = None
 
     @field_validator('timestamp')
     @classmethod
@@ -42,12 +46,12 @@ class GoodwillActionSchema(BaseModel):
             raise ValueError("Timestamp must include timezone information (e.g., 'Z' for UTC).")
         return v.astimezone(timezone.utc)
 
-# --- Blueprint Definition ---
+
 metabolic_bp = Blueprint('metabolic', __name__, url_prefix='/metabolic')
 
 
 @metabolic_bp.route('/status', methods=['GET'])
-def metabolic_status() -> tuple[Response, int]:
+def metabolic_status() -> Tuple[Response, int]:
     """
     Health check endpoint for the Metabolic System.
     """
@@ -56,60 +60,63 @@ def metabolic_status() -> tuple[Response, int]:
 
 
 @metabolic_bp.route('/submit_goodwill', methods=['POST'])
-def submit_goodwill() -> tuple[Response, int]:
+def submit_goodwill() -> Tuple[Response, int]:
     """
-    Endpoint to receive, validate (schema + business rules), and queue goodwill actions.
+    Receives and validates a goodwill action, persists it, and queues it for processing.
     """
     logger.info("📥 Received goodwill submission request.")
+
     if not request.is_json:
-        logger.warning("Request missing JSON body.")
+        logger.warning("Request missing JSON body or incorrect Content-Type.")
         return jsonify({KEY_ERROR: "Content-Type must be application/json"}), http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE
 
     data = request.get_json()
     if not data:
-        logger.warning("Empty JSON payload.")
+        logger.warning("Empty JSON payload received.")
         return jsonify({KEY_ERROR: "No JSON data provided"}), http.HTTPStatus.BAD_REQUEST
 
     try:
-        # Step 1: Validate schema with Pydantic
+        # Step 1: Validate schema
         goodwill_data = GoodwillActionSchema(**data)
-        logger.info(f"✅ Goodwill action schema validated for user_id: {goodwill_data.user_id}")
+        logger.info(f"✅ Schema validated for user_id: {goodwill_data.user_id}, action_type: {goodwill_data.action_type}")
 
-        # Step 2: Run custom business logic validation
-        # Use .model_dump() for Pydantic v2+ to get a dictionary
+        # Step 2: Business validation
         validated_dict = goodwill_data.model_dump()
         is_valid, validation_result = validate_transaction(validated_dict)
         if not is_valid:
-            logger.warning(f"🚫 Business logic validation failed: {validation_result}")
+            logger.warning(f"🚫 Business validation failed for user_id: {goodwill_data.user_id}. Details: {validation_result}")
             return jsonify({KEY_ERROR: "Transaction validation failed", KEY_DETAILS: validation_result}), http.HTTPStatus.BAD_REQUEST
 
-        # Step 3: Persist to DB within a safe, managed transaction scope
-        with get_session_scope() as session:
-            # Create the model instance concisely using dictionary unpacking
-            goodwill_action = GoodwillAction(**validated_dict, status=STATUS_PENDING)
+        # Step 3: Persist goodwill action to the database within a managed session scope
+        with get_session_scope(db) as session:
+            goodwill_action = GoodwillAction(
+                **validated_dict,
+                status=STATUS_PENDING,
+                resonance_score=None
+            )
             session.add(goodwill_action)
-            # Flush to get the ID for the response before the transaction is committed
             session.flush()
 
-            logger.info(f"💾 GoodwillAction ID {goodwill_action.id} queued for commit with status '{STATUS_PENDING}'.")
-            
-            action_id = goodwill_action.id
-            action_status = goodwill_action.status
+            logger.info(
+                f"💾 GoodwillAction ID {goodwill_action.id} "
+                f"(Correlation ID: {goodwill_action.correlation_id}) queued with status '{STATUS_PENDING}'."
+            )
 
-        # The session is automatically committed here upon successful exit from the 'with' block.
-        # If any exception occurs inside the block, the session is automatically rolled back.
+            action_id = goodwill_action.id
+
+        logger.debug(f"📤 GoodwillAction ID {action_id} queued for background processing.")
 
         return jsonify({
             KEY_MESSAGE: "Goodwill action accepted and queued for processing.",
             KEY_ACTION_ID: action_id,
-            KEY_STATUS: action_status
+            KEY_STATUS: STATUS_ACCEPTED
         }), http.HTTPStatus.ACCEPTED
 
     except ValidationError as ve:
-        logger.warning(f"🚫 Pydantic validation failed: {ve.errors()}")
+        logger.warning(f"🚫 Pydantic validation failed. Errors: {ve.errors()}")
         return jsonify({KEY_ERROR: "Invalid data provided", KEY_DETAILS: ve.errors()}), http.HTTPStatus.BAD_REQUEST
-    except Exception:
-        # No need for db.session.rollback() as the session scope handles it.
-        logger.exception("💥 Unexpected error during goodwill submission.")
-        return jsonify({KEY_ERROR: "Internal server error"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+    except Exception as e:
+        logger.exception(f"💥 Unexpected error during goodwill submission: {e}")
+        return jsonify({KEY_ERROR: "Internal server error", KEY_DETAILS: str(e)}), http.HTTPStatus.INTERNAL_SERVER_ERROR
 

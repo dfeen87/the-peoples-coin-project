@@ -184,3 +184,6 @@ class ImmuneSystem:
         """Checks if the cleaner thread is active."""
         return self._cleaner_thread is not None and self._cleaner_thread.is_alive()
 
+
+# Singleton instance of ImmuneSystem
+immune_system = ImmuneSystem()

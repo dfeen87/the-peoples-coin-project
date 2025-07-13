@@ -9,7 +9,7 @@ venv/
 .venv/
 
 # Flask instance folder (contains databases, logs, snapshots)
-instance/
+# instance/
 
 # Logs
 *.log
@@ -31,5 +31,6 @@ instance/
 dump.rdb
 
 # Migrations generated files
-migrations/
+# migrations/
 
+instances/peoples_coin.db

@@ -1,6 +1,6 @@
-from peoples_coin.peoples_coin.run import create_app
-from peoples_coin.peoples_coin.db import db
-from peoples_coin.peoples_coin.db.models import GoodwillAction
+from peoples_coin.run import create_app
+from peoples_coin.extensions import db
+from peoples_coin.db.models import GoodwillAction
 
 app = create_app()
 

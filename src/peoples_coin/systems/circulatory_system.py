@@ -135,3 +135,6 @@ class CirculatorySystem:
                 # Return a generic, safe message to the caller.
                 return False, "An unexpected internal error occurred during the minting process."
 
+
+# Singleton instance of CirculatorySystem
+circulatory_system = CirculatorySystem()

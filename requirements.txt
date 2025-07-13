@@ -7,6 +7,9 @@ gunicorn
 flask-sqlalchemy
 # psycopg2-binary  # Or the driver for your DB
 
+# Database Migrations
+alembic # Added for database migrations
+
 # Validation & Utilities
 pydantic
 validators
@@ -23,3 +26,4 @@ pika
 
 # Google Cloud (Optional)
 google-cloud-firestore
+

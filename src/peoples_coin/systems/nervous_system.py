@@ -51,7 +51,7 @@ def nervous_status() -> tuple[Response, int]:
 
 
 @nervous_bp.route("/process_data", methods=["POST"])
-@immune_system.check() # This decorator will now work correctly
+@immune_system.check()  # This decorator will now work correctly
 def process_data() -> tuple[Response, int]:
     """
     Receives, validates, and stores data, creating a DataEntry for the Endocrine system.
@@ -63,27 +63,24 @@ def process_data() -> tuple[Response, int]:
     transaction_id = data.get("id", "N/A")
     logger.info(f"[Nervous] Received data for processing. Transaction ID: {transaction_id}")
 
-    # Assuming you have a validate_transaction function in validation.py
-    # For this example, we'll mock it if it's not available.
     try:
-        from ..validation import validate_transaction
         is_valid, result_details = validate_transaction(data)
     except ImportError:
-        is_valid, result_details = True, {} # Mock validation if file doesn't exist
+        is_valid, result_details = True, {}  # Mock validation if file doesn't exist
 
     if not is_valid:
         logger.warning(f"[Nervous] Validation failed for transaction {transaction_id}: {result_details}")
-        
+
         identifier = immune_system._get_identifier()
         immune_system.record_invalid_attempt(identifier)
-        
+
         with get_session_scope() as session:
             _create_and_enqueue_cognitive_event(
                 session,
                 EVENT_NERVOUS_VALIDATION_FAILED,
                 {"validation_details": result_details, "identifier": identifier, "transaction_id": transaction_id}
             )
-            
+
         return jsonify({KEY_ERROR: "Validation failed", KEY_DETAILS: result_details}), http.HTTPStatus.BAD_REQUEST
 
     try:
