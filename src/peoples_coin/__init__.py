@@ -15,7 +15,6 @@ from .db.models import GoodwillAction, ChainBlock  # Ensure ChainBlock imported 
 
 logger = logging.getLogger(__name__)
 
-
 def setup_logging(app):
     log_level = app.config.get("LOG_LEVEL", "INFO").upper()
     # Clear existing root handlers to avoid duplicates
@@ -41,7 +40,7 @@ def setup_logging(app):
 
 
 def create_app(config_class=Config):
-    app = Flask(__name__)  # removed instance_relative_config=True on purpose
+    app = Flask(__name__)
     app.config.from_object(config_class)
 
     # Set absolute path for DB in the instance folder within project root
@@ -72,11 +71,20 @@ def create_app(config_class=Config):
     from .systems.nervous_system import nervous_bp
     from .systems.metabolic_system import metabolic_bp
     from .systems.cognitive_system import cognitive_bp
+    from .routes.api import api_bp
 
     app.register_blueprint(nervous_bp)
     app.register_blueprint(metabolic_bp)
     app.register_blueprint(cognitive_bp)
+    app.register_blueprint(api_bp)
+
     logger.info("All blueprints registered.")
+
+    # Consensus initialization done directly here (no decorator)
+    from .consensus import Consensus
+    consensus = Consensus()
+    consensus.init_app(app, db)
+    logger.info("Consensus system initialized.")
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])
@@ -125,7 +133,6 @@ def register_cli_commands(app: Flask):
                 click.echo('⚠️  Dropping database file...')
                 if db_path and os.path.exists(db_path):
                     try:
-                        # Properly remove session and dispose engine before deleting DB file
                         db.session.remove()
                         if db.engine:
                             db.engine.dispose()
@@ -167,5 +174,4 @@ def register_cli_commands(app: Flask):
             click.echo(f"  - Endocrine System: {'✅ Running' if endocrine_system.is_running() else '⚠️ Stopped'}")
             click.echo(f"  - Cognitive System: {'✅ Running' if cognitive_system.is_running() else '⚠️ Stopped'}")
             click.echo(f"  - Immune System:    {'✅ Running' if immune_system.is_cleaner_running() else '⚠️ Stopped'}")
-
 
