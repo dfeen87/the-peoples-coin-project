@@ -8,9 +8,26 @@ from flask import Flask
 from ..extensions import db
 from ..db.db_utils import get_session_scope, retry_db_operation
 from ..db.models import GoodwillAction
-from ..ai_processor.processor import process_goodwill_action_with_ailee_and_love
+from ..config import Config
+
+# If Celery is enabled
+try:
+    from peoples_coin.ailee.ailee_and_love import process_goodwill_action_task
+except ImportError:
+    process_goodwill_action_task = None
 
 logger = logging.getLogger(__name__)
+
+
+"""
+🩺 EndocrineSystem: Background worker to process GoodwillActions.
+
+📌 By default, this runs autonomously in worker threads inside your Flask app.
+📌 If you set `USE_CELERY_FOR_GOODWILL = True` in your Config,
+    the workers will delegate to Celery tasks instead (requires a running Celery worker & broker).
+
+Current default: USE_CELERY_FOR_GOODWILL = False
+"""
 
 
 class EndocrineSystem:
@@ -33,6 +50,12 @@ class EndocrineSystem:
         self.app = app
         self.loop_delay = loop_delay
         self.max_workers = max_workers
+
+        if app.config.get("USE_CELERY_FOR_GOODWILL", False) and not process_goodwill_action_task:
+            raise RuntimeError(
+                "USE_CELERY_FOR_GOODWILL is True but Celery task is not available. "
+                "Check your Celery setup or set USE_CELERY_FOR_GOODWILL = False."
+            )
 
         self.executor = ThreadPoolExecutor(
             max_workers=self.max_workers,
@@ -87,6 +110,7 @@ class EndocrineSystem:
 
     def _process_goodwill_actions_batch(self) -> int:
         thread_name = threading.current_thread().name
+        use_celery = self.app.config.get("USE_CELERY_FOR_GOODWILL", False)
 
         def db_op():
             processed_count = 0
@@ -94,8 +118,6 @@ class EndocrineSystem:
                 actions = (
                     session.query(GoodwillAction)
                     .filter_by(status='pending')
-                    # Uncomment the next line if DB supports SKIP LOCKED
-                    # .with_for_update(skip_locked=True)
                     .limit(self.app.config.get("AILEE_BATCH_SIZE", 5))
                     .all()
                 )
@@ -108,9 +130,19 @@ class EndocrineSystem:
 
                 for action in actions:
                     try:
-                        process_goodwill_action_with_ailee_and_love(action.id)
+                        if use_celery:
+                            process_goodwill_action_task.delay(action.id)
+                            logger.debug(f"[{thread_name}] 📨 Dispatched to Celery: GoodwillAction ID: {action.id}")
+                            action.status = 'queued'
+                        else:
+                            from ..ai_processor.processor import process_goodwill_action_with_ailee_and_love
+                            process_goodwill_action_with_ailee_and_love(action.id)
+                            logger.debug(f"[{thread_name}] ✅ Processed GoodwillAction ID: {action.id}")
+                            action.status = 'processed'
+
+                        session.add(action)
                         processed_count += 1
-                        logger.debug(f"[{thread_name}] ✅ Processed GoodwillAction ID: {action.id}")
+
                     except Exception as e:
                         logger.error(f"[{thread_name}] ❌ Failed to process ID {action.id}: {e}", exc_info=True)
                         action.status = 'failed'

@@ -22,13 +22,14 @@ if __name__ == '__main__':
         endocrine_system.start()
         logger.info("Starting Cognitive System background loop...")
         cognitive_system.start_background_loop()
-        
+
         logger.info("Celery initialized and ready to process tasks.")
-    
-    logger.info(f"Starting Flask server on 0.0.0.0:{os.environ.get('FLASK_PORT', 5000)}")
+
+    port = int(os.environ.get('PORT', os.environ.get('FLASK_PORT', 5000)))
+    logger.info(f"Starting Flask server on 0.0.0.0:{port}")
     app.run(
         host='0.0.0.0',
-        port=int(os.environ.get('FLASK_PORT', 5000)),
+        port=port,
         debug=app.config.get('DEBUG', False)
     )
 
