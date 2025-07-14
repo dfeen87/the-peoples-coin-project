@@ -5,12 +5,10 @@ import logging
 import http
 from functools import wraps
 from collections import defaultdict
-from typing import Optional
+from typing import Optional, Callable, Dict, Any
 
 from flask import request, jsonify, Flask
 
-# This module no longer needs to import from other parts of the app,
-# making it a self-contained, reusable component.
 try:
     from redis import Redis, exceptions as RedisExceptions
 except ImportError:
@@ -18,6 +16,7 @@ except ImportError:
     RedisExceptions = None
 
 logger = logging.getLogger(__name__)
+
 
 class ImmuneSystem:
     """
@@ -27,7 +26,7 @@ class ImmuneSystem:
 
     def __init__(self):
         self.app: Optional[Flask] = None
-        self.config = {}
+        self.config: Dict[str, Any] = {}
         self.redis: Optional[Redis] = None
         self._redis_lock = threading.Lock()
         self._in_memory_lock = threading.Lock()
@@ -42,7 +41,7 @@ class ImmuneSystem:
         """Initializes the Immune System with the Flask app context."""
         if self._initialized:
             return
-            
+
         self.app = app
         self.config = app.config
         app.config.setdefault("IMMUNE_QUARANTINE_TIME_SEC", 300)
@@ -50,7 +49,7 @@ class ImmuneSystem:
         app.config.setdefault("IMMUNE_RATE_LIMIT_WINDOW_SEC", 60)
         app.config.setdefault("IMMUNE_MAX_REQUESTS_PER_WINDOW", 30)
         app.config.setdefault("REDIS_URL", "redis://localhost:6379/1")
-        
+
         self._lazy_connect_redis()
         self._start_cleaner()
         self._initialized = True
@@ -68,9 +67,9 @@ class ImmuneSystem:
                         )
                         redis_client.ping()
                         self.redis = redis_client
-                        logger.info("🛡️ ImmuneSystem: Successfully connected to Redis.")
+                        logger.info("🛡️ ImmuneSystem: Connected to Redis.")
                     except (RedisExceptions.RedisError, ValueError) as e:
-                        logger.warning(f"🛡️ ImmuneSystem: Redis unavailable, falling back to in-memory. Error: {e}")
+                        logger.warning(f"🛡️ Redis unavailable, falling back to in-memory. Error: {e}")
                         self.redis = None
 
     def _get_identifier(self) -> str:
@@ -86,7 +85,7 @@ class ImmuneSystem:
                 return self.redis.sismember("immune:blacklist", identifier)
             except RedisExceptions.RedisError as e:
                 logger.warning(f"🛡️ Redis error during is_blacklisted: {e}. Falling back.")
-        
+
         with self._in_memory_lock:
             return identifier in self._blacklist
 
@@ -131,7 +130,7 @@ class ImmuneSystem:
                 return p.execute()[0] > self.config["IMMUNE_MAX_REQUESTS_PER_WINDOW"]
             except RedisExceptions.RedisError as e:
                 logger.warning(f"🛡️ Redis error during rate limit check: {e}. Falling back.")
-        
+
         with self._in_memory_lock:
             now = time.time()
             window_start = now - self.config["IMMUNE_RATE_LIMIT_WINDOW_SEC"]
@@ -140,9 +139,9 @@ class ImmuneSystem:
             self._rate_limits[identifier] = requests
             return len(requests) > self.config["IMMUNE_MAX_REQUESTS_PER_WINDOW"]
 
-    def check(self):
+    def check(self) -> Callable:
         """Decorator to apply all immune checks to a route."""
-        def decorator(f):
+        def decorator(f: Callable) -> Callable:
             @wraps(f)
             def wrapper(*args, **kwargs):
                 identifier = self._get_identifier()
@@ -180,10 +179,46 @@ class ImmuneSystem:
             self._cleaner_thread = threading.Thread(target=self._cleaner_task, daemon=True, name="ImmuneCleaner")
             self._cleaner_thread.start()
 
+    def stop(self):
+        """Stops the background cleaner thread gracefully."""
+        if self._cleaner_thread and self._cleaner_thread.is_alive():
+            logger.info("🛡️ Stopping ImmuneSystem cleaner thread...")
+            self._stop_event.set()
+            self._cleaner_thread.join()
+            logger.info("🛡️ Cleaner thread stopped.")
+
+    def reset(self, identifier: Optional[str] = None):
+        """Resets blacklist and greylist. If identifier is given, resets only for that ID."""
+        with self._in_memory_lock:
+            if identifier:
+                self._blacklist.discard(identifier)
+                self._greylist.pop(identifier, None)
+            else:
+                self._blacklist.clear()
+                self._greylist.clear()
+        if self.redis:
+            if identifier:
+                self.redis.srem("immune:blacklist", identifier)
+                self.redis.delete(f"immune:greylist:{identifier}")
+            else:
+                self.redis.delete("immune:blacklist")
+                # To clear all greylist keys you’d scan + delete
+
     def is_cleaner_running(self) -> bool:
         """Checks if the cleaner thread is active."""
         return self._cleaner_thread is not None and self._cleaner_thread.is_alive()
 
+    def status(self) -> Dict[str, Any]:
+        """Returns a summary of the immune system state."""
+        with self._in_memory_lock:
+            return {
+                "redis_connected": self.redis is not None,
+                "blacklist_size": len(self._blacklist),
+                "greylist_size": len(self._greylist),
+                "cleaner_running": self.is_cleaner_running()
+            }
 
-# Singleton instance of ImmuneSystem
+
+# Singleton instance
 immune_system = ImmuneSystem()
+

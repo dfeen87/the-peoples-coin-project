@@ -40,7 +40,6 @@ class CognitiveSystem:
         self._initialized = False
 
     def init_app(self, app: Flask):
-        """Initializes the Cognitive System but does NOT start the background loop."""
         if self._initialized:
             return
         
@@ -53,7 +52,7 @@ class CognitiveSystem:
         self._initialize_firestore_client()
         self._initialized = True
         logger.info("🧠 Cognitive System initialized and ready to start.")
-        # NOTE: start_background_loop() is now called explicitly from run.py
+        # Note: start_background_loop() should be called explicitly from run.py or app startup code
 
     def _initialize_firestore_client(self):
         if GCP_AVAILABLE and not self.firestore_client:
@@ -64,13 +63,26 @@ class CognitiveSystem:
                 logger.warning(f"☁️ Google Cloud Firestore client failed to initialize: {e}")
                 self.firestore_client = None
 
+    def _get_rabbit_connection(self, max_retries=5, retry_delay=5):
+        for attempt in range(max_retries):
+            try:
+                params = pika.URLParameters(self.config["COGNITIVE_RABBITMQ_URL"])
+                connection = pika.BlockingConnection(params)
+                logger.debug(f"🐇 RabbitMQ connection established on attempt {attempt + 1}.")
+                return connection
+            except pika.exceptions.AMQPConnectionError as e:
+                logger.warning(f"🐇 RabbitMQ connection attempt {attempt + 1} failed: {e}")
+                time.sleep(retry_delay)
+        logger.error("🐇 RabbitMQ connection failed after max retries, falling back to in-memory queue.")
+        return None
+
     def enqueue_event(self, event: dict):
         event.setdefault("timestamp", datetime.utcnow().isoformat())
         if RABBIT_AVAILABLE:
-            try:
-                params = pika.URLParameters(self.config["COGNITIVE_RABBITMQ_URL"])
-                with pika.BlockingConnection(params) as conn:
-                    ch = conn.channel()
+            connection = self._get_rabbit_connection()
+            if connection:
+                try:
+                    ch = connection.channel()
                     ch.queue_declare(queue=self.config["COGNITIVE_RABBIT_QUEUE"], durable=True)
                     ch.basic_publish(
                         exchange='',
@@ -78,13 +90,15 @@ class CognitiveSystem:
                         body=json.dumps(event),
                         properties=pika.BasicProperties(delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE)
                     )
-                return
-            except pika.exceptions.AMQPConnectionError as e:
-                logger.warning(f"🐇 RabbitMQ connection failed ({e}), falling back to in-memory.")
+                    connection.close()
+                    return
+                except Exception as e:
+                    logger.warning(f"🐇 RabbitMQ publish failed: {e}, falling back to in-memory.")
+            else:
+                logger.info("🐇 RabbitMQ connection unavailable, using in-memory queue.")
         self._in_memory_queue.put(event)
 
     def start_background_loop(self):
-        """Starts the main background worker thread."""
         if not self._loop_thread or not self._loop_thread.is_alive():
             self._stop_event.clear()
             target_loop = self._rabbit_consumer_loop if RABBIT_AVAILABLE else self._in_memory_consumer_loop
@@ -126,9 +140,13 @@ class CognitiveSystem:
 
     def _rabbit_consumer_loop(self):
         while not self._stop_event.is_set():
+            connection = self._get_rabbit_connection(max_retries=3, retry_delay=10)
+            if not connection:
+                # Retry after waiting, respecting stop event
+                if self._stop_event.wait(timeout=30):
+                    break
+                continue
             try:
-                params = pika.URLParameters(self.config["COGNITIVE_RABBITMQ_URL"])
-                connection = pika.BlockingConnection(params)
                 channel = connection.channel()
                 channel.queue_declare(queue=self.config["COGNITIVE_RABBIT_QUEUE"], durable=True)
                 for method_frame, properties, body in channel.consume(self.config["COGNITIVE_RABBIT_QUEUE"]):
@@ -143,8 +161,10 @@ class CognitiveSystem:
                         time.sleep(5)
                 channel.cancel()
                 connection.close()
-            except pika.exceptions.AMQPConnectionError:
-                self._stop_event.wait(10)
+            except pika.exceptions.AMQPConnectionError as e:
+                logger.warning(f"🐇 RabbitMQ consumer connection lost: {e}, retrying...")
+                if self._stop_event.wait(timeout=10):
+                    break
 
 cognitive_bp = Blueprint('cognitive_bp', __name__)
 
@@ -159,3 +179,4 @@ def cognitive_event() -> tuple[Response, int]:
 
 # Singleton instance of CognitiveSystem
 cognitive_system = CognitiveSystem()
+

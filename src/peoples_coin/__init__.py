@@ -11,13 +11,15 @@ from flask.cli import with_appcontext
 
 from .config import Config
 from .extensions import db, immune_system, cognitive_system, endocrine_system, circulatory_system
-from .db.models import GoodwillAction, ChainBlock  # Ensure ChainBlock imported for CLI
+from .db.models import GoodwillAction, ChainBlock  # Ensure ChainBlock imported for CLI commands
 
 logger = logging.getLogger(__name__)
 
+
 def setup_logging(app):
     log_level = app.config.get("LOG_LEVEL", "INFO").upper()
-    # Clear existing root handlers to avoid duplicates
+
+    # Clear existing root handlers to avoid duplicate logs if reloading
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
 
@@ -26,16 +28,19 @@ def setup_logging(app):
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 
+    # Console handler
     ch = logging.StreamHandler(sys.stdout)
     ch.setFormatter(formatter)
 
+    # File handler with rotation in the instance folder
     log_dir = app.instance_path
     os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, 'app.log')
-    fh = RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=5)
+    fh = RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=5)
     fh.setFormatter(formatter)
 
     logging.basicConfig(level=log_level, handlers=[ch, fh])
+    # Control werkzeug logs separately for less noise unless debugging
     logging.getLogger('werkzeug').setLevel(logging.INFO if not app.debug else logging.DEBUG)
 
 
@@ -43,18 +48,19 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Set absolute path for DB in the instance folder within project root
+    # Set absolute path for DB file in instance folder within project root
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
     instance_path = os.path.join(project_root, 'instance')
     os.makedirs(instance_path, exist_ok=True)
     db_file_path = os.path.join(instance_path, 'peoples_coin.db')
 
+    # Prefer environment variable DATABASE_URL if set, else use SQLite file
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or f"sqlite:///{db_file_path}"
 
     setup_logging(app)
     logger.info("Creating Flask application instance.")
 
-    # Initialize extensions and systems
+    # Initialize Flask extensions and systems
     db.init_app(app)
     immune_system.init_app(app)
     cognitive_system.init_app(app)
@@ -67,7 +73,7 @@ def create_app(config_class=Config):
 
     logger.info("All systems initialized.")
 
-    # Register blueprints
+    # Register blueprints cleanly
     from .systems.nervous_system import nervous_bp
     from .systems.metabolic_system import metabolic_bp
     from .systems.cognitive_system import cognitive_bp
@@ -80,22 +86,22 @@ def create_app(config_class=Config):
 
     logger.info("All blueprints registered.")
 
-    # Consensus initialization done directly here (no decorator)
+    # Initialize consensus system
     from .consensus import Consensus
     consensus = Consensus()
     consensus.init_app(app, db)
     logger.info("Consensus system initialized.")
 
-    # Health check endpoint
+    # Simple health check route
     @app.route('/health', methods=['GET'])
     def health():
         return jsonify(status="healthy"), 200
 
-    # Register CLI commands
-    register_cli_commands(app)
+    # Register CLI commands grouped
+    register_cli_commands(app, consensus)
 
-    # Graceful shutdown handlers
-    def shutdown_systems():
+    # Graceful shutdown of background loops on SIGINT/SIGTERM and exit
+    def shutdown_systems(*args):
         logger.info("Initiating graceful shutdown of background systems...")
         cognitive_system.stop_background_loop()
         endocrine_system.stop()
@@ -109,7 +115,7 @@ def create_app(config_class=Config):
     return app
 
 
-def register_cli_commands(app: Flask):
+def register_cli_commands(app: Flask, consensus: 'Consensus'):
     @app.cli.command('init-db')
     @click.option('--drop', is_flag=True, help="Drop database file. Use 'alembic upgrade head' to create tables.")
     def init_db_command(drop):

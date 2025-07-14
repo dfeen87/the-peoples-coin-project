@@ -4,11 +4,14 @@ FROM python:3.9-slim
 # Set working directory inside the container
 WORKDIR /app
 
-# Copy all project files into the container
-COPY . /app
+# Copy only requirements first to leverage Docker cache for dependencies
+COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Now copy the rest of the app source code
+COPY . .
 
 # Set environment variables
 ENV PYTHONPATH=src
