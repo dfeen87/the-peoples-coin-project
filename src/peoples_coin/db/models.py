@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from decimal import Decimal
 
 from sqlalchemy.orm import Query, relationship
@@ -37,7 +37,13 @@ class SoftDeleteQuery(Query):
     def get(self, ident):
         if self._with_deleted:
             return super().get(ident)
-        return super().filter(self._only_not_deleted()).get(ident)
+        else:
+            # Get primary key column of the model
+            mapper = self._only_full_mapper_zero("get")
+            if mapper is None:
+                return None
+            pk = mapper.primary_key[0]
+            return self.filter(pk == ident, self._only_not_deleted()).one_or_none()
 
     def _only_not_deleted(self):
         """Return filter condition for non-deleted rows if model has deleted_at."""
@@ -64,9 +70,12 @@ class BaseModel(db.Model):
     """Base model that applies soft delete filtering on queries."""
     __abstract__ = True
     query_class = SoftDeleteQuery
-    query: SoftDeleteQuery
+    query: SoftDeleteQuery = db.session.query_property(query_cls=SoftDeleteQuery)
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} id={self.id}>"
 
 
 # ==============================================================================
@@ -85,7 +94,7 @@ class TimestampMixin:
 
 class SoftDeleteMixin:
     """Adds a soft delete timestamp column."""
-    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True, default=None)
 
 
 # ==============================================================================
@@ -97,7 +106,10 @@ class DataEntry(BaseModel, TimestampMixin, SoftDeleteMixin):
     Stores arbitrary data entries, with a processed flag.
     """
     __tablename__ = 'data_entries'
-    __table_args__ = (db.Index('idx_processed_created_at', 'processed', 'created_at'),)
+    __table_args__ = (
+        db.Index('idx_processed_created_at', 'processed', 'created_at'),
+        {'extend_existing': True},
+    )
 
     value = db.Column(db.Text, nullable=True)
     processed = db.Column(db.Boolean, default=False, nullable=False)
@@ -146,7 +158,10 @@ class GoodwillAction(BaseModel, SoftDeleteMixin):
     Represents a verified goodwill action. Includes status and resonance scoring.
     """
     __tablename__ = 'goodwill_actions'
-    __table_args__ = (db.Index('idx_goodwill_status', 'status'),)
+    __table_args__ = (
+        db.Index('idx_goodwill_status', 'status'),
+        {'extend_existing': True},
+    )
 
     user_id = db.Column(db.String(255), db.ForeignKey('user_accounts.user_id'), nullable=False, index=True)
     action_type = db.Column(db.String(100), nullable=False)
@@ -206,7 +221,10 @@ class GoodwillAction(BaseModel, SoftDeleteMixin):
 class EventLog(BaseModel):
     """Logs significant events within the system."""
     __tablename__ = 'event_logs'
-    __table_args__ = (db.Index('idx_event_type_timestamp', 'event_type', 'timestamp'),)
+    __table_args__ = (
+        db.Index('idx_event_type_timestamp', 'event_type', 'timestamp'),
+        {'extend_existing': True},
+    )
 
     event_type = db.Column(db.String(64), nullable=False, index=True)
     message = db.Column(db.Text, nullable=False)
@@ -225,12 +243,13 @@ class EventLog(BaseModel):
 
 
 # ==============================================================================
-# 5. Consensus System Models (unchanged)
+# 5. Consensus System Models
 # ==============================================================================
 
 class ConsensusNode(BaseModel):
     """Represents a registered node in the consensus network."""
     __tablename__ = 'consensus_nodes'
+    __table_args__ = {'extend_existing': True}
 
     id = db.Column(db.String(255), primary_key=True)
     address = db.Column(db.String(255), unique=True, nullable=False)
@@ -250,6 +269,7 @@ class ConsensusNode(BaseModel):
 class ChainBlock(BaseModel):
     """Represents a single block in the blockchain."""
     __tablename__ = 'chain_blocks'
+    __table_args__ = {'extend_existing': True}
 
     timestamp = db.Column(db.Float, nullable=False)
     transactions = db.Column(db.JSON, nullable=False)

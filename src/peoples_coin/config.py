@@ -1,4 +1,4 @@
-kimport os
+import os
 
 class Config:
     """Base configuration settings for the Flask application."""

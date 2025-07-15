@@ -4,7 +4,16 @@ WSGI entry point for the Peoples Coin Flask application.
 This file is used by WSGI servers like Gunicorn or uWSGI to run the app.
 """
 
+import os
+import sys
 import logging
+
+# Ensure `src/` is in the Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+src_path = os.path.join(project_root, 'src')
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+
 from peoples_coin import create_app
 
 # Create Flask application instance using default config

@@ -7531,3 +7531,140 @@ TypeError: get_session_scope() missing 1 required positional argument: 'db_insta
 2025-07-14 09:08:57 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] Stopping all worker threads...
 2025-07-14 09:08:57 [INFO] peoples_coin.systems.endocrine_system: [Endocrine] All worker threads stopped.
 2025-07-14 09:08:57 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-15 17:08:05 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-15 17:08:05 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/peoples_coin.db
+2025-07-15 17:08:05 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Connected to Redis.
+2025-07-15 17:08:05 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-15 17:08:05 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-15 17:08:06 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-15 17:08:06 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-15 17:08:06 [INFO] peoples_coin.systems.circulatory_system: 🫀 CirculatorySystem initialized and configured.
+2025-07-15 17:08:06 [INFO] peoples_coin.systems.endocrine_system: 🧠 EndocrineSystem initialized: 2 workers, loop delay 5s.
+2025-07-15 17:08:06 [INFO] peoples_coin: All systems initialized.
+2025-07-15 17:08:06 [INFO] peoples_coin: All blueprints registered.
+2025-07-15 17:08:06 [INFO] peoples_coin.consensus: Consensus system instance created.
+2025-07-15 17:08:06 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-15 17:08:06 [INFO] peoples_coin: Consensus system initialized.
+2025-07-15 17:08:06 [INFO] peoples_coin: Celery initialized and attached to app.extensions.
+2025-07-15 17:08:06 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-15 17:08:06 [INFO] peoples_coin.wsgi: Peoples Coin WSGI application starting up.
+2025-07-15 17:10:11 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-15 17:10:11 [INFO] peoples_coin.systems.endocrine_system: ⏹️ Stopping all worker threads...
+2025-07-15 17:10:11 [INFO] peoples_coin.systems.endocrine_system: 🧵 All worker threads stopped gracefully.
+2025-07-15 17:10:11 [ERROR] peoples_coin: Error stopping immune_system cleaner: 'ImmuneSystem' object has no attribute 'stop_cleaner'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/__init__.py", line 148, in shutdown_systems
+    immune_system.stop_cleaner()  # Assuming this is the correct stop method
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ImmuneSystem' object has no attribute 'stop_cleaner'. Did you mean: '_start_cleaner'?
+2025-07-15 17:10:11 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-15 17:10:22 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-15 17:10:22 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/peoples_coin.db
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Connected to Redis.
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-15 17:10:22 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-15 17:10:22 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/peoples_coin.db
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Connected to Redis.
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-15 17:10:22 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-15 17:10:22 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/peoples_coin.db
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Connected to Redis.
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-15 17:10:22 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-15 17:10:22 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/peoples-coin/instance/peoples_coin.db
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Connected to Redis.
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-15 17:10:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-15 17:10:23 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-15 17:10:23 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-15 17:10:23 [INFO] peoples_coin.systems.circulatory_system: 🫀 CirculatorySystem initialized and configured.
+2025-07-15 17:10:23 [INFO] peoples_coin.systems.endocrine_system: 🧠 EndocrineSystem initialized: 2 workers, loop delay 5s.
+2025-07-15 17:10:23 [INFO] peoples_coin: All systems initialized.
+2025-07-15 17:10:23 [INFO] peoples_coin: All blueprints registered.
+2025-07-15 17:10:23 [INFO] peoples_coin.consensus: Consensus system instance created.
+2025-07-15 17:10:23 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-15 17:10:23 [INFO] peoples_coin: Consensus system initialized.
+2025-07-15 17:10:23 [INFO] peoples_coin: Celery initialized and attached to app.extensions.
+2025-07-15 17:10:23 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-15 17:10:23 [INFO] peoples_coin.wsgi: Peoples Coin WSGI application starting up.
+2025-07-15 17:10:23 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-15 17:10:23 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-15 17:10:23 [INFO] peoples_coin.systems.circulatory_system: 🫀 CirculatorySystem initialized and configured.
+2025-07-15 17:10:23 [INFO] peoples_coin.systems.endocrine_system: 🧠 EndocrineSystem initialized: 2 workers, loop delay 5s.
+2025-07-15 17:10:23 [INFO] peoples_coin: All systems initialized.
+2025-07-15 17:10:23 [INFO] peoples_coin: All blueprints registered.
+2025-07-15 17:10:23 [INFO] peoples_coin.consensus: Consensus system instance created.
+2025-07-15 17:10:23 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-15 17:10:23 [INFO] peoples_coin: Consensus system initialized.
+2025-07-15 17:10:23 [INFO] peoples_coin: Celery initialized and attached to app.extensions.
+2025-07-15 17:10:23 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-15 17:10:23 [INFO] peoples_coin.wsgi: Peoples Coin WSGI application starting up.
+2025-07-15 17:10:23 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-15 17:10:23 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-15 17:10:23 [INFO] peoples_coin.systems.circulatory_system: 🫀 CirculatorySystem initialized and configured.
+2025-07-15 17:10:23 [INFO] peoples_coin.systems.endocrine_system: 🧠 EndocrineSystem initialized: 2 workers, loop delay 5s.
+2025-07-15 17:10:23 [INFO] peoples_coin: All systems initialized.
+2025-07-15 17:10:23 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-15 17:10:23 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-15 17:10:23 [INFO] peoples_coin.systems.circulatory_system: 🫀 CirculatorySystem initialized and configured.
+2025-07-15 17:10:23 [INFO] peoples_coin.systems.endocrine_system: 🧠 EndocrineSystem initialized: 2 workers, loop delay 5s.
+2025-07-15 17:10:23 [INFO] peoples_coin: All systems initialized.
+2025-07-15 17:10:23 [INFO] peoples_coin: All blueprints registered.
+2025-07-15 17:10:23 [INFO] peoples_coin.consensus: Consensus system instance created.
+2025-07-15 17:10:23 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-15 17:10:23 [INFO] peoples_coin: Consensus system initialized.
+2025-07-15 17:10:23 [INFO] peoples_coin: Celery initialized and attached to app.extensions.
+2025-07-15 17:10:23 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-15 17:10:23 [INFO] peoples_coin.wsgi: Peoples Coin WSGI application starting up.
+2025-07-15 17:10:23 [INFO] peoples_coin: All blueprints registered.
+2025-07-15 17:10:23 [INFO] peoples_coin.consensus: Consensus system instance created.
+2025-07-15 17:10:23 [INFO] peoples_coin.consensus: Consensus system configured with difficulty: 0000.
+2025-07-15 17:10:23 [INFO] peoples_coin: Consensus system initialized.
+2025-07-15 17:10:23 [INFO] peoples_coin: Celery initialized and attached to app.extensions.
+2025-07-15 17:10:23 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-15 17:10:23 [INFO] peoples_coin.wsgi: Peoples Coin WSGI application starting up.
+2025-07-15 17:16:56 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-15 17:16:56 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-15 17:16:56 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-15 17:16:56 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-15 17:16:56 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-15 17:16:56 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-15 17:16:56 [INFO] peoples_coin.systems.endocrine_system: ⏹️ Stopping all worker threads...
+2025-07-15 17:16:56 [INFO] peoples_coin.systems.endocrine_system: ⏹️ Stopping all worker threads...
+2025-07-15 17:16:56 [INFO] peoples_coin.systems.endocrine_system: ⏹️ Stopping all worker threads...
+2025-07-15 17:16:56 [INFO] peoples_coin.systems.endocrine_system: ⏹️ Stopping all worker threads...
+2025-07-15 17:16:56 [INFO] peoples_coin.systems.endocrine_system: 🧵 All worker threads stopped gracefully.
+2025-07-15 17:16:56 [INFO] peoples_coin.systems.endocrine_system: 🧵 All worker threads stopped gracefully.
+2025-07-15 17:16:56 [INFO] peoples_coin.systems.endocrine_system: 🧵 All worker threads stopped gracefully.
+2025-07-15 17:16:56 [INFO] peoples_coin.systems.endocrine_system: 🧵 All worker threads stopped gracefully.
+2025-07-15 17:16:56 [ERROR] peoples_coin: Error stopping immune_system cleaner: 'ImmuneSystem' object has no attribute 'stop_cleaner'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/__init__.py", line 148, in shutdown_systems
+    immune_system.stop_cleaner()  # Assuming this is the correct stop method
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ImmuneSystem' object has no attribute 'stop_cleaner'. Did you mean: '_start_cleaner'?
+2025-07-15 17:16:56 [ERROR] peoples_coin: Error stopping immune_system cleaner: 'ImmuneSystem' object has no attribute 'stop_cleaner'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/__init__.py", line 148, in shutdown_systems
+    immune_system.stop_cleaner()  # Assuming this is the correct stop method
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ImmuneSystem' object has no attribute 'stop_cleaner'. Did you mean: '_start_cleaner'?
+2025-07-15 17:16:56 [ERROR] peoples_coin: Error stopping immune_system cleaner: 'ImmuneSystem' object has no attribute 'stop_cleaner'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/__init__.py", line 148, in shutdown_systems
+    immune_system.stop_cleaner()  # Assuming this is the correct stop method
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ImmuneSystem' object has no attribute 'stop_cleaner'. Did you mean: '_start_cleaner'?
+2025-07-15 17:16:56 [ERROR] peoples_coin: Error stopping immune_system cleaner: 'ImmuneSystem' object has no attribute 'stop_cleaner'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/peoples-coin/src/peoples_coin/__init__.py", line 148, in shutdown_systems
+    immune_system.stop_cleaner()  # Assuming this is the correct stop method
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ImmuneSystem' object has no attribute 'stop_cleaner'. Did you mean: '_start_cleaner'?
+2025-07-15 17:16:56 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-15 17:16:56 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-15 17:16:56 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-15 17:16:56 [INFO] peoples_coin: ✅ All background systems shut down successfully.
