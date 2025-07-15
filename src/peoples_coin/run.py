@@ -4,32 +4,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from peoples_coin import create_app, endocrine_system, cognitive_system
+from peoples_coin import create_app
 
-# Import celery and the helper
-from celery_app import celery, init_celery
-
+# Initialize the Flask app
 app = create_app()
 
-# Initialize celery with the Flask app context
-celery = init_celery(app)
-
+# Set up logging for production
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+)
 logger = logging.getLogger(__name__)
 
+# Export the app for Gunicorn to use:
+# gunicorn -w 4 -b 0.0.0.0:$PORT run:app
+
+# Note: Do NOT start background loops here — 
+# those should be handled by dedicated worker processes or init scripts.
+
 if __name__ == '__main__':
-    with app.app_context():
-        logger.info("Starting Endocrine System...")
-        endocrine_system.start()
-        logger.info("Starting Cognitive System background loop...")
-        cognitive_system.start_background_loop()
-
-        logger.info("Celery initialized and ready to process tasks.")
-
-    port = int(os.environ.get('PORT', os.environ.get('FLASK_PORT', 5000)))
-    logger.info(f"Starting Flask server on 0.0.0.0:{port}")
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=app.config.get('DEBUG', False)
-    )
+    # This block is only for local dev/debug (optional)
+    port = int(os.environ.get('PORT', 5000))
+    logger.info(f"Starting local Flask dev server on 0.0.0.0:{port}")
+    app.run(host='0.0.0.0', port=port, debug=True)
 

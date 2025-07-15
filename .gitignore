@@ -34,3 +34,4 @@ dump.rdb
 # migrations/
 
 instances/peoples_coin.db
+node_modules/

@@ -25,11 +25,11 @@ RUN apk update && apk add --no-cache \
 # Copy only requirements first to leverage Docker cache
 COPY requirements.txt .
 
-# Install python dependencies
+# Upgrade pip and install Python dependencies
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app source code
+# Copy application source code
 COPY . .
 
 # Change ownership to the non-root user
@@ -42,5 +42,5 @@ USER appuser
 EXPOSE 8080
 
 # Run Gunicorn with 4 workers binding to port 8080
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "run:app"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "peoples_coin.run:app"]
 
