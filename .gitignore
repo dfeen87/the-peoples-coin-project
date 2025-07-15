@@ -4,16 +4,18 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Virtual environment
+# Virtual environments
 venv/
 .venv/
+env/
 
-# Flask instance folder (contains databases, logs, snapshots)
-# instance/
+# Flask instance folder (contains databases, logs, config)
+instance/
 
 # Logs
 *.log
-!app.log
+# Uncomment below if you want to ignore all logs including app.log
+# app.log
 
 # Database files
 *.db
@@ -23,15 +25,25 @@ venv/
 # OS generated files
 .DS_Store
 .vscode/
-.env
+.env*
+# Add other environment config files if needed
 
 # Temporary files
 *.tmp
 *.bak
 dump.rdb
 
-# Migrations generated files
-# migrations/
+# Migrations (usually you want to keep migration scripts under version control)
+#migrations/
 
-instances/peoples_coin.db
+# Node modules (if you have frontend JS)
 node_modules/
+
+# Testing and coverage
+.coverage
+.pytest_cache/
+
+# IDE/editor folders
+.idea/
+.vscode/
+
