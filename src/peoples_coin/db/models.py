@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from decimal import Decimal
+import uuid
 
 from sqlalchemy.orm import Query, relationship
-from sqlalchemy import event
+from sqlalchemy import event, Column, String, Boolean, DateTime, ForeignKey, Integer, Float, Text, Numeric, JSON
+from sqlalchemy.dialects.postgresql import UUID
 
 from peoples_coin.extensions import db
 
@@ -38,7 +40,6 @@ class SoftDeleteQuery(Query):
         if self._with_deleted:
             return super().get(ident)
         else:
-            # Get primary key column of the model
             mapper = self._only_full_mapper_zero("get")
             if mapper is None:
                 return None
@@ -46,7 +47,6 @@ class SoftDeleteQuery(Query):
             return self.filter(pk == ident, self._only_not_deleted()).one_or_none()
 
     def _only_not_deleted(self):
-        """Return filter condition for non-deleted rows if model has deleted_at."""
         for entity in self._entities:
             ent = getattr(entity, "entity_zero", None)
             if ent is None:
@@ -67,12 +67,11 @@ class SoftDeleteQuery(Query):
 # ==============================================================================
 
 class BaseModel(db.Model):
-    """Base model that applies soft delete filtering on queries."""
     __abstract__ = True
     query_class = SoftDeleteQuery
     query: SoftDeleteQuery = db.session.query_property(query_cls=SoftDeleteQuery)
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
 
     def __repr__(self):
         return f"<{self.__class__.__name__} id={self.id}>"
@@ -83,18 +82,14 @@ class BaseModel(db.Model):
 # ==============================================================================
 
 class TimestampMixin:
-    """
-    Adds created_at and updated_at timestamp columns with UTC timezone awareness.
-    """
-    created_at = db.Column(db.DateTime(timezone=True), default=utcnow, nullable=False)
-    updated_at = db.Column(
-        db.DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
     )
 
 
 class SoftDeleteMixin:
-    """Adds a soft delete timestamp column."""
-    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True, default=None)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
 
 
 # ==============================================================================
@@ -102,17 +97,14 @@ class SoftDeleteMixin:
 # ==============================================================================
 
 class DataEntry(BaseModel, TimestampMixin, SoftDeleteMixin):
-    """
-    Stores arbitrary data entries, with a processed flag.
-    """
     __tablename__ = 'data_entries'
     __table_args__ = (
         db.Index('idx_processed_created_at', 'processed', 'created_at'),
         {'extend_existing': True},
     )
 
-    value = db.Column(db.Text, nullable=True)
-    processed = db.Column(db.Boolean, default=False, nullable=False)
+    value = Column(Text, nullable=True)
+    processed = Column(Boolean, default=False, nullable=False)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -129,16 +121,13 @@ class DataEntry(BaseModel, TimestampMixin, SoftDeleteMixin):
 
 
 class UserAccount(BaseModel, TimestampMixin, SoftDeleteMixin):
-    """
-    Represents a user's account holding their balance in 'Loves'.
-    """
     __tablename__ = 'user_accounts'
 
-    user_id = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    balance = db.Column(db.Numeric(precision=18, scale=4), default=Decimal('0.0'), nullable=False)
+    user_id = Column(String(255), unique=True, nullable=False, index=True)
+    balance = Column(Numeric(precision=18, scale=4), default=Decimal('0.0'), nullable=False)
 
-    # Relationship to GoodwillAction
     goodwill_actions = relationship("GoodwillAction", back_populates="user_account", lazy='dynamic')
+    api_keys = relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -154,40 +143,33 @@ class UserAccount(BaseModel, TimestampMixin, SoftDeleteMixin):
 
 
 class GoodwillAction(BaseModel, SoftDeleteMixin):
-    """
-    Represents a verified goodwill action. Includes status and resonance scoring.
-    """
     __tablename__ = 'goodwill_actions'
     __table_args__ = (
         db.Index('idx_goodwill_status', 'status'),
         {'extend_existing': True},
     )
 
-    user_id = db.Column(db.String(255), db.ForeignKey('user_accounts.user_id'), nullable=False, index=True)
-    action_type = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime(timezone=True), default=utcnow, nullable=False)
-    contextual_data = db.Column(db.JSON, default=dict)
-    raw_goodwill_score = db.Column(db.Integer, default=0, nullable=False)
-    resonance_score = db.Column(db.Float, nullable=True)
+    user_id = Column(String(255), ForeignKey('user_accounts.user_id'), nullable=False, index=True)
+    action_type = Column(String(100), nullable=False)
+    description = Column(Text, nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    contextual_data = Column(JSON, default=dict)
+    raw_goodwill_score = Column(Integer, default=0, nullable=False)
+    resonance_score = Column(Float, nullable=True)
 
-    initial_model_state_v0 = db.Column(db.Float, nullable=True)
-    expected_workload_intensity_w0 = db.Column(db.Float, nullable=True)
-    client_compute_estimate = db.Column(db.Float, nullable=True)
+    initial_model_state_v0 = Column(Float, nullable=True)
+    expected_workload_intensity_w0 = Column(Float, nullable=True)
+    client_compute_estimate = Column(Float, nullable=True)
 
-    status = db.Column(db.String(50), default='pending', nullable=False)
-    processed_at = db.Column(db.DateTime(timezone=True), nullable=True)
-    minted_token_id = db.Column(db.String(255), nullable=True, unique=True)
+    status = Column(String(50), default='pending', nullable=False)
+    processed_at = Column(DateTime(timezone=True), nullable=True)
+    minted_token_id = Column(String(255), nullable=True, unique=True)
 
-    correlation_id = db.Column(db.String(255), nullable=True)
+    correlation_id = Column(String(255), nullable=True)
 
-    # Relationship back to UserAccount
     user_account = relationship("UserAccount", back_populates="goodwill_actions", lazy='joined')
 
     def mark_processed(self) -> None:
-        """
-        Marks the goodwill action as processed, setting timestamp.
-        """
         self.status = 'completed'
         self.processed_at = utcnow()
 
@@ -219,16 +201,15 @@ class GoodwillAction(BaseModel, SoftDeleteMixin):
 
 
 class EventLog(BaseModel):
-    """Logs significant events within the system."""
     __tablename__ = 'event_logs'
     __table_args__ = (
         db.Index('idx_event_type_timestamp', 'event_type', 'timestamp'),
         {'extend_existing': True},
     )
 
-    event_type = db.Column(db.String(64), nullable=False, index=True)
-    message = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime(timezone=True), default=utcnow, nullable=False)
+    event_type = Column(String(64), nullable=False, index=True)
+    message = Column(Text, nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -247,13 +228,12 @@ class EventLog(BaseModel):
 # ==============================================================================
 
 class ConsensusNode(BaseModel):
-    """Represents a registered node in the consensus network."""
     __tablename__ = 'consensus_nodes'
     __table_args__ = {'extend_existing': True}
 
-    id = db.Column(db.String(255), primary_key=True)
-    address = db.Column(db.String(255), unique=True, nullable=False)
-    registered_at = db.Column(db.DateTime(timezone=True), default=utcnow)
+    id = Column(String(255), primary_key=True)
+    address = Column(String(255), unique=True, nullable=False)
+    registered_at = Column(DateTime(timezone=True), default=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -267,15 +247,14 @@ class ConsensusNode(BaseModel):
 
 
 class ChainBlock(BaseModel):
-    """Represents a single block in the blockchain."""
     __tablename__ = 'chain_blocks'
     __table_args__ = {'extend_existing': True}
 
-    timestamp = db.Column(db.Float, nullable=False)
-    transactions = db.Column(db.JSON, nullable=False)
-    previous_hash = db.Column(db.String(64), nullable=False)
-    nonce = db.Column(db.Integer, default=0, nullable=False)
-    hash = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    timestamp = Column(Float, nullable=False)
+    transactions = Column(JSON, nullable=False)
+    previous_hash = Column(String(64), nullable=False)
+    nonce = Column(Integer, default=0, nullable=False)
+    hash = Column(String(64), unique=True, nullable=False, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -292,23 +271,36 @@ class ChainBlock(BaseModel):
 
 
 # ==============================================================================
-# 6. Event Listener Examples for Validation & Defaults
+# 6. API Key Model for Authentication
+# ==============================================================================
+
+class ApiKey(BaseModel):
+    __tablename__ = "api_keys"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    key = Column(String(64), unique=True, nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user_accounts.id"), nullable=False)
+    created_at = Column(DateTime, default=utcnow)
+    revoked = Column(Boolean, default=False)
+
+    user = relationship("UserAccount", back_populates="api_keys")
+
+    def __repr__(self):
+        return f"<ApiKey {self.key} user={self.user_id} revoked={self.revoked}>"
+
+
+# ==============================================================================
+# 7. Event Listeners & Validation Hooks
 # ==============================================================================
 
 @event.listens_for(GoodwillAction, "before_insert")
 def goodwill_before_insert(mapper, connection, target: GoodwillAction) -> None:
-    """
-    Example validation to ensure status is always set properly.
-    """
     if target.status not in ('pending', 'completed', 'failed'):
         target.status = 'pending'
 
 
 @event.listens_for(UserAccount.balance, "set", retval=False)
 def balance_set(target: UserAccount, value, oldvalue, initiator):
-    """
-    Prevent negative balances at assignment.
-    """
     if value is not None and value < 0:
         raise ValueError("UserAccount balance cannot be negative.")
     return value

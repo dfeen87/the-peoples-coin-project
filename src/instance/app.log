@@ -7668,3 +7668,35 @@ AttributeError: 'ImmuneSystem' object has no attribute 'stop_cleaner'. Did you m
 2025-07-15 17:16:56 [INFO] peoples_coin: ✅ All background systems shut down successfully.
 2025-07-15 17:16:56 [INFO] peoples_coin: ✅ All background systems shut down successfully.
 2025-07-15 17:16:56 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-16 12:53:04 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
+2025-07-16 12:53:04 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
+2025-07-16 12:53:04 [ERROR] alembic.util.messaging: Target database is not up to date.
+2025-07-16 12:53:41 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
+2025-07-16 12:53:41 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
+2025-07-16 12:53:41 [INFO] alembic.runtime.migration: Running upgrade  -> 90e53ab6e209, Create initial tables and update GoodwillAction for AILEE
+2025-07-16 12:59:04 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
+2025-07-16 12:59:04 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed index 'idx_event_type_timestamp' on 'event_logs'
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed index 'ix_event_logs_event_type' on 'event_logs'
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed table 'event_logs'
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed table 'user_accounts'
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed index 'idx_processed_created_at' on 'data_entries'
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed table 'data_entries'
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed table 'consensus_nodes'
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed index 'idx_goodwill_status' on 'goodwill_actions'
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed index 'ix_goodwill_actions_user_id' on 'goodwill_actions'
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed table 'goodwill_actions'
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed index 'ix_chain_blocks_hash' on 'chain_blocks'
+2025-07-16 12:59:04 [INFO] alembic.autogenerate.compare: Detected removed table 'chain_blocks'
+2025-07-16 13:15:39 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
+2025-07-16 13:15:39 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
+2025-07-16 13:15:39 [ERROR] alembic.util.messaging: Can't locate revision identified by '90e53ab6e209'
+2025-07-16 13:16:47 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
+2025-07-16 13:16:47 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
+2025-07-16 13:16:47 [ERROR] alembic.util.messaging: Can't locate revision identified by '90e53ab6e209'
+2025-07-16 13:17:57 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
+2025-07-16 13:17:57 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
+2025-07-16 13:17:57 [ERROR] alembic.util.messaging: Can't locate revision identified by '90e53ab6e209'
+2025-07-16 13:19:31 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
+2025-07-16 13:19:31 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
+2025-07-16 13:19:31 [ERROR] alembic.util.messaging: Can't locate revision identified by '90e53ab6e209'

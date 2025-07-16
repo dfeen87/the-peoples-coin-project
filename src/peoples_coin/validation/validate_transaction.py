@@ -1,18 +1,42 @@
-from typing import Tuple, Dict, Any, Union, List
+from typing import Union, Dict, Any, List
+from pydantic import BaseModel, ValidationError, Field, constr
+from typing_extensions import Literal
+from uuid import UUID
+from datetime import datetime, timezone, timedelta
+import logging
+import re
+import json
 
-from pydantic import BaseModel, ValidationError, Field
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.exceptions import InvalidSignature
+from base64 import b64decode
+
+logger = logging.getLogger(__name__)
+
+
+# ==============================================================================
+# Configuration / Whitelist
+# ==============================================================================
+
+ALLOWED_CONTRIBUTORS = {"user1", "user2", "admin", "service-account"}
+
+KEY_REGEX = re.compile(r"^[a-zA-Z0-9\-]{1,64}$")  # alphanumeric + dash, max 64 chars
+MAX_TIMESTAMP_SKEW_SECONDS = 300  # 5 minutes skew allowed
+
 
 # ==============================================================================
 # 1. Define the Core Data Schema
 # ==============================================================================
 
 class TransactionModel(BaseModel):
-    """Defines the structure for an incoming transaction."""
-    key: str = Field(..., description="Transaction key or identifier")
-    # Using Union can make the model more specific if you know the possible types.
-    # 'Any' is also a valid choice if the value can truly be anything.
-    value: Union[str, int, float, dict, list] = Field(..., description="Value associated with the transaction")
+    # Change constr(regex=...) to constr(pattern=...) for Pydantic v2 compatibility
+    key: constr(pattern=KEY_REGEX.pattern) = Field(..., description="Transaction key or identifier")
+    value: Any = Field(..., description="Value associated with the transaction")
     contributor: str = Field(..., description="User or entity contributing the transaction")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="UTC timestamp")
+    signature: str = Field(None, description="Base64-encoded digital signature")
+    public_key_pem: str = Field(None, description="Contributor's public key in PEM format")
 
 
 # ==============================================================================
@@ -20,52 +44,111 @@ class TransactionModel(BaseModel):
 # ==============================================================================
 
 class ValidationSuccess(BaseModel):
-    """
-    Represents a successful validation result.
-    The 'is_valid' flag is a literal True, making the result type-safe.
-    """
-    is_valid: bool = Field(True, Literal=True)
-    data: TransactionModel
+    is_valid: Literal[True] = True
+    data: Dict[str, Any]
 
 
 class ValidationFailure(BaseModel):
-    """
-    Represents a failed validation result.
-    Contains a list of detailed Pydantic errors.
-    """
-    is_valid: bool = Field(False, Literal=False)
+    is_valid: Literal[False] = False
     errors: List[Dict[str, Any]]
 
 
 # ==============================================================================
-# 3. Implement the Validation Function
+# 3. Helper: Signature Verification
+# ==============================================================================
+
+def verify_signature(public_key_pem: str, signature_b64: str, payload: dict) -> bool:
+    """
+    Verifies an ECDSA signature (secp256k1) over the JSON payload.
+    """
+    try:
+        public_key = serialization.load_pem_public_key(public_key_pem.encode())
+        signature = b64decode(signature_b64)
+        message = json.dumps(payload, sort_keys=True).encode()
+
+        public_key.verify(signature, message, ec.ECDSA(hashes.SHA256()))
+        return True
+    except (InvalidSignature, ValueError, Exception) as e:
+        logger.warning(f"Invalid signature: {e}")
+        return False
+
+
+def is_timestamp_valid(timestamp: datetime) -> bool:
+    """
+    Ensures the timestamp is not too far in the past or future.
+    """
+    now = datetime.now(timezone.utc)
+    delta = abs((now - timestamp).total_seconds())
+    return delta <= MAX_TIMESTAMP_SKEW_SECONDS
+
+
+# ==============================================================================
+# 4. Validation Function
 # ==============================================================================
 
 def validate_transaction(data: dict) -> Union[ValidationSuccess, ValidationFailure]:
     """
-    Validates the transaction data against the TransactionModel schema.
-
-    This function is type-safe and returns an unambiguous result, making it
-    easy for the caller to handle both success and failure cases.
-
-    Args:
-        data (dict): Incoming transaction data.
-
-    Returns:
-        Union[ValidationSuccess, ValidationFailure]: An object indicating
-        whether the validation passed or failed, containing either the
-        validated data or a list of errors.
+    Validates the transaction data against schema and business rules.
     """
     try:
-        # Attempt to parse and validate the data using the core model.
-        validated_transaction = TransactionModel(**data)
-        
-        # On success, wrap the validated data in a ValidationSuccess object.
-        return ValidationSuccess(data=validated_transaction)
-        
+        validated = TransactionModel(**data)
+
+        # Check contributor whitelist
+        if validated.contributor not in ALLOWED_CONTRIBUTORS:
+            error = {
+                "loc": ["contributor"],
+                "msg": f"Contributor '{validated.contributor}' is not allowed.",
+                "type": "value_error.contributor_not_allowed"
+            }
+            logger.warning(f"❌ Contributor not allowed: {validated.contributor}")
+            return ValidationFailure(errors=[error])
+
+        # Check timestamp skew
+        if not is_timestamp_valid(validated.timestamp):
+            error = {
+                "loc": ["timestamp"],
+                "msg": f"Timestamp skew exceeds {MAX_TIMESTAMP_SKEW_SECONDS} seconds.",
+                "type": "value_error.timestamp_skew"
+            }
+            logger.warning(f"❌ Timestamp invalid: {validated.timestamp}")
+            return ValidationFailure(errors=[error])
+
+        # Optional: verify signature if present
+        if validated.signature and validated.public_key_pem:
+            payload = {
+                "key": validated.key,
+                "value": validated.value,
+                "contributor": validated.contributor,
+                "timestamp": validated.timestamp.isoformat()
+            }
+            if not verify_signature(validated.public_key_pem, validated.signature, payload):
+                error = {
+                    "loc": ["signature"],
+                    "msg": "Invalid cryptographic signature.",
+                    "type": "value_error.invalid_signature"
+                }
+                logger.warning("❌ Invalid signature.")
+                return ValidationFailure(errors=[error])
+
+        # Optional: ensure value is JSON-serializable
+        try:
+            json.dumps(validated.value)
+        except Exception:
+            error = {
+                "loc": ["value"],
+                "msg": "Value is not JSON-serializable.",
+                "type": "value_error.value_not_serializable"
+            }
+            logger.warning("❌ Value is not JSON-serializable.")
+            return ValidationFailure(errors=[error])
+
+        logger.info("✅ Transaction validated successfully.")
+        return ValidationSuccess(data=validated.model_dump())
+
     except ValidationError as e:
-        # On failure, wrap the Pydantic errors in a ValidationFailure object.
+        logger.warning(f"❌ Validation failed: {e.errors()}")
         return ValidationFailure(errors=e.errors())
+
 
 # ==============================================================================
 # Example Usage:
@@ -76,12 +159,8 @@ def validate_transaction(data: dict) -> Union[ValidationSuccess, ValidationFailu
 #     result = validate_transaction(incoming_data)
 #
 #     if result.is_valid:
-#         # You can now safely access result.data, and your IDE knows its type.
-#         validated_data = result.data.model_dump() # Use .dict() for Pydantic v1
-#         # ... process the valid data ...
+#         validated_data = result.data
 #         return jsonify({"message": "Success!", "data": validated_data}), 200
 #     else:
-#         # You can safely access result.errors.
 #         return jsonify({"error": "Validation failed", "details": result.errors}), 400
-#
 

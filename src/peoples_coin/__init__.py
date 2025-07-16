@@ -4,7 +4,7 @@ import atexit
 import signal
 import logging
 from logging.handlers import RotatingFileHandler
-from typing import Optional
+from typing import Optional, Any
 
 import click
 from flask import Flask, jsonify
@@ -40,8 +40,8 @@ def setup_logging(app: Flask) -> None:
     fh.setFormatter(formatter)
 
     logging.basicConfig(level=log_level, handlers=[ch, fh])
-    # Flask werkzeug logger level adjusted based on debug mode
     logging.getLogger('werkzeug').setLevel(logging.INFO if not app.debug else logging.DEBUG)
+
 
 def make_celery(app: Flask) -> Celery:
     celery = Celery(
@@ -59,6 +59,7 @@ def make_celery(app: Flask) -> Celery:
     celery.Task = ContextTask
     return celery
 
+
 def create_app(config_class=Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_class)
@@ -75,7 +76,6 @@ def create_app(config_class=Config) -> Flask:
     # Mask credentials before logging DB URI
     masked_db_uri = db_uri
     if '://' in db_uri and '@' in db_uri:
-        # e.g. postgresql://user:pass@host/db -> mask password
         protocol, rest = db_uri.split('://', 1)
         if '@' in rest:
             userinfo, hostinfo = rest.split('@', 1)
@@ -132,7 +132,7 @@ def create_app(config_class=Config) -> Flask:
 
     register_cli_commands(app, consensus)
 
-    def shutdown_systems(*args, **kwargs) -> None:
+    def shutdown_systems(*args: Any, **kwargs: Any) -> None:
         logger.info("Initiating graceful shutdown of background systems...")
         try:
             cognitive_system.stop_background_loop()
@@ -145,18 +145,25 @@ def create_app(config_class=Config) -> Flask:
             logger.error(f"Error stopping endocrine_system: {e}", exc_info=True)
 
         try:
-            immune_system.stop_cleaner()  # Assuming this is the correct stop method
+            immune_system.stop_cleaner()  # Verify this method name matches your immune_system's shutdown method
         except Exception as e:
             logger.error(f"Error stopping immune_system cleaner: {e}", exc_info=True)
 
         logger.info("✅ All background systems shut down successfully.")
 
     atexit.register(shutdown_systems)
-    signal.signal(signal.SIGTERM, lambda *a, **k: (shutdown_systems(*a, **k), sys.exit(0)))
-    signal.signal(signal.SIGINT, lambda *a, **k: (shutdown_systems(*a, **k), sys.exit(0)))
+
+    def handle_shutdown_signal(signum, frame) -> None:
+        logger.info(f"Received shutdown signal: {signum}")
+        shutdown_systems()
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, handle_shutdown_signal)
+    signal.signal(signal.SIGINT, handle_shutdown_signal)
 
     logger.info("🚀 Application factory setup complete.")
     return app
+
 
 def register_cli_commands(app: Flask, consensus: 'Consensus') -> None:
     @app.cli.command('init-db')
@@ -185,7 +192,7 @@ def register_cli_commands(app: Flask, consensus: 'Consensus') -> None:
                 if db_path and os.path.exists(db_path):
                     try:
                         db.session.remove()
-                        if db.engine:
+                        if hasattr(db, 'engine') and db.engine:
                             db.engine.dispose()
                             logger.debug("Disposed SQLAlchemy engine to release DB file lock.")
                         os.remove(db_path)
@@ -206,7 +213,8 @@ def register_cli_commands(app: Flask, consensus: 'Consensus') -> None:
     def create_genesis_block_command() -> None:
         with app.app_context():
             try:
-                consensus._create_genesis_block_if_needed()
+                # Use public method on Consensus instead of private
+                consensus.create_genesis_block_if_needed()
                 click.secho("✅ Genesis block creation checked/completed.", fg='green')
             except Exception as e:
                 click.secho(f"❌ Failed to create genesis block: {e}", fg='red')
