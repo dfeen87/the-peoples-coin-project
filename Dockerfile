@@ -9,7 +9,8 @@ ENV FLASK_ENV=production
 # Create non-root user and group
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-WORKDIR /app
+# Set working directory to /app/src where your 'peoples_coin' package is
+WORKDIR /app/src
 
 # Install build dependencies and runtime dependencies
 RUN apk update && apk add --no-cache \
@@ -23,16 +24,16 @@ RUN apk update && apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 # Copy only requirements first to leverage Docker cache
-COPY requirements.txt .
+COPY requirements.txt /app/src/
 
 # Upgrade pip and install Python dependencies
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application source code
-COPY . .
+# Copy application source code into /app (so src is here)
+COPY . /app
 
-# Change ownership to the non-root user
+# Change ownership to the non-root user for the entire /app directory
 RUN chown -R appuser:appgroup /app
 
 # Switch to non-root user
