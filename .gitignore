@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
+=======
+k# Ignore Python bytecode files
+*.pyc
+>>>>>>> a6880b9 (Add peoples-coin folder contents to main repo)
 __pycache__/
 *.pyc
 *.pyo
@@ -9,8 +14,20 @@ venv/
 .venv/
 env/
 
+<<<<<<< HEAD
 # Flask instance folder (contains databases, logs, config)
 instance/
+=======
+# Ignore instance folder (local config, databases)
+instance/
+
+# Ignore environment variable files
+.env
+
+# IDE files (for VS Code, JetBrains, etc.)
+.idea/
+.vscode/
+>>>>>>> a6880b9 (Add peoples-coin folder contents to main repo)
 
 # Logs
 *.log
