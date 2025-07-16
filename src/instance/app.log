@@ -7700,3 +7700,28 @@ AttributeError: 'ImmuneSystem' object has no attribute 'stop_cleaner'. Did you m
 2025-07-16 13:19:31 [INFO] alembic.runtime.migration: Context impl SQLiteImpl.
 2025-07-16 13:19:31 [INFO] alembic.runtime.migration: Will assume non-transactional DDL.
 2025-07-16 13:19:31 [ERROR] alembic.util.messaging: Can't locate revision identified by '90e53ab6e209'
+2025-07-16 13:58:22 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-16 13:58:22 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/instance/peoples_coin.db
+2025-07-16 13:58:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem: Connected to Redis.
+2025-07-16 13:58:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-16 13:58:22 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.
+2025-07-16 13:58:22 [INFO] cognitive_system: ☁️ Google Cloud Firestore client initialized.
+2025-07-16 13:58:22 [INFO] cognitive_system: 🧠 Cognitive System initialized and ready to start.
+2025-07-16 13:58:22 [INFO] peoples_coin.systems.circulatory_system: 🫀 CirculatorySystem initialized and configured.
+2025-07-16 13:58:22 [INFO] peoples_coin.systems.endocrine_system: 🧠 EndocrineSystem initialized: 2 workers, loop delay 5s.
+2025-07-16 13:58:22 [INFO] peoples_coin: All systems initialized.
+2025-07-16 13:58:22 [INFO] peoples_coin: All blueprints registered.
+2025-07-16 13:58:22 [INFO] peoples_coin.consensus: ✅ Consensus instance created.
+2025-07-16 13:58:22 [INFO] peoples_coin.consensus: 🚀 Consensus initialized with difficulty: 0000
+2025-07-16 13:58:22 [INFO] peoples_coin: Consensus system initialized.
+2025-07-16 13:58:22 [INFO] peoples_coin: Celery initialized and attached to app.extensions.
+2025-07-16 13:58:22 [INFO] peoples_coin: 🚀 Application factory setup complete.
+2025-07-16 13:59:08 [INFO] peoples_coin: Initiating graceful shutdown of background systems...
+2025-07-16 13:59:08 [INFO] peoples_coin.systems.endocrine_system: ⏹️ Stopping all worker threads...
+2025-07-16 13:59:08 [INFO] peoples_coin.systems.endocrine_system: 🧵 All worker threads stopped gracefully.
+2025-07-16 13:59:08 [ERROR] peoples_coin: Error stopping immune_system cleaner: 'ImmuneSystem' object has no attribute 'stop_cleaner'
+Traceback (most recent call last):
+  File "/Users/donfeeney/the-peoples-coin-project/src/peoples_coin/__init__.py", line 148, in shutdown_systems
+    immune_system.stop_cleaner()  # Verify this method name matches your immune_system's shutdown method
+AttributeError: 'ImmuneSystem' object has no attribute 'stop_cleaner'
+2025-07-16 13:59:08 [INFO] peoples_coin: ✅ All background systems shut down successfully.

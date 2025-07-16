@@ -48,3 +48,4 @@ node_modules/
 # Migrations folder (optional — uncomment if you don’t want to track migrations)
 # migrations/
 
+src/peoples_coin_backup/
