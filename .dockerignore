@@ -1,0 +1,26 @@
+# Ignore Python cache files
+__pycache__
+*.pyc
+*.pyo
+
+# Ignore virtual environment folders
+venv/
+.env
+
+# Ignore Git files
+.git
+.gitignore
+
+# Ignore node modules (if your frontend is in the same repo)
+node_modules/
+
+# Ignore Dockerfile, docker-compose files if you want
+Dockerfile
+docker-compose.yml
+
+# Ignore logs and build artifacts
+*.log
+build/
+dist/
+*.egg-info/
+
