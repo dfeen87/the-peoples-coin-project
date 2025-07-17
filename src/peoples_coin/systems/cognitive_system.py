@@ -10,8 +10,8 @@ from typing import Optional, Dict
 from flask import Blueprint, request, jsonify, Flask, Response
 import http
 
-from ..db.db_utils import get_session_scope
-from ..db.models import EventLog
+from peoples_coin.db.db_utils import get_session_scope
+from peoples_coin.db.models import EventLog
 
 try:
     import pika
@@ -179,4 +179,3 @@ def cognitive_event() -> tuple[Response, int]:
 
 # Singleton instance of CognitiveSystem
 cognitive_system = CognitiveSystem()
-

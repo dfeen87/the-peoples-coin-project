@@ -3,10 +3,10 @@ import json
 import http
 from flask import Blueprint, request, jsonify, Response
 
-from ..extensions import immune_system, cognitive_system, db
-from ..db.db_utils import get_session_scope
-from ..db.models import DataEntry, EventLog
-from ..validation import validate_transaction
+from peoples_coin.extensions import immune_system, cognitive_system, db
+from peoples_coin.db.db_utils import get_session_scope
+from peoples_coin.db.models import DataEntry, EventLog
+from peoples_coin.validation import validate_transaction
 
 logger = logging.getLogger(__name__)
 
@@ -126,4 +126,3 @@ def process_data() -> tuple[Response, int]:
             KEY_STATUS: "error",
             KEY_ERROR: "Processing failed due to an internal error"
         }), http.HTTPStatus.INTERNAL_SERVER_ERROR
-

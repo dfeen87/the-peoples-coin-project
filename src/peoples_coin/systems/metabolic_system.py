@@ -7,8 +7,8 @@ from typing import Any, Dict, Optional, Tuple
 from flask import Blueprint, request, jsonify, Response
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
-from ..db.db_utils import get_session_scope
-from ..db.models import GoodwillAction
+from peoples_coin.db.db_utils import get_session_scope
+from peoples_coin.db.models import GoodwillAction
 from peoples_coin.validation.validate_transaction import validate_transaction
 from peoples_coin.extensions import db
 
@@ -125,4 +125,3 @@ def submit_goodwill() -> Tuple[Response, int]:
     except Exception as e:
         logger.exception(f"💥 Unexpected error during goodwill submission.")
         return jsonify(status="error", error="Internal server error", details=str(e)), http.HTTPStatus.INTERNAL_SERVER_ERROR
-

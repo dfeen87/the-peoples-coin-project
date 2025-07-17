@@ -221,4 +221,3 @@ class ImmuneSystem:
 
 # Singleton instance
 immune_system = ImmuneSystem()
-

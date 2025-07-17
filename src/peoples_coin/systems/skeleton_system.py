@@ -203,4 +203,3 @@ if __name__ == "__main__":
     use_reloader = app.config["DEBUG"]
     logger.info(f"Skeleton System API running on http://0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port, use_reloader=use_reloader)
-

@@ -5,10 +5,10 @@ from typing import Optional
 
 from flask import Flask
 
-from ..extensions import db
-from ..db.db_utils import get_session_scope, retry_db_operation
-from ..db.models import GoodwillAction
-from ..config import Config
+from peoples_coin.extensions import db
+from peoples_coin.db.db_utils import get_session_scope, retry_db_operation
+from peoples_coin.db.models import GoodwillAction
+from peoples_coin.config import Config
 
 # If Celery is enabled
 try:
@@ -170,4 +170,3 @@ class EndocrineSystem:
 
 # Singleton instance
 endocrine_system = EndocrineSystem()
-

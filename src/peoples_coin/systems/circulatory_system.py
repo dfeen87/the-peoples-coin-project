@@ -6,8 +6,8 @@ from typing import Tuple, Optional
 
 from flask import Flask
 
-from ..db.db_utils import get_session_scope
-from ..db.models import GoodwillAction, UserAccount
+from peoples_coin.db.db_utils import get_session_scope
+from peoples_coin.db.models import GoodwillAction, UserAccount
 
 logger = logging.getLogger(__name__)
 
@@ -137,4 +137,3 @@ class CirculatorySystem:
 
 # Singleton instance
 circulatory_system = CirculatorySystem()
-
