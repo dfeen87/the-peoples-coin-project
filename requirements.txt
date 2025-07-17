@@ -25,3 +25,4 @@ celery>=5.3
 # Optional for Google Cloud Firestore integration
 google-cloud-firestore>=2.14
 
+cryptography
