@@ -3,48 +3,28 @@ import time
 import threading
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional, Callable, Dict, Any
-import uuid # For UUID if needed
+from typing import Optional
+from flask import Flask
 
-from flask import request, jsonify, Flask, g
-
-try:
-    from redis import Redis, exceptions as RedisExceptions
-except ImportError:
-    Redis = None
-    RedisExceptions = None
-
-# Import the CirculatorySystem instance
-from peoples_coin.systems.circulatory_system import circulatory_system
 from peoples_coin.db.db_utils import get_session_scope, retry_db_operation
-from peoples_coin.db.models import GoodwillAction # Ensure GoodwillAction is imported
-from peoples_coin.config import Config # Ensure Config is imported
+from peoples_coin.db.models import GoodwillAction
+from peoples_coin.config import Config
 
-# If Celery is enabled
+# 👇 NEW import
+from peoples_coin.ai_processor.processor import process_goodwill_action
+
 try:
-    from peoples_coin.ailee.ailee_and_love import process_goodwill_action_task # This task will now call circulatory_system
+    from peoples_coin.ailee.ailee_and_love import process_goodwill_action_task
 except ImportError:
     process_goodwill_action_task = None
 
 logger = logging.getLogger(__name__)
 
 
-"""
-🩺 EndocrineSystem: Background worker to process GoodwillActions.
-
-📌 By default, this runs autonomously in worker threads inside your Flask app.
-📌 If you set `USE_CELERY_FOR_GOODWILL = True` in your Config,
-    the workers will delegate to Celery tasks instead (requires a running Celery worker & broker).
-
-Current default: USE_CELERY_FOR_GOODWILL = False
-"""
-
-
 class EndocrineSystem:
     """
-    The Endocrine System. Multi-threaded background worker controller.
-    Responsible for picking up VERIFIED GoodwillActions and passing them
-    to the CirculatorySystem for on-chain minting.
+    Endocrine System. Multi-threaded worker controller.
+    Picks up VERIFIED GoodwillActions and passes them to the AI processor.
     """
 
     def __init__(self):
@@ -63,11 +43,9 @@ class EndocrineSystem:
         self.loop_delay = loop_delay
         self.max_workers = max_workers
 
-        # Ensure Celery task is available if configured to use Celery
         if app.config.get("USE_CELERY_FOR_GOODWILL", False) and not process_goodwill_action_task:
             raise RuntimeError(
-                "USE_CELERY_FOR_GOODWILL is True but Celery task is not available. "
-                "Check your Celery setup or set USE_CELERY_FOR_GOODWILL = False."
+                "USE_CELERY_FOR_GOODWILL is True but Celery task is not available."
             )
 
         self.executor = ThreadPoolExecutor(
@@ -109,15 +87,15 @@ class EndocrineSystem:
         thread_name = threading.current_thread().name
         logger.info(f"[{thread_name}] 🧵 Worker thread started.")
 
-        with self.app.app_context(): # Ensure app context for DB operations
+        with self.app.app_context():
             while not self._stop_event.is_set():
                 try:
                     processed_count = self._process_goodwill_actions_batch()
                     if processed_count == 0:
-                        self._stop_event.wait(self.loop_delay) # Wait if no actions processed
+                        self._stop_event.wait(self.loop_delay)
                 except Exception as e:
                     logger.error(f"[{thread_name}] 💥 Unrecoverable error in worker loop: {e}", exc_info=True)
-                    self._stop_event.wait(self.loop_delay * 5) # Longer wait on error
+                    self._stop_event.wait(self.loop_delay * 5)
 
         logger.info(f"[{thread_name}] 💤 Worker thread exiting.")
 
@@ -127,11 +105,10 @@ class EndocrineSystem:
 
         def db_op():
             processed_count = 0
-            with get_session_scope(db) as session:
-                # Query for GoodwillActions that are VERIFIED and ready for minting
+            with get_session_scope(self.app.extensions['sqlalchemy'].db) as session:
                 actions = (
                     session.query(GoodwillAction)
-                    .filter_by(status='VERIFIED') # Only process VERIFIED actions
+                    .filter_by(status='VERIFIED')
                     .limit(self.app.config.get("AILEE_BATCH_SIZE", 5))
                     .all()
                 )
@@ -145,34 +122,25 @@ class EndocrineSystem:
                 for action in actions:
                     try:
                         if use_celery:
-                            # If using Celery, dispatch the action ID to a Celery task
-                            # This task will then call circulatory_system.process_goodwill_for_minting
-                            if process_goodwill_action_task: # Ensure task is imported
-                                process_goodwill_action_task.delay(str(action.id)) # Pass UUID as string
+                            if process_goodwill_action_task:
+                                process_goodwill_action_task.delay(str(action.id))
                                 logger.debug(f"[{thread_name}] 📨 Dispatched to Celery: GoodwillAction ID: {action.id}")
-                                # Status will be updated by the Celery task after processing by CirculatorySystem
                             else:
                                 logger.error(f"[{thread_name}] Celery task not available despite USE_CELERY_FOR_GOODWILL=True.")
-                                action.status = 'FAILED_DISPATCH' # New status for dispatch failure
+                                action.status = 'FAILED_DISPATCH'
                                 session.add(action)
                         else:
-                            # If not using Celery, process directly within this thread
-                            # Call the CirculatorySystem directly for minting
-                            success, msg = circulatory_system.process_goodwill_for_minting(action.id)
+                            success = process_goodwill_action(action.id, self.app.extensions['sqlalchemy'].db, self.app.config)
                             if success:
-                                logger.debug(f"[{thread_name}] ✅ Processed GoodwillAction ID: {action.id} (in-app). Message: {msg}")
-                                # Status is updated by circulatory_system.process_goodwill_for_minting
+                                logger.info(f"[{thread_name}] ✅ Processed GoodwillAction {action.id}")
                             else:
-                                logger.error(f"[{thread_name}] ❌ Failed to process GoodwillAction ID {action.id} (in-app). Message: {msg}")
-                                # Status is updated by circulatory_system.process_goodwill_for_minting
+                                logger.error(f"[{thread_name}] ❌ Failed to process GoodwillAction {action.id}")
                         
                         processed_count += 1
 
                     except Exception as e:
                         logger.error(f"[{thread_name}] ❌ Failed to process ID {action.id} in batch: {e}", exc_info=True)
-                        # If an error occurs here, it might be before circulatory_system updates status
-                        # So, set to a generic failed state or ensure circulatory_system handles all failures
-                        action.status = 'FAILED_ENDOCRINE_BATCH' 
+                        action.status = 'FAILED_ENDOCRINE_BATCH'
                         session.add(action)
 
             return processed_count
@@ -197,3 +165,4 @@ class EndocrineSystem:
 
 # Singleton instance
 endocrine_system = EndocrineSystem()
+
