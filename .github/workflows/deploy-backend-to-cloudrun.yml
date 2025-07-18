@@ -61,3 +61,6 @@ jobs:
           region: 'us-central1' # Your Cloud Run region
           allow-unauthenticated: true # Or adjust authentication as needed
           # Add other Cloud Run specific configurations if necessary
+
+
+ 
