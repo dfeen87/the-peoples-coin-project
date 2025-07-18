@@ -1,26 +1,46 @@
-# Python bytecode
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environment folders
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
 venv/
 .venv/
 env/
+ENV/
 
-# Flask instance folder (local config, databases)
+# Flask instance folder (local configs, databases)
 instance/
 
-# Environment variable files
+# Environment variables
 .env
 .env.*
 
 # Logs
 *.log
-# Uncomment below if you want to ignore all logs including app.log
-# app.log
+app.log
 
-# IDE/editor folders (VS Code, JetBrains, etc.)
+# IDE/editor folders
 .idea/
 .vscode/
 
@@ -38,14 +58,32 @@ Thumbs.db
 *.bak
 dump.rdb
 
-# Node modules (if you have frontend JS)
+# Node.js modules (for your frontend)
 node_modules/
 
 # Testing and coverage
 .coverage
 .pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
 
-# Migrations folder (optional — uncomment if you don’t want to track migrations)
-# migrations/
+# Migrations (keep tracked — uncomment if you want to ignore)
+#migrations/
 
+# Flutter build outputs
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.flutter-plugins
+
+# Backup folders (ignored)
 src/peoples_coin_backup/
+
+# Miscellaneous
+*.swp
+*.swo
+
