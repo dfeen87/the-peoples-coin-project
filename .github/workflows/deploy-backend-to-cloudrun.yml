@@ -29,8 +29,7 @@ jobs:
           # REPLACE 'your-github-actions-sa@heroic-tide-428421-q7.iam.gserviceaccount.com'
           # with the email of the Service Account you created for GitHub Actions
           # This SA needs 'Artifact Registry Writer' and 'Cloud Run Developer' roles.
-          service_account: 'your-github-actions-sa@heroic-tide-428421-q7.iam.gserviceaccount.com' # <--- FILL IN YOUR SERVICE ACCOUNT EMAIL HERE
-
+        service_account: 'github-actions-sa@heroic-tide-428421-q7.iam.gserviceaccount.com'
       # Set up Docker Buildx (for building multi-platform images if needed, good practice)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
