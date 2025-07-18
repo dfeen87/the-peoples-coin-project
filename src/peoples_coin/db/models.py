@@ -4,9 +4,10 @@ from decimal import Decimal
 import uuid
 
 from sqlalchemy.orm import Query, relationship
-from sqlalchemy import event, Column, String, Boolean, DateTime, ForeignKey, Integer, Float, Text, Numeric, JSON
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID # Use specific PostgreSQL UUID type
-from sqlalchemy.dialects.postgresql import JSONB # Use specific PostgreSQL JSONB type
+from sqlalchemy import event, Column, String, Boolean, DateTime, ForeignKey, Integer, Float, Text, Numeric
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.types import BigInteger # Import BigInteger for block_number
 
 from peoples_coin.extensions import db
 
@@ -45,7 +46,6 @@ class SoftDeleteQuery(Query):
             if mapper is None:
                 return None
             pk = mapper.primary_key[0]
-            # Ensure the correct type for UUID comparison if PK is UUID
             if isinstance(ident, str) and isinstance(pk.type, PG_UUID):
                 ident = uuid.UUID(ident)
             return self.filter(pk == ident, self._only_not_deleted()).one_or_none()
@@ -76,7 +76,6 @@ class BaseModel(db.Model):
     query_class = SoftDeleteQuery
     query: SoftDeleteQuery = db.session.query_property(query_cls=SoftDeleteQuery)
 
-    # Use UUID as default primary key type across models for consistency
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     def __repr__(self):
@@ -114,7 +113,7 @@ class DataEntry(BaseModel, TimestampMixin, SoftDeleteMixin):
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            'id': str(self.id), # Convert UUID to string for JSON serialization
+            'id': str(self.id),
             'value': self.value,
             'processed': self.processed,
             'created_at': self.created_at.isoformat(),
@@ -127,28 +126,33 @@ class DataEntry(BaseModel, TimestampMixin, SoftDeleteMixin):
 
 
 class UserAccount(BaseModel, TimestampMixin, SoftDeleteMixin):
-    __tablename__ = 'users' # Renamed table for clarity
+    __tablename__ = 'users'
 
-    # Changed from String(255) to PG_UUID(as_uuid=True) for consistency, but
-    # if Firebase UID is a string, keep it as String(128)
-    # user_id = Column(String(255), unique=True, nullable=False, index=True) # Old column
-    firebase_uid = Column(String(128), unique=True, nullable=False, index=True) # Use this for Firebase UID
-
-    balance = Column(Numeric(precision=20, scale=8), default=Decimal('0.0'), nullable=False) # Increased precision for 'loves'
+    firebase_uid = Column(String(128), unique=True, nullable=False, index=True)
+    balance = Column(Numeric(precision=20, scale=8), default=Decimal('0.0'), nullable=False)
+    is_premium = Column(Boolean, default=False, nullable=False) # Added for frontend features
 
     # Relationships
     goodwill_actions = relationship("GoodwillAction", back_populates="user_account", lazy='dynamic',
-                                    primaryjoin="UserAccount.id == GoodwillAction.performer_user_id") # Updated relationship link
+                                    primaryjoin="UserAccount.id == GoodwillAction.performer_user_id")
     api_keys = relationship("ApiKey", back_populates="user_account", cascade="all, delete-orphan",
-                            primaryjoin="UserAccount.id == ApiKey.user_id") # Updated relationship link
+                            primaryjoin="UserAccount.id == ApiKey.user_id")
     user_wallets = relationship("UserWallet", back_populates="user_account", lazy='dynamic', cascade="all, delete-orphan",
-                                primaryjoin="UserAccount.id == UserWallet.user_id") # New relationship
+                                primaryjoin="UserAccount.id == UserWallet.user_id")
+    proposals = relationship("Proposal", back_populates="proposer", lazy='dynamic',
+                             primaryjoin="UserAccount.id == Proposal.proposer_user_id") # New relationship
+    votes = relationship("Vote", back_populates="voter", lazy='dynamic',
+                         primaryjoin="UserAccount.id == Vote.voter_user_id") # New relationship
+    council_memberships = relationship("CouncilMember", back_populates="user_account", lazy='dynamic',
+                                       primaryjoin="UserAccount.id == CouncilMember.user_id") # New relationship
+
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "id": str(self.id), # Convert UUID to string
+            "id": str(self.id),
             "firebase_uid": self.firebase_uid,
             "balance": str(self.balance),
+            "is_premium": self.is_premium,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
@@ -158,15 +162,15 @@ class UserAccount(BaseModel, TimestampMixin, SoftDeleteMixin):
         return f"<UserAccount id={self.id} firebase_uid={self.firebase_uid} balance={self.balance}>"
 
 
-class UserWallet(BaseModel, TimestampMixin): # New UserWallet model
+class UserWallet(BaseModel, TimestampMixin):
     __tablename__ = 'user_wallets'
 
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True) # Foreign Key to UserAccount.id
-    public_address = Column(String(42), unique=True, nullable=False) # Ethereum address format
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
+    public_address = Column(String(42), unique=True, nullable=False)
     blockchain_network = Column(String(50), nullable=False, default='Ethereum Mainnet')
     is_primary = Column(Boolean, default=False, nullable=False)
 
-    user_account = relationship("UserAccount", back_populates="user_wallets") # Relationship back to UserAccount
+    user_account = relationship("UserAccount", back_populates="user_wallets")
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -183,36 +187,34 @@ class UserWallet(BaseModel, TimestampMixin): # New UserWallet model
         return f"<UserWallet id={self.id} public_address={self.public_address}>"
 
 
-class GoodwillAction(BaseModel, TimestampMixin, SoftDeleteMixin): # Added TimestampMixin
+class GoodwillAction(BaseModel, TimestampMixin, SoftDeleteMixin):
     __tablename__ = 'goodwill_actions'
     __table_args__ = (
         db.Index('idx_goodwill_status', 'status'),
-        db.Index('idx_goodwill_performer', 'performer_user_id'), # New index
+        db.Index('idx_goodwill_performer', 'performer_user_id'),
         {'extend_existing': True},
     )
 
-    performer_user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True) # FK to users.id
+    performer_user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
     action_type = Column(String(100), nullable=False)
     description = Column(Text, nullable=False)
-    # timestamp = Column(DateTime(timezone=True), default=utcnow, nullable=False) # Replaced by created_at from TimestampMixin
-    contextual_data = Column(JSONB, default={}) # Use JSONB, default to empty dict
-    loves_value = Column(Integer, default=0, nullable=False) # Renamed raw_goodwill_score, now directly the 'loves' score
+    contextual_data = Column(JSONB, default={})
+    loves_value = Column(Integer, default=0, nullable=False)
     resonance_score = Column(Float, nullable=True)
 
     initial_model_state_v0 = Column(Float, nullable=True)
     expected_workload_intensity_w0 = Column(Float, nullable=True)
     client_compute_estimate = Column(Float, nullable=True)
 
-    status = Column(String(50), default='PENDING_VERIFICATION', nullable=False) # More descriptive initial status
+    status = Column(String(50), default='PENDING_VERIFICATION', nullable=False)
     processed_at = Column(DateTime(timezone=True), nullable=True)
-    blockchain_tx_hash = Column(String(66), nullable=True, unique=True) # Renamed minted_token_id, 66 chars for hex hash
+    blockchain_tx_hash = Column(String(66), nullable=True, unique=True)
 
     correlation_id = Column(String(255), nullable=True)
 
     user_account = relationship("UserAccount", back_populates="goodwill_actions", lazy='joined',
-                                primaryjoin="GoodwillAction.performer_user_id == UserAccount.id") # Updated relationship link
+                                primaryjoin="GoodwillAction.performer_user_id == UserAccount.id")
 
-    # Method to update status to "ISSUED_ON_CHAIN" and link to ledger_entry
     def mark_issued_on_chain(self, tx_hash: str) -> None:
         self.status = 'ISSUED_ON_CHAIN'
         self.blockchain_tx_hash = tx_hash
@@ -221,7 +223,7 @@ class GoodwillAction(BaseModel, TimestampMixin, SoftDeleteMixin): # Added Timest
     def to_dict(self) -> Dict[str, Any]:
         return {
             "id": str(self.id),
-            "performer_user_id": str(self.performer_user_id), # Convert UUID to string
+            "performer_user_id": str(self.performer_user_id),
             "action_type": self.action_type,
             "description": self.description,
             "created_at": self.created_at.isoformat(),
@@ -245,29 +247,28 @@ class GoodwillAction(BaseModel, TimestampMixin, SoftDeleteMixin): # Added Timest
         )
 
 
-class LedgerEntry(BaseModel, TimestampMixin): # New LedgerEntry model
+class LedgerEntry(BaseModel, TimestampMixin):
     __tablename__ = 'ledger_entries'
     __table_args__ = (
         db.Index('idx_ledger_tx_hash', 'blockchain_tx_hash'),
-        db.Index('idx_ledger_block_time', 'block_timestamp', postgresql_using='btree'), # For faster range queries
-        db.Index('idx_ledger_sender_receiver', 'sender_address', 'receiver_address'), # For faster address searches
+        db.Index('idx_ledger_block_time', 'block_timestamp', postgresql_using='btree'),
+        db.Index('idx_ledger_sender_receiver', 'sender_address', 'receiver_address'),
         {'extend_existing': True},
     )
 
-    blockchain_tx_hash = Column(String(66), unique=True, nullable=False, index=True) # CRITICAL: Hash of the actual transaction on the blockchain
-    goodwill_action_id = Column(PG_UUID(as_uuid=True), ForeignKey('goodwill_actions.id'), nullable=True, unique=True, index=True) # Link to goodwill_actions
+    blockchain_tx_hash = Column(String(66), unique=True, nullable=False, index=True)
+    goodwill_action_id = Column(PG_UUID(as_uuid=True), ForeignKey('goodwill_actions.id'), nullable=True, unique=True, index=True)
 
-    transaction_type = Column(String(50), nullable=False) # 'MINT_GOODWILL', 'TRANSFER_GOODWILL', 'BURN_GOODWILL', etc.
+    transaction_type = Column(String(50), nullable=False)
     amount = Column(Numeric(precision=20, scale=8), nullable=False)
     token_symbol = Column(String(10), nullable=False, default='GOODWILL')
-    sender_address = Column(String(42), nullable=False) # Ethereum address format
-    receiver_address = Column(String(42), nullable=False) # Ethereum address format
-    block_number = Column(BigInteger, nullable=False) # Use BigInteger for block numbers
-    block_timestamp = Column(DateTime(timezone=True), nullable=False) # Timestamp from blockchain block
-    status = Column(String(20), nullable=False, default='CONFIRMED') # 'CONFIRMED', 'PENDING' (if tracking pre-mined)
-    metadata = Column(JSONB) # Additional flexible data for the ledger entry
+    sender_address = Column(String(42), nullable=False)
+    receiver_address = Column(String(42), nullable=False)
+    block_number = Column(BigInteger, nullable=False)
+    block_timestamp = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String(20), nullable=False, default='CONFIRMED')
+    metadata = Column(JSONB)
 
-    # Optional: Link to your internal users if the transaction relates to an app user
     initiator_user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=True, index=True)
     receiver_user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=True, index=True)
 
@@ -301,7 +302,7 @@ class LedgerEntry(BaseModel, TimestampMixin): # New LedgerEntry model
         return f"<LedgerEntry id={self.id} tx_hash={self.blockchain_tx_hash[:8]}... type={self.transaction_type}>"
 
 
-class EventLog(BaseModel, TimestampMixin): # Added TimestampMixin
+class EventLog(BaseModel, TimestampMixin):
     __tablename__ = 'event_logs'
     __table_args__ = (
         db.Index('idx_event_type_timestamp', 'event_type', 'timestamp'),
@@ -310,14 +311,13 @@ class EventLog(BaseModel, TimestampMixin): # Added TimestampMixin
 
     event_type = Column(String(64), nullable=False, index=True)
     message = Column(Text, nullable=False)
-    # timestamp = Column(DateTime(timezone=True), default=utcnow, nullable=False) # Replaced by created_at
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "id": str(self.id),
             "event_type": self.event_type,
             "message": self.message,
-            "timestamp": self.created_at.isoformat(), # Use created_at
+            "timestamp": self.created_at.isoformat(),
         }
 
     def __repr__(self) -> str:
@@ -328,19 +328,17 @@ class EventLog(BaseModel, TimestampMixin): # Added TimestampMixin
 # 5. Consensus System Models
 # ==============================================================================
 
-class ConsensusNode(BaseModel, TimestampMixin): # Added TimestampMixin
+class ConsensusNode(BaseModel, TimestampMixin):
     __tablename__ = 'consensus_nodes'
     __table_args__ = {'extend_existing': True}
 
-    # id = Column(String(255), primary_key=True) # Changed from String to UUID
     address = Column(String(255), unique=True, nullable=False)
-    # registered_at = Column(DateTime(timezone=True), default=utcnow) # Replaced by created_at
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "id": str(self.id),
             "address": self.address,
-            "registered_at": self.created_at.isoformat(), # Use created_at
+            "registered_at": self.created_at.isoformat(),
         }
 
     def __repr__(self) -> str:
@@ -351,17 +349,15 @@ class ChainBlock(BaseModel):
     __tablename__ = 'chain_blocks'
     __table_args__ = {'extend_existing': True}
 
-    # Removed id=Column(Integer, ...) as BaseModel now defines UUID id
-    block_number = Column(Integer, unique=True, nullable=False, index=True) # Unique identifier for the block
-    timestamp = Column(DateTime(timezone=True), nullable=False) # Use DateTime, not Float for timestamps
+    block_number = Column(Integer, unique=True, nullable=False, index=True)
+    timestamp = Column(DateTime(timezone=True), nullable=False)
     previous_hash = Column(String(64), nullable=False)
     nonce = Column(Integer, default=0, nullable=False)
     hash = Column(String(64), unique=True, nullable=False, index=True)
-    # transactions = Column(JSON, nullable=False) # REMOVED: Transactions now go into LedgerEntry table
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "id": str(self.id), # Convert UUID to string
+            "id": str(self.id),
             "block_number": self.block_number,
             "timestamp": self.timestamp.isoformat(),
             "previous_hash": self.previous_hash,
@@ -377,20 +373,125 @@ class ChainBlock(BaseModel):
 # 6. API Key Model for Authentication
 # ==============================================================================
 
-class ApiKey(BaseModel, TimestampMixin): # Added TimestampMixin
+class ApiKey(BaseModel, TimestampMixin):
     __tablename__ = "api_keys"
 
-    # id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4) # Already handled by BaseModel
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False) # FK to users.id
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     key = Column(String(64), unique=True, nullable=False, index=True)
-    # created_at = Column(DateTime, default=utcnow) # Replaced by TimestampMixin
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     revoked = Column(Boolean, default=False)
 
     user_account = relationship("UserAccount", back_populates="api_keys",
-                                primaryjoin="ApiKey.user_id == UserAccount.id") # Updated relationship link
+                                primaryjoin="ApiKey.user_id == UserAccount.id")
 
     def __repr__(self):
         return f"<ApiKey {self.key} user_id={self.user_id} revoked={self.revoked}>"
+
+
+# ==============================================================================
+# 7. Governance System Models (NEW)
+# ==============================================================================
+
+class Proposal(BaseModel, TimestampMixin, SoftDeleteMixin):
+    __tablename__ = 'proposals'
+
+    proposer_user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    status = Column(String(50), default='DRAFT', nullable=False) # e.g., DRAFT, VOTING, PASSED, FAILED, EXECUTED
+    vote_start_time = Column(DateTime(timezone=True), nullable=True)
+    vote_end_time = Column(DateTime(timezone=True), nullable=True)
+    required_quorum = Column(Numeric(precision=5, scale=2), default=Decimal('0.0'), nullable=False) # e.g., 0.50 for 50%
+    proposal_type = Column(String(100), nullable=False) # e.g., PROTOCOL_CHANGE, TREASURY_SPEND, COUNCIL_ELECTION
+    details = Column(JSONB) # Specific parameters for the proposal (e.g., new mint rate, recipient address)
+
+    proposer = relationship("UserAccount", back_populates="proposals", lazy='joined')
+    votes = relationship("Vote", back_populates="proposal", lazy='dynamic', cascade="all, delete-orphan")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": str(self.id),
+            "proposer_user_id": str(self.proposer_user_id),
+            "title": self.title,
+            "description": self.description,
+            "status": self.status,
+            "vote_start_time": self.vote_start_time.isoformat() if self.vote_start_time else None,
+            "vote_end_time": self.vote_end_time.isoformat() if self.vote_end_time else None,
+            "required_quorum": str(self.required_quorum),
+            "proposal_type": self.proposal_type,
+            "details": self.details,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
+        }
+
+    def __repr__(self) -> str:
+        return f"<Proposal id={self.id} title='{self.title[:20]}...' status={self.status}>"
+
+
+class Vote(BaseModel, TimestampMixin):
+    __tablename__ = 'votes'
+    __table_args__ = (
+        db.UniqueConstraint('proposal_id', 'voter_user_id', name='_proposal_voter_uc'), # Ensure one vote per user per proposal
+        db.Index('idx_vote_proposal_voter', 'proposal_id', 'voter_user_id'),
+        {'extend_existing': True},
+    )
+
+    proposal_id = Column(PG_UUID(as_uuid=True), ForeignKey('proposals.id'), nullable=False, index=True)
+    voter_user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
+    vote_choice = Column(String(50), nullable=False) # e.g., 'YES', 'NO', 'ABSTAIN'
+    vote_weight = Column(Numeric(precision=20, scale=8), nullable=False) # Amount of token/power spent for quadratic voting
+    actual_vote_power = Column(Numeric(precision=20, scale=8), nullable=False) # Calculated power after quadratic logic
+
+    proposal = relationship("Proposal", back_populates="votes")
+    voter = relationship("UserAccount", back_populates="votes")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": str(self.id),
+            "proposal_id": str(self.proposal_id),
+            "voter_user_id": str(self.voter_user_id),
+            "vote_choice": self.vote_choice,
+            "vote_weight": str(self.vote_weight),
+            "actual_vote_power": str(self.actual_vote_power),
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }
+
+    def __repr__(self) -> str:
+        return f"<Vote id={self.id} proposal={self.proposal_id} voter={self.voter_user_id} choice={self.vote_choice}>"
+
+
+class CouncilMember(BaseModel, TimestampMixin, SoftDeleteMixin):
+    __tablename__ = 'council_members'
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'role', name='_user_role_uc'), # Ensure one role per user
+        {'extend_existing': True},
+    )
+
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
+    role = Column(String(100), nullable=False) # e.g., 'CORE_COUNCIL', 'TREASURY_COMMITTEE'
+    term_start_date = Column(DateTime(timezone=True), nullable=False)
+    term_end_date = Column(DateTime(timezone=True), nullable=True) # Nullable for indefinite terms
+    status = Column(String(50), default='ACTIVE', nullable=False) # e.g., ACTIVE, INACTIVE, SUSPENDED
+
+    user_account = relationship("UserAccount", back_populates="council_memberships")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": str(self.id),
+            "user_id": str(self.user_id),
+            "role": self.role,
+            "term_start_date": self.term_start_date.isoformat(),
+            "term_end_date": self.term_end_date.isoformat() if self.term_end_date else None,
+            "status": self.status,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
+        }
+
+    def __repr__(self) -> str:
+        return f"<CouncilMember id={self.id} user={self.user_id} role={self.role}>"
 
 
 # ==============================================================================
@@ -399,10 +500,9 @@ class ApiKey(BaseModel, TimestampMixin): # Added TimestampMixin
 
 @event.listens_for(GoodwillAction, "before_insert")
 def goodwill_before_insert(mapper, connection, target: GoodwillAction) -> None:
-    # Ensure loves_value is within 1-100 range before insert
     if not (1 <= target.loves_value <= 100):
         raise ValueError("Loves value must be between 1 and 100.")
-    if target.status not in ('PENDING_VERIFICATION', 'VERIFIED', 'ISSUED_ON_CHAIN', 'REJECTED'):
+    if target.status not in ('PENDING_VERIFICATION', 'VERIFIED', 'ISSUED_ON_CHAIN', 'FAILED_ON_CHAIN_MINT', 'FAILED_WALLET_MISSING', 'FAILED_DISPATCH', 'FAILED_ENDOCRINE_BATCH'): # Added new statuses
         target.status = 'PENDING_VERIFICATION'
 
 
@@ -411,3 +511,29 @@ def balance_set(target: UserAccount, value, oldvalue, initiator):
     if value is not None and value < 0:
         raise ValueError("UserAccount balance cannot be negative.")
     return value
+
+
+@event.listens_for(Proposal, "before_insert")
+def proposal_before_insert(mapper, connection, target: Proposal) -> None:
+    if target.status not in ('DRAFT', 'VOTING', 'PASSED', 'FAILED', 'EXECUTED'):
+        target.status = 'DRAFT'
+    if target.required_quorum is not None and not (0.0 <= target.required_quorum <= 1.0):
+        raise ValueError("Required quorum must be between 0.0 and 1.0.")
+
+
+@event.listens_for(Vote, "before_insert")
+def vote_before_insert(mapper, connection, target: Vote) -> None:
+    if target.vote_choice not in ('YES', 'NO', 'ABSTAIN'):
+        raise ValueError("Vote choice must be 'YES', 'NO', or 'ABSTAIN'.")
+    if target.vote_weight is not None and target.vote_weight < 0:
+        raise ValueError("Vote weight cannot be negative.")
+    if target.actual_vote_power is not None and target.actual_vote_power < 0:
+        raise ValueError("Actual vote power cannot be negative.")
+
+
+@event.listens_for(CouncilMember, "before_insert")
+def council_member_before_insert(mapper, connection, target: CouncilMember) -> None:
+    if target.status not in ('ACTIVE', 'INACTIVE', 'SUSPENDED'):
+        target.status = 'ACTIVE'
+    if target.term_start_date and target.term_end_date and target.term_start_date >= target.term_end_date:
+        raise ValueError("Term end date must be after term start date.")

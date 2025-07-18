@@ -4,12 +4,13 @@ import time
 import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Set
+import uuid # For temporary hash generation
 
 import requests
 from multiprocessing import Pool, cpu_count
 
 from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import ChainBlock, LedgerEntry # Import LedgerEntry
+from peoples_coin.db.models import ChainBlock, LedgerEntry # Ensure LedgerEntry is imported
 from peoples_coin.validation.validate_transaction import validate_transaction # For validating current_transactions
 
 logger = logging.getLogger(__name__)
@@ -103,6 +104,7 @@ class Consensus:
                 logger.info(f"📝 Processing {len(self.current_transactions)} transactions for Block {block.block_number}...")
                 for tx_data in self.current_transactions:
                     # Validate incoming transaction data first
+                    # This uses the TransactionModel schema we refined in validate_transaction.py
                     validation_result = validate_transaction(tx_data)
                     if not validation_result.is_valid:
                         logger.error(f"🚫 Invalid transaction found during block creation. Skipping. Details: {validation_result.errors}")
@@ -112,29 +114,20 @@ class Consensus:
                     validated_tx_data = validation_result.data # This is a Pydantic model_dump dict
                     
                     # Create LedgerEntry from validated data
-                    # This assumes tx_data already contains necessary fields like amount, sender, receiver
-                    # and that 'goodwill_action_id' (if applicable) is resolved externally or mapped here.
-                    # This also assumes blockchain_tx_hash is not yet available, will be updated by worker
-                    
-                    # For simplicity, we're assuming required fields for LedgerEntry are present in validated_tx_data
-                    # You might need more complex mapping based on your specific transaction types
+                    # Assuming blockchain_tx_hash will be updated later by event listener
                     ledger_entry = LedgerEntry(
-                        # Assuming blockchain_tx_hash will be updated later by event listener
-                        # For now, it might be derived from the transaction itself, or set to a temp ID
-                        blockchain_tx_hash=f"TEMP_HASH_{uuid.uuid4()}", # TEMPORARY, will be updated post-blockchain
-                        # If this is a goodwill issuance, link to the specific GoodwillAction
-                        # This would need to be passed in tx_data or resolved by GoodwillAction.id
-                        # goodwill_action_id=validated_tx_data.get('goodwill_action_id_uuid'), # Example: if schema has this
-                        transaction_type=validated_tx_data.get('action_type', 'UNKNOWN'), # Mapping from GoodwillActionSchema
-                        amount=validated_tx_data.get('loves_value', 0), # Mapping loves_value to amount
-                        token_symbol='GOODWILL', # Hardcoded for now
-                        sender_address=validated_tx_data.get('sender_address', 'UNKNOWN'), # Needs to be passed in initial tx_data
-                        receiver_address=validated_tx_data.get('receiver_address', 'UNKNOWN'), # Needs to be passed in initial tx_data
+                        blockchain_tx_hash=validated_tx_data.get('blockchain_tx_hash', f"TEMP_HASH_{uuid.uuid4()}"), # TEMPORARY, will be updated post-blockchain
+                        # goodwill_action_id would need to be passed in tx_data if it applies
+                        transaction_type=validated_tx_data.get('action_type', 'UNKNOWN'),
+                        amount=validated_tx_data.get('loves_value', 0),
+                        token_symbol='GOODWILL',
+                        sender_address=validated_tx_data.get('sender_address', 'UNKNOWN_SENDER'),
+                        receiver_address=validated_tx_data.get('receiver_address', 'UNKNOWN_RECEIVER'),
                         block_number=block.block_number,
-                        block_timestamp=block.timestamp, # Use block's timestamp
-                        status='PENDING_ON_CHAIN', # Status before actually being on chain
+                        block_timestamp=block.timestamp,
+                        status='PENDING_ON_CHAIN', # Status before actually being confirmed on chain
                         metadata=validated_tx_data.get('contextual_data', {}),
-                        # initiator_user_id and receiver_user_id would be looked up/resolved
+                        # initiator_user_id and receiver_user_id would be looked up/resolved from user_id in tx_data
                     )
                     session.add(ledger_entry)
                     logger.debug(f"  --> LedgerEntry created (temp hash: {ledger_entry.blockchain_tx_hash})")
@@ -178,8 +171,6 @@ class Consensus:
     def parallel_proof_of_work(self, last_proof: int) -> int:
         logger.info("⚡ Parallelizing proof of work…")
         with Pool(cpu_count()) as pool:
-            # Map a range of proofs to be checked in parallel
-            # We iterate a large range, but pool.terminate() will stop early if a proof is found
             for proof in pool.imap_unordered(self._check_proof, ((last_proof, i, self.difficulty) for i in range(1, 1_000_000_000))):
                 if proof is not None:
                     logger.info(f"💡 Parallel PoW found: {proof}")
@@ -286,7 +277,7 @@ class Consensus:
             logger.info("✅ Local chain replaced with better chain from network.")
             return True
 
-        logger.info("ℹ️ Local chain remains authoritative (no better chain found).")
+        logger.info("ℹ️ Local chain remains authoritative.")
         return False
 
     def get_chain_length(self) -> int:
@@ -336,8 +327,8 @@ class Consensus:
                             transaction_type=validated_tx_data.get('action_type', 'UNKNOWN'),
                             amount=validated_tx_data.get('loves_value', 0),
                             token_symbol='GOODWILL',
-                            sender_address=validated_tx_data.get('sender_address', 'UNKNOWN'),
-                            receiver_address=validated_tx_data.get('receiver_address', 'UNKNOWN'),
+                            sender_address=validated_tx_data.get('sender_address', 'UNKNOWN_SENDER'),
+                            receiver_address=validated_tx_data.get('receiver_address', 'UNKNOWN_RECEIVER'),
                             block_number=block.block_number,
                             block_timestamp=block.timestamp,
                             status='CONFIRMED', # Assuming imported transactions are confirmed
