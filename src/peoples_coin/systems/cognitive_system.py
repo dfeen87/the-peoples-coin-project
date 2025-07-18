@@ -11,7 +11,7 @@ from flask import Blueprint, request, jsonify, Flask, Response
 import http
 
 from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import EventLog
+from peoples_coin.db.models import EventLog # EventLog will be used here
 
 # Conditional imports for message queuing and Firestore
 try:
@@ -26,6 +26,7 @@ try:
     GCP_AVAILABLE = True
 except ImportError:
     firestore = None
+    firestore_client = None # Explicitly set to None
     GCP_AVAILABLE = False
 
 logger = logging.getLogger("cognitive_system")
@@ -54,14 +55,15 @@ class CognitiveSystem:
         self._initialize_firestore_client()
         self._initialized = True
         logger.info("🧠 Cognitive System initialized and ready to start.")
-        # Note: start_background_loop() should be called explicitly from run.py or app startup code
-        # For Cloud Run, consider separate worker services or Pub/Sub push subscriptions.
+        # Note: start_background_loop() should be called explicitly from run.py or app startup code.
+        # For Cloud Run, background loops should typically run in separate worker services.
 
     def _initialize_firestore_client(self):
         """Initializes Google Cloud Firestore client."""
         if GCP_AVAILABLE and not self.firestore_client:
             try:
                 # Ensure GOOGLE_APPLICATION_CREDENTIALS or default credentials are set up
+                # Service account running Cloud Run needs 'Cloud Datastore User' role at least.
                 self.firestore_client = firestore.Client()
                 logger.info("☁️ Google Cloud Firestore client initialized.")
             except Exception as e:
@@ -239,15 +241,15 @@ cognitive_bp = Blueprint('cognitive_bp', __name__, url_prefix="/api/v1/cognitive
 
 @cognitive_bp.route('/event', methods=['POST'])
 def cognitive_event() -> Tuple[Response, int]:
-    from ..extensions import cognitive_system # Import the singleton instance
-    event = request.get_json()
-    if not event or not isinstance(event, dict) or "type" not in event:
-        return jsonify({"error": "Event must be a JSON object with a 'type' field."}), http.HTTPStatus.BAD_REQUEST
-    
-    # Enqueue event for asynchronous processing by the CognitiveSystem's background loop
-    cognitive_system.enqueue_event(event)
-    logger.info(f"🧠 API: Event '{event.get('type')}' accepted for cognitive processing.")
-    return jsonify({"message": "Event accepted for processing."}), http.HTTPStatus.ACCEPTED
+    from ..extensions import cognitive_system # Import the singleton instance
+    event = request.get_json()
+    if not event or not isinstance(event, dict) or "type" not in event:
+        return jsonify({"error": "Event must be a JSON object with a 'type' field."}), http.HTTPStatus.BAD_REQUEST
+    
+    # Enqueue event for asynchronous processing by the CognitiveSystem's background loop
+    cognitive_system.enqueue_event(event)
+    logger.info(f"🧠 API: Event '{event.get('type')}' accepted for cognitive processing.")
+    return jsonify({"message": "Event accepted for processing."}), http.HTTPStatus.ACCEPTED
 
 # Singleton instance of CognitiveSystem
 cognitive_system = CognitiveSystem()
