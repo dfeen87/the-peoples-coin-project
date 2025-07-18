@@ -23,13 +23,12 @@ jobs:
         id: auth_gcp
         uses: 'google-github-actions/auth@v2'
         with:
-          # REPLACE 'YOUR_PROJECT_NUMBER' with your actual Google Cloud Project Number
-          # (Find it in GCP Console -> Project settings -> Project info -> Project number)
-          workload_identity_provider: 'projects/YOUR_PROJECT_NUMBER/locations/global/pools/default/providers/github'
-          # REPLACE 'your-github-actions-sa@your-project-id.iam.gserviceaccount.com'
+          # Your actual Google Cloud Project Number is 105378934751
+          workload_identity_provider: 'projects/105378934751/locations/global/pools/default/providers/github'
+          # REPLACE 'your-github-actions-sa@heroic-tide-428421-q7.iam.gserviceaccount.com'
           # with the email of the Service Account you created for GitHub Actions
           # This SA needs 'Artifact Registry Writer' and 'Cloud Run Developer' roles.
-          service_account: 'github-actions-sa@heroic-tide-428421-q7.iam.gserviceaccount.com'
+          service_account: 'github-actions-sa@heroic-tide-428421-q7.iam.gserviceaccount.com' # FILL IN YOUR SERVICE ACCOUNT EMAIL
 
       # Set up Docker Buildx (for building multi-platform images if needed, good practice)
       - name: Set up Docker Buildx
