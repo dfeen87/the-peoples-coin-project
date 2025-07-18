@@ -1,1 +1,0 @@
-# the-peoples-coin-project
