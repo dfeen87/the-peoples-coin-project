@@ -24,7 +24,7 @@ jobs:
         uses: 'google-github-actions/auth@v2'
         with:
           # Your actual Google Cloud Project Number is 105378934751
-          workload_identity_provider: 'projects/105378934751/locations/global/pools/default/providers/github'
+          workload_identity_provider: 'projects/105378934751/locations/global/pools/github-ci-pool/providers/github-actions'
           # REPLACE 'your-github-actions-sa@heroic-tide-428421-q7.iam.gserviceaccount.com'
           # with the email of the Service Account you created for GitHub Actions
           # This SA needs 'Artifact Registry Writer' and 'Cloud Run Developer' roles.
