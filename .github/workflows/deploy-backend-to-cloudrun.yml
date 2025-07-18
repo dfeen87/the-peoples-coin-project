@@ -1,4 +1,4 @@
-name: Deploy Backend to Cloud Run 
+name: Deploy Backend to Cloud Run
 
 on:
   push:
@@ -24,11 +24,12 @@ jobs:
         uses: 'google-github-actions/auth@v2'
         with:
           # Your actual Google Cloud Project Number is 105378934751
+          # This exact string is the Workload Identity Provider resource name you copied.
           workload_identity_provider: 'projects/105378934751/locations/global/pools/github-ci-pool/providers/github-actions'
           # REPLACE 'your-github-actions-sa@heroic-tide-428421-q7.iam.gserviceaccount.com'
           # with the email of the Service Account you created for GitHub Actions
           # This SA needs 'Artifact Registry Writer' and 'Cloud Run Developer' roles.
-          service_account: 'github-actions-sa@heroic-tide-428421-q7.iam.gserviceaccount.com' # FILL IN YOUR SERVICE ACCOUNT EMAIL
+          service_account: 'your-github-actions-sa@heroic-tide-428421-q7.iam.gserviceaccount.com' # <--- FILL IN YOUR SERVICE ACCOUNT EMAIL HERE
 
       # Set up Docker Buildx (for building multi-platform images if needed, good practice)
       - name: Set up Docker Buildx
@@ -61,6 +62,3 @@ jobs:
           region: 'us-central1' # Your Cloud Run region
           allow-unauthenticated: true # Or adjust authentication as needed
           # Add other Cloud Run specific configurations if necessary
-
-
- 
