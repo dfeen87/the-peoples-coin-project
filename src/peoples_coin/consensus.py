@@ -1,13 +1,11 @@
 import hashlib
 import json
-import time
 import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Set
-import uuid # For temporary hash generation
+import uuid # For temporary hash generation if needed
 
-import requests
-from multiprocessing import Pool, cpu_count
+import requests # Keep requests for node communication/conflict resolution
 
 from peoples_coin.db.db_utils import get_session_scope
 from peoples_coin.db.models import ChainBlock, LedgerEntry # Ensure LedgerEntry is imported
@@ -18,21 +16,20 @@ logger = logging.getLogger(__name__)
 
 class Consensus:
     """
-    Production-grade blockchain consensus mechanism:
+    Core blockchain consensus mechanism for your custom chain (no Proof of Work).
     - Persistent chain in DB (ChainBlock model)
-    - Proof of Work (parallelizable)
-    - Conflict resolution using total work
+    - Block creation based on accumulated transactions
+    - Conflict resolution using longest chain (no PoW work calculation)
     - Supports genesis block, validation, node registration
     """
 
     def __init__(self):
-        # Transactions temporarily held here before being added to a block and persisted as LedgerEntry
-        self.current_transactions: List[Dict[str, Any]] = [] 
+        self.current_transactions: List[Dict[str, Any]] = [] # Transactions temporarily held
         self.nodes: Set[str] = set()
-        self.difficulty: str = "0000" # Example difficulty
+        # self.difficulty: str = "0000" # REMOVED: Difficulty is for PoW, no longer needed for mining
         self.app = None
         self.db = None
-        logger.info("✅ Consensus instance created.")
+        logger.info("✅ Consensus instance created (No PoW).")
 
     def init_app(self, app: Optional[Any], db_instance: Optional[Any]) -> None:
         if self.app:
@@ -41,28 +38,29 @@ class Consensus:
 
         self.app = app
         self.db = db_instance
-        self.difficulty = self.app.config.get("POW_DIFFICULTY", "0000")
-        logger.info(f"🚀 Consensus initialized with difficulty: {self.difficulty}")
+        # self.difficulty = self.app.config.get("POW_DIFFICULTY", "0000") # REMOVED: PoW difficulty
+        logger.info("🚀 Consensus initialized.")
 
     def create_genesis_block_if_needed(self) -> None:
         """
-        Creates the genesis block if no blocks exist in the database.
+        Creates the genesis block (Block 0) if no blocks exist in the database.
         """
         with get_session_scope(self.db) as session:
-            # Check for existing blocks by block_number for clarity (assuming genesis is block 0)
             if session.query(ChainBlock).filter_by(block_number=0).first() is None:
                 logger.info("🔷 No blocks found. Creating genesis block...")
-                # Genesis block has index 0, previous_hash '1', and no transactions
-                genesis_block = self.new_block(proof=100, previous_hash='1', block_number=0)
+                # Genesis block has block_number 0, previous_hash '1', and no transactions
+                # No 'proof' (nonce) for non-PoW chain
+                genesis_block = self.new_block(previous_hash='1', block_number=0)
                 session.add(genesis_block)
                 session.flush() # Ensure ID and other defaults are populated
                 logger.info(f"✅ Genesis block created: {genesis_block.hash}")
             else:
                 logger.info("✅ Genesis block already exists.")
 
-    def new_block(self, proof: int, previous_hash: Optional[str] = None, block_number: Optional[int] = None) -> ChainBlock:
+    def new_block(self, previous_hash: Optional[str] = None, block_number: Optional[int] = None) -> ChainBlock:
         """
-        Creates a new Block and persists its transactions as LedgerEntry records.
+        Creates a new Block, including current_transactions as LedgerEntry records.
+        This block creation does NOT involve Proof-of-Work (mining).
         """
         with get_session_scope(self.db) as session:
             # Determine the block number
@@ -79,7 +77,7 @@ class Consensus:
                 'block_number': current_block_number,
                 'timestamp': current_timestamp.isoformat(), # Use ISO format for hashing consistently
                 'transactions_count': len(self.current_transactions), # Store count, not full transactions
-                'proof': proof,
+                # 'proof': proof, # REMOVED: No proof (nonce) for non-PoW
                 'previous_hash': previous_hash or (self.get_last_block_hash() if current_block_number > 0 else '1'),
             }
 
@@ -91,7 +89,7 @@ class Consensus:
                 block_number=block_data['block_number'],
                 timestamp=current_timestamp, # Store as datetime object
                 previous_hash=block_data['previous_hash'],
-                nonce=proof,
+                # nonce=proof, # REMOVED: No nonce for non-PoW
                 hash=block_hash,
             )
             session.add(block)
@@ -104,33 +102,40 @@ class Consensus:
                 logger.info(f"📝 Processing {len(self.current_transactions)} transactions for Block {block.block_number}...")
                 for tx_data in self.current_transactions:
                     # Validate incoming transaction data first
-                    # This uses the TransactionModel schema we refined in validate_transaction.py
                     validation_result = validate_transaction(tx_data)
                     if not validation_result.is_valid:
                         logger.error(f"🚫 Invalid transaction found during block creation. Skipping. Details: {validation_result.errors}")
-                        # You might want to log these failed transactions or move them to a 'failed' queue
                         continue
                     
-                    validated_tx_data = validation_result.data # This is a Pydantic model_dump dict
+                    validated_tx_data = validation_result.data
                     
                     # Create LedgerEntry from validated data
-                    # Assuming blockchain_tx_hash will be updated later by event listener
+                    # blockchain_tx_hash is now the unique ID of the transaction within your custom chain
                     ledger_entry = LedgerEntry(
-                        blockchain_tx_hash=validated_tx_data.get('blockchain_tx_hash', f"TEMP_HASH_{uuid.uuid4()}"), # TEMPORARY, will be updated post-blockchain
-                        # goodwill_action_id would need to be passed in tx_data if it applies
+                        blockchain_tx_hash=f"CHAIN_TX_{uuid.uuid4().hex}", # Use a derived hash or unique ID for your custom chain
                         transaction_type=validated_tx_data.get('action_type', 'UNKNOWN'),
                         amount=validated_tx_data.get('loves_value', 0),
                         token_symbol='GOODWILL',
-                        sender_address=validated_tx_data.get('sender_address', 'UNKNOWN_SENDER'),
+                        sender_address=validated_tx_data.get('sender_address', 'SYSTEM_MINTER'), # Default to SYSTEM_MINTER
                         receiver_address=validated_tx_data.get('receiver_address', 'UNKNOWN_RECEIVER'),
                         block_number=block.block_number,
                         block_timestamp=block.timestamp,
-                        status='PENDING_ON_CHAIN', # Status before actually being confirmed on chain
+                        status='CONFIRMED', # Immediately confirmed if included in a block
                         metadata=validated_tx_data.get('contextual_data', {}),
                         # initiator_user_id and receiver_user_id would be looked up/resolved from user_id in tx_data
                     )
+                    # Link to GoodwillAction if available in tx_data
+                    if 'goodwill_action_id' in validated_tx_data:
+                        ledger_entry.goodwill_action_id = validated_tx_data['goodwill_action_id']
+
+                    # Resolve user_ids from performer_user_id (Firebase UID from schema)
+                    # This implies you would pass these as part of the transaction_data
+                    if 'performer_user_id' in validated_tx_data:
+                        # You'd need to query UserAccount by Firebase UID to get internal UUID
+                        pass # Placeholder for user_id resolution logic
+
                     session.add(ledger_entry)
-                    logger.debug(f"  --> LedgerEntry created (temp hash: {ledger_entry.blockchain_tx_hash})")
+                    logger.debug(f"  --> LedgerEntry created for custom chain (hash: {ledger_entry.blockchain_tx_hash})")
 
                 session.flush() # Flush to persist LedgerEntry records
                 logger.info(f"✅ {len(self.current_transactions)} LedgerEntry records persisted for Block {block.block_number}.")
@@ -143,10 +148,8 @@ class Consensus:
     def hash(block: Dict[str, Any]) -> str:
         """
         Creates a SHA-256 hash of a Block.
-        The 'transactions' field is excluded from hashing because individual LedgerEntry objects are stored separately.
-        Instead, 'transactions_count' is included in block_data.
+        Transactions are excluded from hashing; 'transactions_count' is included instead.
         """
-        # Ensure block_data is sorted for consistent hashing
         block_string = json.dumps(block, sort_keys=True).encode()
         return hashlib.sha256(block_string).hexdigest()
 
@@ -160,41 +163,6 @@ class Consensus:
         with get_session_scope(self.db) as session:
             return session.query(ChainBlock).order_by(ChainBlock.block_number.desc()).first()
 
-    def proof_of_work(self, last_proof: int) -> int:
-        logger.info("⛏️ Starting proof of work (single-threaded)…")
-        proof = 0
-        while not self.valid_proof(last_proof, proof):
-            proof += 1
-        logger.info(f"💡 Proof of work found: {proof}")
-        return proof
-
-    def parallel_proof_of_work(self, last_proof: int) -> int:
-        logger.info("⚡ Parallelizing proof of work…")
-        with Pool(cpu_count()) as pool:
-            for proof in pool.imap_unordered(self._check_proof, ((last_proof, i, self.difficulty) for i in range(1, 1_000_000_000))):
-                if proof is not None:
-                    logger.info(f"💡 Parallel PoW found: {proof}")
-                    pool.terminate() # Stop other workers once a proof is found
-                    return proof
-            logger.warning("🚫 Parallel PoW search exhausted range without finding proof.")
-            return -1 # Indicate failure to find proof within range
-
-    def _check_proof(self, args) -> Optional[int]:
-        """Helper for parallel proof of work."""
-        last_proof, proof, difficulty = args
-        if self.valid_proof(last_proof, proof, difficulty):
-            return proof
-        return None
-
-    def valid_proof(self, last_proof: int, proof: int, difficulty: Optional[str] = None) -> bool:
-        """
-        Validates the proof: Does hash(last_proof, proof) contain 'difficulty' leading zeroes?
-        """
-        difficulty = difficulty or self.difficulty # Use instance difficulty if not provided
-        guess = f'{last_proof}{proof}'.encode()
-        guess_hash = hashlib.sha256(guess).hexdigest()
-        return guess_hash.startswith(difficulty)
-
     def register_node(self, address: str) -> None:
         """Registers a new node in the set of blockchain nodes."""
         self.nodes.add(address)
@@ -202,7 +170,7 @@ class Consensus:
 
     def valid_chain(self, chain: List[Dict[str, Any]]) -> bool:
         """
-        Determines if a given blockchain is valid by verifying hashes and proofs.
+        Determines if a given blockchain is valid by verifying hashes (no PoW check).
         Expected chain: list of dictionaries representing ChainBlock data.
         """
         if not chain:
@@ -212,7 +180,6 @@ class Consensus:
         current_index = 0
         while current_index < len(chain):
             block = chain[current_index]
-            # Ensure block contains 'hash' and 'previous_hash' for validation
             if 'hash' not in block or 'previous_hash' not in block:
                 logger.warning(f"❌ Block {current_index} is missing hash or previous_hash.")
                 return False
@@ -223,15 +190,13 @@ class Consensus:
                     logger.warning(f"❌ Invalid previous hash at block {current_index}. Expected: {self.hash(last_block)[:8]}, Got: {block['previous_hash'][:8]}")
                     return False
 
-                # Proof of work validation (assuming 'proof' field in dict)
-                if 'proof' not in block or 'proof' not in last_block:
-                    logger.warning(f"❌ Block {current_index} is missing 'proof' field.")
-                    return False
-                
-                # Make sure to pass the actual difficulty to valid_proof
-                if not self.valid_proof(last_block['proof'], block['proof'], self.difficulty):
-                    logger.warning(f"❌ Invalid PoW at block {current_index}.")
-                    return False
+                # REMOVED: No Proof of Work validation here for non-PoW chain
+                # if 'proof' not in block or 'proof' not in last_block:
+                #     logger.warning(f"❌ Block {current_index} is missing 'proof' field.")
+                #     return False
+                # if not self.valid_proof(last_block['proof'], block['proof'], self.difficulty):
+                #     logger.warning(f"❌ Invalid PoW at block {current_index}.")
+                #     return False
             
             current_index += 1
 
@@ -246,11 +211,10 @@ class Consensus:
         """
         logger.info("🔄 Resolving conflicts…")
         new_chain = None
-        max_length = self.get_chain_length()
+        max_length = self.get_chain_length() # Longest chain is now the "most work"
 
         for node_address in self.nodes:
             try:
-                # Ensure correct API endpoint for chain sync
                 response = requests.get(f"http://{node_address}/chain", timeout=5) # Example endpoint
                 if response.status_code == 200:
                     data = response.json()
@@ -277,7 +241,7 @@ class Consensus:
             logger.info("✅ Local chain replaced with better chain from network.")
             return True
 
-        logger.info("ℹ️ Local chain remains authoritative.")
+        logger.info("ℹ️ Local chain remains authoritative (no better chain found).")
         return False
 
     def get_chain_length(self) -> int:
@@ -296,14 +260,13 @@ class Consensus:
             session.query(ChainBlock).delete()
             logger.info("📝 Clearing local chain and ledger for replacement.")
 
-            for index, block_dict in enumerate(chain_data):
+            for block_dict in chain_data: # Iterate through the block dictionaries
                 # Recreate ChainBlock instance (id will be auto-generated UUID)
                 block = ChainBlock(
-                    # block_number is crucial for ordering and linking
                     block_number=block_dict['block_number'],
-                    timestamp=datetime.fromisoformat(block_dict['timestamp']) if isinstance(block_dict['timestamp'], str) else datetime.fromtimestamp(block_dict['timestamp'], tz=timezone.utc), # Handle ISO or float timestamp
+                    timestamp=datetime.fromisoformat(block_dict['timestamp']) if isinstance(block_dict['timestamp'], str) else datetime.fromtimestamp(block_dict['timestamp'], tz=timezone.utc),
                     previous_hash=block_dict['previous_hash'],
-                    nonce=block_dict['proof'], # PoW 'proof' maps to 'nonce' in ChainBlock
+                    # nonce=block_dict['proof'], # REMOVED: No nonce
                     hash=block_dict['hash'],
                 )
                 session.add(block)
@@ -312,8 +275,6 @@ class Consensus:
                 # Re-process transactions into LedgerEntry for each block in the new chain
                 if 'transactions' in block_dict and isinstance(block_dict['transactions'], list):
                     for tx_data in block_dict['transactions']:
-                        # This part assumes a specific structure for transactions within the chain_data
-                        # And that validate_transaction can process it for LedgerEntry creation.
                         validation_result = validate_transaction(tx_data)
                         if not validation_result.is_valid:
                             logger.error(f"🚫 Invalid transaction encountered during chain replacement for block {block.block_number}. Skipping. Details: {validation_result.errors}")
@@ -321,19 +282,21 @@ class Consensus:
 
                         validated_tx_data = validation_result.data
                         
+                        # Populate LedgerEntry based on validated_tx_data
                         ledger_entry = LedgerEntry(
-                            blockchain_tx_hash=validated_tx_data.get('blockchain_tx_hash', f"SYNC_HASH_{uuid.uuid4()}"), # Get actual hash or temp ID
-                            goodwill_action_id=validated_tx_data.get('goodwill_action_id_uuid'), # If schema provides this
+                            blockchain_tx_hash=validated_tx_data.get('blockchain_tx_hash', f"SYNC_HASH_{uuid.uuid4()}"),
+                            goodwill_action_id=validated_tx_data.get('goodwill_action_id'), # Assuming goodwill_action_id is now a direct field in tx_data
                             transaction_type=validated_tx_data.get('action_type', 'UNKNOWN'),
                             amount=validated_tx_data.get('loves_value', 0),
                             token_symbol='GOODWILL',
-                            sender_address=validated_tx_data.get('sender_address', 'UNKNOWN_SENDER'),
+                            sender_address=validated_tx_data.get('sender_address', 'SYSTEM_MINTER'),
                             receiver_address=validated_tx_data.get('receiver_address', 'UNKNOWN_RECEIVER'),
                             block_number=block.block_number,
                             block_timestamp=block.timestamp,
-                            status='CONFIRMED', # Assuming imported transactions are confirmed
+                            status='CONFIRMED',
                             metadata=validated_tx_data.get('contextual_data', {}),
-                            # initiator_user_id and receiver_user_id would be resolved based on address
+                            initiator_user_id=validated_tx_data.get('initiator_user_id'), # Assuming these are passed
+                            receiver_user_id=validated_tx_data.get('receiver_user_id'), # Assuming these are passed
                         )
                         session.add(ledger_entry)
                         logger.debug(f"  --> LedgerEntry re-added (tx_hash: {ledger_entry.blockchain_tx_hash})")
@@ -341,47 +304,22 @@ class Consensus:
             logger.info("✅ Local chain and ledger updated successfully with new chain.")
 
 
-    def total_work(self) -> int:
-        """
-        Calculate the total work of the current chain.
-        """
-        with get_session_scope(self.db) as session:
-            # Query ChainBlocks directly, convert to dict format expected by calculate_work
-            chain_blocks = session.query(ChainBlock).order_by(ChainBlock.block_number).all()
-            chain_dicts = [
-                {
-                    'block_number': blk.block_number,
-                    'timestamp': blk.timestamp.isoformat(), # Use ISO format
-                    'previous_hash': blk.previous_hash,
-                    'proof': blk.nonce,
-                    'hash': blk.hash,
-                    'transactions_count': session.query(LedgerEntry).filter_by(block_number=blk.block_number).count() # Get count from LedgerEntry table
-                }
-                for blk in chain_blocks
-            ]
-            return self.calculate_work(chain_dicts)
-
-    def calculate_work(self, chain: List[Dict[str, Any]]) -> int:
-        """
-        Total work is sum of (2^difficulty_bits) per block.
-        Assumes 'block_number' is present in chain dicts.
-        """
-        if not chain:
-            return 0
-        
-        bits = len(self.difficulty)
-        # Ensure we're calculating work based on actual blocks, not just arbitrary list length
-        # A more robust work calculation might iterate through each block's actual proof
-        return len(chain) * (2 ** bits)
+    # REMOVED: Proof of Work related methods
+    # def proof_of_work(self, last_proof: int) -> int: ...
+    # def parallel_proof_of_work(self, last_proof: int) -> int: ...
+    # def _check_proof(self, args) -> Optional[int]: ...
+    # def valid_proof(self, last_proof: int, proof: int, difficulty: Optional[str] = None) -> bool: ...
 
     def add_transaction(self, transaction: Dict[str, Any]) -> int:
         """
-        Adds a new transaction to the list of current transactions to be included in the next mined block.
+        Adds a new transaction to the list of current transactions to be included in the next block.
+        Returns the block_number of the block this transaction will be added to.
         """
         # This transaction would be the validated data from submit_goodwill
         self.current_transactions.append(transaction)
         logger.info(f"➕ Transaction added to current_transactions (count: {len(self.current_transactions)}).")
-        # Return the index of the block that this transaction will be added to
-        # (current chain length + 1, since it's for the NEXT block)
+        
+        # Return the block number of the *next* block to be mined/created
         with get_session_scope(self.db) as session:
-            return session.query(ChainBlock).count() + 1
+            last_block_number = session.query(ChainBlock.block_number).order_by(ChainBlock.block_number.desc()).scalar()
+            return (last_block_number + 1) if last_block_number is not None else 0
