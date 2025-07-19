@@ -10,9 +10,10 @@ from peoples_coin.db.db_utils import get_session_scope, retry_db_operation
 from peoples_coin.db.models import GoodwillAction
 from peoples_coin.config import Config
 
-# 👇 NEW import
+# AI goodwill action processor function
 from peoples_coin.ai_processor.processor import process_goodwill_action
 
+# Optional Celery task import
 try:
     from peoples_coin.ailee.ailee_and_love import process_goodwill_action_task
 except ImportError:
@@ -23,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 class EndocrineSystem:
     """
-    Endocrine System. Multi-threaded worker controller.
-    Picks up VERIFIED GoodwillActions and passes them to the AI processor.
+    Endocrine System manages asynchronous processing of VERIFIED GoodwillActions.
+    Uses a thread pool to process actions in batches, optionally dispatching Celery tasks.
     """
 
     def __init__(self):
@@ -35,6 +36,10 @@ class EndocrineSystem:
         logger.info("🧠 EndocrineSystem instance created.")
 
     def init_app(self, app: Flask, loop_delay: int = 5, max_workers: int = 2):
+        """
+        Initialize with Flask app, worker count, and loop delay.
+        Validates Celery task availability if enabled.
+        """
         if self._initialized:
             logger.warning("⚠️ EndocrineSystem already initialized.")
             return
@@ -56,6 +61,9 @@ class EndocrineSystem:
         logger.info(f"🧠 EndocrineSystem initialized: {self.max_workers} workers, loop delay {self.loop_delay}s.")
 
     def start(self):
+        """
+        Starts worker threads for batch processing GoodwillActions.
+        """
         if not self._initialized or not self.executor:
             logger.error("🚫 Cannot start: EndocrineSystem not initialized.")
             return
@@ -71,6 +79,9 @@ class EndocrineSystem:
         logger.info("🧵 All worker tasks submitted to the pool.")
 
     def stop(self):
+        """
+        Gracefully stops all worker threads.
+        """
         if not self.is_running():
             logger.warning("⚠️ EndocrineSystem is not running.")
             return
@@ -81,9 +92,16 @@ class EndocrineSystem:
         logger.info("🧵 All worker threads stopped gracefully.")
 
     def is_running(self) -> bool:
+        """
+        Returns True if the thread pool is active.
+        """
         return self.executor is not None and not self.executor._shutdown
 
     def _worker_loop(self):
+        """
+        Each worker thread runs this loop to fetch and process goodwill actions.
+        Waits loop_delay seconds if no work was found.
+        """
         thread_name = threading.current_thread().name
         logger.info(f"[{thread_name}] 🧵 Worker thread started.")
 
@@ -100,6 +118,11 @@ class EndocrineSystem:
         logger.info(f"[{thread_name}] 💤 Worker thread exiting.")
 
     def _process_goodwill_actions_batch(self) -> int:
+        """
+        Query for VERIFIED GoodwillActions and process them.
+        Dispatches to Celery if enabled, otherwise runs synchronously.
+        Returns count of processed actions.
+        """
         thread_name = threading.current_thread().name
         use_celery = self.app.config.get("USE_CELERY_FOR_GOODWILL", False)
 
@@ -135,7 +158,7 @@ class EndocrineSystem:
                                 logger.info(f"[{thread_name}] ✅ Processed GoodwillAction {action.id}")
                             else:
                                 logger.error(f"[{thread_name}] ❌ Failed to process GoodwillAction {action.id}")
-                        
+
                         processed_count += 1
 
                     except Exception as e:
@@ -163,6 +186,6 @@ class EndocrineSystem:
             return 0
 
 
-# Singleton instance
+# Singleton instance for import and use
 endocrine_system = EndocrineSystem()
 

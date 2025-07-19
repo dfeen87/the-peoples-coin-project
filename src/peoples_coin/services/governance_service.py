@@ -1,26 +1,27 @@
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from decimal import Decimal
-import uuid
+from uuid import UUID
 
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
 
 from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import Proposal, Vote, UserAccount, CouncilMember # Import all governance models
+from peoples_coin.db.models import Proposal, Vote, UserAccount, CouncilMember
 from peoples_coin.extensions import db
 
 logger = logging.getLogger(__name__)
 
-# Align with models.py status constants
+# Proposal status constants
 STATUS_PROPOSAL_DRAFT = 'DRAFT'
 STATUS_PROPOSAL_VOTING = 'VOTING'
 STATUS_PROPOSAL_PASSED = 'PASSED'
 STATUS_PROPOSAL_FAILED = 'FAILED'
 STATUS_PROPOSAL_EXECUTED = 'EXECUTED'
 
+# Vote choice constants
 VOTE_CHOICE_YES = 'YES'
 VOTE_CHOICE_NO = 'NO'
 VOTE_CHOICE_ABSTAIN = 'ABSTAIN'
@@ -35,10 +36,8 @@ class GovernanceService:
     def init_app(self, app, db_instance):
         self.app = app
         self.db = db_instance
-        # Add config for governance here, e.g., default vote duration
 
     def create_new_proposal(self, proposal_data: Dict[str, Any]) -> Tuple[bool, Union[Dict[str, Any], str]]:
-        """Creates a new governance proposal."""
         with get_session_scope(self.db) as session:
             try:
                 user_account = session.query(UserAccount).filter_by(firebase_uid=proposal_data['proposer_user_id']).first()
@@ -47,8 +46,8 @@ class GovernanceService:
 
                 vote_start = datetime.now(timezone.utc)
                 vote_end = None
-                if 'vote_duration_days' in proposal_data and proposal_data['vote_duration_days']:
-                    vote_end = vote_start + timedelta(days=proposal_data['vote_duration_days'])
+                if proposal_data.get('vote_duration_days'):
+                    vote_end = vote_start + timedelta(days=int(proposal_data['vote_duration_days']))
 
                 new_proposal = Proposal(
                     proposer_user_id=user_account.id,
@@ -63,16 +62,17 @@ class GovernanceService:
                 )
                 session.add(new_proposal)
                 session.flush()
+
                 return True, new_proposal.to_dict()
+
             except IntegrityError:
-                logger.error("GovernanceService: Proposal creation failed due to integrity error.", exc_info=True)
+                logger.error("Proposal creation failed: Integrity error.", exc_info=True)
                 return False, "Proposal with similar details might already exist."
             except Exception as e:
-                logger.exception("GovernanceService: Unexpected error creating proposal.")
+                logger.exception("Unexpected error creating proposal.")
                 return False, f"Internal error: {e}"
 
     def submit_user_vote(self, proposal_id: UUID, vote_data: Dict[str, Any]) -> Tuple[bool, Union[Dict[str, Any], str]]:
-        """Submits a vote for a proposal."""
         with get_session_scope(self.db) as session:
             try:
                 proposal = session.query(Proposal).filter_by(id=proposal_id).first()
@@ -80,50 +80,47 @@ class GovernanceService:
                     return False, "Proposal not found."
                 if proposal.status != STATUS_PROPOSAL_VOTING:
                     return False, "Proposal not open for voting."
-                
+
                 now = datetime.now(timezone.utc)
                 if proposal.vote_start_time and now < proposal.vote_start_time:
                     return False, "Voting has not started yet."
                 if proposal.vote_end_time and now > proposal.vote_end_time:
                     return False, "Voting has ended."
 
-                voter_user_account = session.query(UserAccount).filter_by(firebase_uid=vote_data['voter_user_id']).first()
-                if not voter_user_account:
+                voter_account = session.query(UserAccount).filter_by(firebase_uid=vote_data['voter_user_id']).first()
+                if not voter_account:
                     return False, "Voter user not found."
-                
-                if voter_user_account.balance < Decimal(str(vote_data['vote_weight'])):
+
+                raw_vote_weight = Decimal(str(vote_data['vote_weight']))
+                if voter_account.balance < raw_vote_weight:
                     return False, "Insufficient balance for vote."
 
-                existing_vote = session.query(Vote).filter_by(proposal_id=proposal.id, voter_user_id=voter_user_account.id).first()
+                existing_vote = session.query(Vote).filter_by(proposal_id=proposal.id, voter_user_id=voter_account.id).first()
                 if existing_vote:
                     return False, "Already voted on this proposal."
-                
-                # Quadratic voting calculation (from ReproductiveSystem class, but duplicated here or accessed via instance)
-                # For simplicity here, let's assume this service has access to the QV logic or it's externalized.
-                # Ideally, reproductive_system.calculate_quadratic_vote_power would be called here.
-                raw_vote_weight = Decimal(str(vote_data['vote_weight']))
-                actual_vote_power = raw_vote_weight.sqrt() # Example QV: sqrt()
+
+                actual_vote_power = raw_vote_weight.sqrt()
 
                 new_vote = Vote(
                     proposal_id=proposal.id,
-                    voter_user_id=voter_user_account.id,
+                    voter_user_id=voter_account.id,
                     vote_choice=vote_data['vote_choice'],
                     vote_weight=raw_vote_weight,
                     actual_vote_power=actual_vote_power
                 )
                 session.add(new_vote)
 
-                voter_user_account.balance -= raw_vote_weight # Deduct vote weight
-                session.add(voter_user_account)
+                voter_account.balance -= raw_vote_weight
+                session.add(voter_account)
                 session.flush()
-                
+
                 return True, new_vote.to_dict()
+
             except Exception as e:
-                logger.exception("GovernanceService: Unexpected error submitting vote.")
+                logger.exception("Unexpected error submitting vote.")
                 return False, f"Internal error: {e}"
 
     def get_all_proposals(self, status: Optional[str] = None, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Retrieves a list of proposals, optionally filtered by status or proposer."""
         with get_session_scope(self.db) as session:
             query = session.query(Proposal).order_by(Proposal.created_at.desc())
             if status:
@@ -133,74 +130,59 @@ class GovernanceService:
                 if user_account:
                     query = query.filter_by(proposer_user_id=user_account.id)
                 else:
-                    return [] # No proposals if user not found
-            
+                    return []  # No proposals if user not found
             return [p.to_dict() for p in query.all()]
 
     def get_proposal_by_id(self, proposal_id: UUID) -> Optional[Dict[str, Any]]:
-        """Retrieves details of a specific proposal."""
         with get_session_scope(self.db) as session:
             proposal = session.query(Proposal).filter_by(id=proposal_id).first()
-            if not proposal:
-                return None
-            return proposal.to_dict()
-    
+            return proposal.to_dict() if proposal else None
+
     def get_council_members(self, role: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Retrieves a list of council members, optionally filtered by role."""
         with get_session_scope(self.db) as session:
             query = session.query(CouncilMember).filter_by(status='ACTIVE').order_by(CouncilMember.created_at.asc())
             if role:
                 query = query.filter_by(role=role.upper())
             return [m.to_dict() for m in query.all()]
 
-    # --- Background evaluation methods (Conceptual) ---
     def evaluate_proposal_results(self, proposal_id: UUID) -> Tuple[bool, str]:
-        """
-        Evaluates the final results of a vote after the voting period ends.
-        This is a conceptual method that would be called by a background worker.
-        """
-        logger.info(f"GovernanceService: Evaluating results for Proposal ID {proposal_id}.")
+        logger.info(f"Evaluating results for Proposal ID {proposal_id}.")
         with get_session_scope(self.db) as session:
             proposal = session.query(Proposal).filter_by(id=proposal_id).first()
             if not proposal:
                 return False, "Proposal not found."
-            
+
             if proposal.status != STATUS_PROPOSAL_VOTING or (proposal.vote_end_time and datetime.now(timezone.utc) < proposal.vote_end_time):
                 return False, "Proposal not in final voting state or voting period not ended."
 
-            # Calculate total YES/NO actual_vote_power
-            total_yes_power = session.query(func.sum(Vote.actual_vote_power)).filter_by(proposal_id=proposal.id, vote_choice=VOTE_CHOICE_YES).scalar() or Decimal('0.0')
-            total_no_power = session.query(func.sum(Vote.actual_vote_power)).filter_by(proposal_id=proposal.id, vote_choice=VOTE_CHOICE_NO).scalar() or Decimal('0.0')
-            total_abstain_power = session.query(func.sum(Vote.actual_vote_power)).filter_by(proposal_id=proposal.id, vote_choice=VOTE_CHOICE_ABSTAIN).scalar() or Decimal('0.0')
-            
-            total_votes_power = total_yes_power + total_no_power + total_abstain_power # All power cast
-            
-            # Quorum check
-            if total_votes_power < (proposal.required_quorum * self.get_total_vote_power_at_start_of_vote()): # Needs total eligible power at vote start
+            total_yes = session.query(func.sum(Vote.actual_vote_power)).filter_by(proposal_id=proposal.id, vote_choice=VOTE_CHOICE_YES).scalar() or Decimal('0.0')
+            total_no = session.query(func.sum(Vote.actual_vote_power)).filter_by(proposal_id=proposal.id, vote_choice=VOTE_CHOICE_NO).scalar() or Decimal('0.0')
+            total_abstain = session.query(func.sum(Vote.actual_vote_power)).filter_by(proposal_id=proposal.id, vote_choice=VOTE_CHOICE_ABSTAIN).scalar() or Decimal('0.0')
+
+            total_votes = total_yes + total_no + total_abstain
+
+            quorum_threshold = proposal.required_quorum * self.get_total_vote_power_at_start_of_vote()
+            if total_votes < quorum_threshold:
                 proposal.status = STATUS_PROPOSAL_FAILED
                 session.add(proposal)
-                logger.info(f"Proposal {proposal_id} FAILED: Quorum not met.")
+                logger.info(f"Proposal {proposal_id} failed: quorum not met.")
                 return False, "Quorum not met."
-            
-            # Simple majority
-            if total_yes_power > total_no_power:
+
+            if total_yes > total_no:
                 proposal.status = STATUS_PROPOSAL_PASSED
                 session.add(proposal)
-                logger.info(f"Proposal {proposal_id} PASSED.")
-                # Trigger execution logic (e.g., call circulatory_system for treasury spend)
+                logger.info(f"Proposal {proposal_id} passed.")
+                # TODO: Trigger any execution logic here
                 return True, "Proposal passed."
             else:
                 proposal.status = STATUS_PROPOSAL_FAILED
                 session.add(proposal)
-                logger.info(f"Proposal {proposal_id} FAILED.")
+                logger.info(f"Proposal {proposal_id} failed by vote.")
                 return False, "Proposal failed by vote."
-            
-        return False, "Evaluation not completed."
 
-    # Placeholder: In a real system, you'd need to snapshot total eligible vote power at vote start
     def get_total_vote_power_at_start_of_vote(self) -> Decimal:
-        """Conceptual: Returns total eligible voting power (sum of user balances) at the start of the vote."""
-        # This would require complex snapshotting logic or storing this value with the proposal
-        return Decimal('1000000.0') # Placeholder value
+        # TODO: Implement snapshotting of total voting power at vote start
+        return Decimal('1000000.0')  # Placeholder
 
 governance_service = GovernanceService()
+

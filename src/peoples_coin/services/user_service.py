@@ -1,17 +1,15 @@
 import logging
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple, List
 from uuid import UUID
-from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 
 from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import UserAccount, UserWallet # Import UserWallet
+from peoples_coin.db.models import UserAccount, UserWallet
 from peoples_coin.extensions import db
 
-# For Firebase Admin SDK (if you use it to sync user data from Firebase Auth)
 try:
     import firebase_admin
     from firebase_admin import auth as firebase_auth_admin
@@ -23,6 +21,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
 class UserService:
     def __init__(self):
         self.app = None
@@ -32,16 +31,13 @@ class UserService:
 
     def init_app(self, app, db_instance):
         if self._initialized:
+            logger.warning("UserService already initialized; skipping.")
             return
-        
         self.app = app
         self.db = db_instance
-        
-        # Ensure Firebase Admin SDK is initialized if needed (e.g., for user sync)
-        # This typically happens in create_app()
-        # if not firebase_admin._apps and FIREBASE_ADMIN_AVAILABLE:
+        # Optionally initialize Firebase Admin SDK here if needed
+        # if FIREBASE_ADMIN_AVAILABLE and not firebase_admin._apps:
         #     firebase_admin.initialize_app()
-        
         self._initialized = True
         logger.info("UserService initialized and configured.")
 
@@ -56,19 +52,17 @@ class UserService:
         with get_session_scope(self.db) as session:
             user = session.query(UserAccount).filter_by(firebase_uid=firebase_uid).first()
             return user.to_dict() if user else None
-    
+
     def create_or_get_user_account(self, firebase_uid: str, email: str, username: str) -> Tuple[UserAccount, bool]:
         """
-        Creates a new UserAccount in AlloyDB or retrieves an existing one.
-        Returns (UserAccount object, True if created, False if existing).
+        Create a new UserAccount or return existing one.
+        Returns tuple: (UserAccount instance, created_flag).
         """
         with get_session_scope(self.db) as session:
-            user_account = session.query(UserAccount).filter_by(firebase_uid=firebase_uid).first()
-            if user_account:
-                logger.debug(f"UserService: Found existing UserAccount for {firebase_uid}.")
-                return user_account, False # User already exists
-
-            # User does not exist, create new
+            existing_user = session.query(UserAccount).filter_by(firebase_uid=firebase_uid).first()
+            if existing_user:
+                logger.debug(f"UserService: Existing UserAccount found for Firebase UID {firebase_uid}.")
+                return existing_user, False
             try:
                 new_user = UserAccount(
                     firebase_uid=firebase_uid,
@@ -78,25 +72,25 @@ class UserService:
                     is_premium=False
                 )
                 session.add(new_user)
-                session.flush() # Populate ID
-                logger.info(f"UserService: Created new UserAccount {new_user.id} for {firebase_uid}.")
+                session.flush()  # Assigns ID
+                logger.info(f"UserService: Created UserAccount {new_user.id} for Firebase UID {firebase_uid}.")
                 return new_user, True
             except IntegrityError:
-                # Handle race condition if another process creates it concurrently
-                session.rollback() # Rollback the failed attempt
-                logger.warning(f"UserService: Race condition detected, retrying get for {firebase_uid}.")
-                return session.query(UserAccount).filter_by(firebase_uid=firebase_uid).one(), False
-            except Exception as e:
-                logger.exception(f"UserService: Error creating UserAccount for {firebase_uid}.")
-                raise e # Re-raise for API endpoint to handle
+                session.rollback()
+                logger.warning(f"UserService: Race condition creating UserAccount for Firebase UID {firebase_uid}, retrying.")
+                user = session.query(UserAccount).filter_by(firebase_uid=firebase_uid).one()
+                return user, False
+            except Exception:
+                logger.exception(f"UserService: Unexpected error creating UserAccount for Firebase UID {firebase_uid}.")
+                raise
 
     def update_user_balance(self, user_id: UUID, amount: Decimal) -> Tuple[bool, str]:
-        """Updates a user's total 'loves' balance in AlloyDB."""
+        """Add amount to user's balance atomically."""
         with get_session_scope(self.db) as session:
             try:
-                user_account = session.query(UserAccount).filter_by(id=user_id).with_for_update().one()
-                user_account.balance += amount
-                logger.info(f"UserService: Updated balance for user {user_id} by {amount}. New balance: {user_account.balance}.")
+                user = session.query(UserAccount).filter_by(id=user_id).with_for_update().one()
+                user.balance += amount
+                logger.info(f"UserService: Updated balance for user {user_id} by {amount}. New balance: {user.balance}.")
                 return True, "Balance updated."
             except NoResultFound:
                 logger.warning(f"UserService: User {user_id} not found for balance update.")
@@ -106,18 +100,18 @@ class UserService:
                 return False, f"Internal error: {e}"
 
     def link_user_wallet(self, user_id: UUID, public_address: str, blockchain_network: str, is_primary: bool = False) -> Tuple[bool, str]:
-        """Links a blockchain wallet address to a user."""
+        """Link a blockchain wallet to a user. Demotes existing primary wallet if needed."""
         with get_session_scope(self.db) as session:
             try:
-                user_account = session.query(UserAccount).filter_by(id=user_id).first()
-                if not user_account:
+                user = session.query(UserAccount).filter_by(id=user_id).first()
+                if not user:
                     return False, "User not found."
-                
-                # Check for existing primary wallet if trying to set new as primary
+
                 if is_primary:
+                    # Demote existing primary wallets
                     existing_primary = session.query(UserWallet).filter_by(user_id=user_id, is_primary=True).first()
                     if existing_primary:
-                        existing_primary.is_primary = False # Demote old primary
+                        existing_primary.is_primary = False
                         session.add(existing_primary)
 
                 new_wallet = UserWallet(
@@ -136,20 +130,20 @@ class UserService:
             except Exception as e:
                 logger.exception(f"UserService: Error linking wallet {public_address} to user {user_id}.")
                 return False, f"Internal error: {e}"
-    
+
     def get_user_wallets(self, user_id: UUID) -> List[Dict[str, Any]]:
-        """Retrieves all wallets linked to a user."""
+        """Get all wallets linked to the user."""
         with get_session_scope(self.db) as session:
-            user_wallets = session.query(UserWallet).filter_by(user_id=user_id).all()
-            return [wallet.to_dict() for wallet in user_wallets]
+            wallets = session.query(UserWallet).filter_by(user_id=user_id).all()
+            return [wallet.to_dict() for wallet in wallets]
 
     def set_user_premium_status(self, user_id: UUID, is_premium: bool) -> Tuple[bool, str]:
-        """Sets a user's premium status."""
+        """Update user's premium status."""
         with get_session_scope(self.db) as session:
             try:
-                user_account = session.query(UserAccount).filter_by(id=user_id).one()
-                user_account.is_premium = is_premium
-                logger.info(f"UserService: User {user_id} premium status set to {is_premium}.")
+                user = session.query(UserAccount).filter_by(id=user_id).one()
+                user.is_premium = is_premium
+                logger.info(f"UserService: Set premium status of user {user_id} to {is_premium}.")
                 return True, f"Premium status set to {is_premium}."
             except NoResultFound:
                 logger.warning(f"UserService: User {user_id} not found for premium status update.")
@@ -158,4 +152,6 @@ class UserService:
                 logger.exception(f"UserService: Error setting premium status for user {user_id}.")
                 return False, f"Internal error: {e}"
 
+
 user_service = UserService()
+

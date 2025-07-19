@@ -1,4 +1,4 @@
-import os # Import os for config access
+import os
 import time
 import threading
 import logging
@@ -7,7 +7,7 @@ from functools import wraps
 from collections import defaultdict
 from typing import Optional, Callable, Dict, Any
 
-from flask import request, jsonify, Flask, g # Import g from Flask
+from flask import request, jsonify, Flask, g
 
 try:
     from redis import Redis, exceptions as RedisExceptions
@@ -20,8 +20,11 @@ logger = logging.getLogger(__name__)
 
 class ImmuneSystem:
     """
-    A stateful security layer for Flask applications providing rate-limiting,
-    greylisting, and blacklisting with a Redis backend and an in-memory fallback.
+    Stateful security layer for Flask apps providing:
+    - Rate limiting
+    - Greylisting (failed attempts tracking)
+    - Blacklisting (permanent or semi-permanent)
+    Uses Redis backend if available, else in-memory fallback.
     """
 
     def __init__(self):
@@ -41,16 +44,20 @@ class ImmuneSystem:
     def init_app(self, app: Flask):
         """Initializes the Immune System with the Flask app context."""
         if self._initialized:
+            logger.warning("🛡️ ImmuneSystem already initialized.")
             return
 
         self.app = app
         self.config = app.config
-        app.config.setdefault("IMMUNE_QUARANTINE_TIME_SEC", 300)
-        app.config.setdefault("IMMUNE_MAX_INVALID_ATTEMPTS", 5)
-        app.config.setdefault("IMMUNE_RATE_LIMIT_WINDOW_SEC", 60)
-        app.config.setdefault("IMMUNE_MAX_REQUESTS_PER_WINDOW", 30)
-        # Use REDIS_URI from app.config (defined in skeleton_system.py Config)
-        app.config.setdefault("REDIS_URL", app.config.get("REDIS_URI", "redis://localhost:6379/1"))
+
+        # Set default config values if not present
+        self.config.setdefault("IMMUNE_QUARANTINE_TIME_SEC", 300)
+        self.config.setdefault("IMMUNE_MAX_INVALID_ATTEMPTS", 5)
+        self.config.setdefault("IMMUNE_RATE_LIMIT_WINDOW_SEC", 60)
+        self.config.setdefault("IMMUNE_MAX_REQUESTS_PER_WINDOW", 30)
+        self.config.setdefault("REDIS_URL", self.config.get("REDIS_URI", "redis://localhost:6379/1"))
+        self.config.setdefault("REDIS_CONNECT_RETRIES", 3)
+        self.config.setdefault("REDIS_CONNECT_BACKOFF_SEC", 1)
 
         self._lazy_connect_redis()
         self._start_cleaner()
@@ -58,55 +65,92 @@ class ImmuneSystem:
         logger.info("🛡️ ImmuneSystem initialized.")
 
     def _lazy_connect_redis(self):
-        """Lazily connects to the Redis client."""
-        if Redis and self.redis is None:
-            with self._redis_lock:
-                if self.redis is None:
-                    try:
-                        redis_client = Redis.from_url(
-                            self.config["REDIS_URL"], decode_responses=True,
-                            socket_connect_timeout=1, socket_timeout=1
-                        )
-                        redis_client.ping()
-                        self.redis = redis_client
-                        logger.info("🛡️ ImmuneSystem: Connected to Redis.")
-                    except (RedisExceptions.RedisError, ValueError) as e:
-                        logger.warning(f"🛡️ Redis unavailable, falling back to in-memory. Error: {e}")
-                        self.redis = None
+        """Tries to connect to Redis with retries and backoff."""
+        if Redis is None:
+            logger.warning("🛡️ Redis library not installed, using in-memory fallback.")
+            return
+
+        if self.redis is not None:
+            return  # Already connected
+
+        with self._redis_lock:
+            if self.redis is not None:
+                return
+
+            for attempt in range(1, self.config["REDIS_CONNECT_RETRIES"] + 1):
+                try:
+                    redis_client = Redis.from_url(
+                        self.config["REDIS_URL"], decode_responses=True,
+                        socket_connect_timeout=1, socket_timeout=1
+                    )
+                    redis_client.ping()
+                    self.redis = redis_client
+                    logger.info(f"🛡️ Connected to Redis on attempt {attempt}.")
+                    return
+                except (RedisExceptions.RedisError, ValueError) as e:
+                    logger.warning(f"🛡️ Redis connection attempt {attempt} failed: {e}")
+                    time.sleep(self.config["REDIS_CONNECT_BACKOFF_SEC"])
+
+            logger.warning("🛡️ Redis unavailable after retries, falling back to in-memory.")
+            self.redis = None
 
     def _get_identifier(self) -> str:
         """
-        Determines a unique identifier for the requestor.
-        Prioritizes securely authenticated user IDs (e.g., Firebase UID).
+        Unique identifier for the requestor.
+        Prefers authenticated user ID from Flask 'g', then API key, then IP address.
         """
-        # CRITICAL: Assuming your authentication middleware stores the authenticated
-        #           user's ID (e.g., Firebase UID) in Flask's 'g' object.
-        if hasattr(g, 'user_id') and g.user_id:
-            return f"user:{g.user_id}" # Prefix with "user:" for clarity
-        
-        # Fallback for unauthenticated requests or requests with only API keys
-        api_key_from_header = request.headers.get("X-API-Key")
-        if api_key_from_header:
-            return f"api_key:{api_key_from_header}" # Use API Key as identifier
+        if hasattr(g, "user_id") and g.user_id:
+            return f"user:{g.user_id}"
+
+        api_key = request.headers.get("X-API-Key")
+        if api_key:
+            return f"api_key:{api_key}"
 
         if request:
-            return f"ip:{request.remote_addr}" # Fallback to IP address
-        
-        return "background_task" # For internal tasks not tied to a request
+            return f"ip:{request.remote_addr}"
+
+        return "background_task"
 
     def is_blacklisted(self, identifier: str) -> bool:
-        """Checks if the identifier is permanently blacklisted."""
+        """Checks if the identifier is blacklisted (permanent deny)."""
         if self.redis:
             try:
                 return self.redis.sismember("immune:blacklist", identifier)
             except RedisExceptions.RedisError as e:
-                logger.warning(f"🛡️ Redis error during is_blacklisted: {e}. Falling back.")
+                logger.warning(f"🛡️ Redis error in is_blacklisted: {e}, falling back to in-memory.")
 
         with self._in_memory_lock:
             return identifier in self._blacklist
 
+    def add_to_blacklist(self, identifier: str):
+        """Manually add an identifier to blacklist."""
+        if self.redis:
+            try:
+                self.redis.sadd("immune:blacklist", identifier)
+                logger.info(f"🛡️ Added {identifier} to Redis blacklist.")
+                return
+            except RedisExceptions.RedisError as e:
+                logger.warning(f"🛡️ Redis error adding to blacklist: {e}, falling back to in-memory.")
+
+        with self._in_memory_lock:
+            self._blacklist.add(identifier)
+            logger.info(f"🛡️ Added {identifier} to in-memory blacklist.")
+
+    def remove_from_blacklist(self, identifier: str):
+        """Removes an identifier from the blacklist."""
+        if self.redis:
+            try:
+                self.redis.srem("immune:blacklist", identifier)
+                logger.info(f"🛡️ Removed {identifier} from Redis blacklist.")
+            except RedisExceptions.RedisError as e:
+                logger.warning(f"🛡️ Redis error removing from blacklist: {e}")
+
+        with self._in_memory_lock:
+            self._blacklist.discard(identifier)
+            logger.info(f"🛡️ Removed {identifier} from in-memory blacklist.")
+
     def record_invalid_attempt(self, identifier: str):
-        """Records a failed attempt, blacklisting if the threshold is met."""
+        """Records a failed attempt; blacklists if max attempts exceeded."""
         if self.is_blacklisted(identifier):
             return
 
@@ -119,39 +163,39 @@ class ImmuneSystem:
                 count = self.redis.incr(key)
                 self.redis.expire(key, quarantine_time)
                 if count >= max_attempts:
-                    self.redis.sadd("immune:blacklist", identifier)
+                    self.add_to_blacklist(identifier)
                     self.redis.delete(key)
-                    logger.warning(f"🛡️ Blacklisted via Redis: {identifier} (exceeded {max_attempts} attempts).")
+                    logger.warning(f"🛡️ Blacklisted {identifier} via Redis (exceeded {max_attempts} invalid attempts).")
                 return
             except RedisExceptions.RedisError as e:
-                logger.warning(f"🛡️ Redis error during record_invalid_attempt: {e}. Falling back.")
+                logger.warning(f"🛡️ Redis error recording invalid attempt: {e}, falling back to in-memory.")
 
         with self._in_memory_lock:
             entry = self._greylist[identifier]
             entry["count"] += 1
             entry["last_seen"] = time.time()
             if entry["count"] >= max_attempts:
-                self._blacklist.add(identifier)
+                self.add_to_blacklist(identifier)
                 del self._greylist[identifier]
-                logger.warning(f"🛡️ Blacklisted in-memory: {identifier} (exceeded {max_attempts} attempts).")
+                logger.warning(f"🛡️ Blacklisted {identifier} in-memory (exceeded {max_attempts} invalid attempts).")
 
     def _is_rate_limited(self, identifier: str) -> bool:
-        """Checks if the identifier has exceeded the rate limit."""
+        """Checks if the identifier has exceeded rate limits."""
         if self.redis:
             try:
                 key = f"immune:rate_limit:{identifier}"
                 p = self.redis.pipeline()
                 p.incr(key, 1)
                 p.expire(key, self.config["IMMUNE_RATE_LIMIT_WINDOW_SEC"])
-                # Compare the *returned count* from incr with MAX_REQUESTS
-                return p.execute()[0] > self.config["IMMUNE_MAX_REQUESTS_PER_WINDOW"]
+                results = p.execute()
+                current_count = results[0]
+                return current_count > self.config["IMMUNE_MAX_REQUESTS_PER_WINDOW"]
             except RedisExceptions.RedisError as e:
-                logger.warning(f"🛡️ Redis error during rate limit check: {e}. Falling back.")
+                logger.warning(f"🛡️ Redis error during rate limit check: {e}, falling back to in-memory.")
 
         with self._in_memory_lock:
             now = time.time()
             window_start = now - self.config["IMMUNE_RATE_LIMIT_WINDOW_SEC"]
-            # Filter out old requests and add current one
             requests = [ts for ts in self._rate_limits[identifier] if ts > window_start]
             requests.append(now)
             self._rate_limits[identifier] = requests
@@ -159,88 +203,102 @@ class ImmuneSystem:
 
     def check(self) -> Callable:
         """
-        Decorator to apply all immune checks to a Flask route.
-        Assumes authentication middleware has run and set g.user_id if available.
+        Flask route decorator applying immune checks:
+        - Blacklist block
+        - Rate limiting
         """
         def decorator(f: Callable) -> Callable:
             @wraps(f)
             def wrapper(*args, **kwargs):
                 identifier = self._get_identifier()
+
                 if self.is_blacklisted(identifier):
                     logger.warning(f"🛡️ Blocked blacklisted identifier: {identifier}")
                     return jsonify({"error": "Access permanently denied"}), http.HTTPStatus.FORBIDDEN
+
                 if self._is_rate_limited(identifier):
                     logger.warning(f"🛡️ Rate limit exceeded by identifier: {identifier}")
                     return jsonify({"error": "Too many requests"}), http.HTTPStatus.TOO_MANY_REQUESTS
+
                 return f(*args, **kwargs)
+
             return wrapper
+
         return decorator
 
     def _cleaner_task(self):
-        """Periodically cleans up in-memory stores."""
+        """Background thread cleaning in-memory greylist and rate limit entries."""
         logger.info("🛡️ ImmuneSystem in-memory cleaner thread started.")
         while not self._stop_event.is_set():
             try:
-                if not self.redis: # Only clean in-memory if Redis is not used
+                if not self.redis:
                     now = time.time()
                     quarantine_time = self.config["IMMUNE_QUARANTINE_TIME_SEC"]
                     with self._in_memory_lock:
-                        to_remove_greylist = [k for k, v in self._greylist.items() if now - v["last_seen"] > quarantine_time]
-                        for k in to_remove_greylist:
+                        to_remove = [k for k, v in self._greylist.items() if now - v["last_seen"] > quarantine_time]
+                        for k in to_remove:
                             del self._greylist[k]
-                        
-                        # Clean up rate limits (remove entries older than window)
-                        to_clean_rate_limits = {
-                            k: [ts for ts in v if ts > (now - self.config["IMMUNE_RATE_LIMIT_WINDOW_SEC"])]
-                            for k, v in self._rate_limits.items()
-                        }
-                        self._rate_limits = defaultdict(list, to_clean_rate_limits)
 
-                self._stop_event.wait(600) # Wait for 10 minutes
+                        # Clean rate limits older than window
+                        window_start = now - self.config["IMMUNE_RATE_LIMIT_WINDOW_SEC"]
+                        cleaned = {}
+                        for k, timestamps in self._rate_limits.items():
+                            filtered = [ts for ts in timestamps if ts > window_start]
+                            if filtered:
+                                cleaned[k] = filtered
+                        self._rate_limits = defaultdict(list, cleaned)
+
+                self._stop_event.wait(600)  # Sleep 10 minutes
             except Exception as e:
                 logger.error(f"🛡️ ImmuneSystem cleaner thread error: {e}", exc_info=True)
         logger.info("🛡️ ImmuneSystem in-memory cleaner thread exiting.")
 
     def _start_cleaner(self):
-        """Starts the background cleaner thread."""
+        """Starts the cleaner background thread."""
         if not self._cleaner_thread or not self._cleaner_thread.is_alive():
             self._stop_event.clear()
-            self._cleaner_thread = threading.Thread(target=self._cleaner_task, daemon=True, name="ImmuneCleaner")
+            self._cleaner_thread = threading.Thread(
+                target=self._cleaner_task, daemon=True, name="ImmuneCleaner"
+            )
             self._cleaner_thread.start()
 
     def stop(self):
-        """Stops the background cleaner thread gracefully."""
+        """Gracefully stops the cleaner background thread."""
         if self._cleaner_thread and self._cleaner_thread.is_alive():
             logger.info("🛡️ Stopping ImmuneSystem cleaner thread...")
             self._stop_event.set()
-            self._cleaner_thread.join(timeout=10) # Give it 10 seconds to join
+            self._cleaner_thread.join(timeout=10)
             if self._cleaner_thread.is_alive():
                 logger.warning("🛡️ Cleaner thread did not stop gracefully.")
-            logger.info("🛡️ Cleaner thread stopped.")
+            else:
+                logger.info("🛡️ Cleaner thread stopped.")
 
     def reset(self, identifier: Optional[str] = None):
-        """Resets blacklist and greylist. If identifier is given, resets only for that ID."""
+        """
+        Resets blacklists, greylists, and rate limits.
+        If `identifier` provided, resets only for that identifier.
+        Note: Redis keys reset is partial; full Redis reset requires careful SCAN+DEL logic.
+        """
         with self._in_memory_lock:
             if identifier:
                 self._blacklist.discard(identifier)
                 self._greylist.pop(identifier, None)
-                self._rate_limits.pop(identifier, None) # Clear rate limits too
+                self._rate_limits.pop(identifier, None)
             else:
                 self._blacklist.clear()
                 self._greylist.clear()
                 self._rate_limits.clear()
+
         if self.redis:
             try:
                 if identifier:
                     self.redis.srem("immune:blacklist", identifier)
                     self.redis.delete(f"immune:greylist:{identifier}")
                     self.redis.delete(f"immune:rate_limit:{identifier}")
+                    logger.info(f"🛡️ Redis data reset for {identifier}")
                 else:
-                    # Caution: Clearing all Redis keys starting with immune:* requires SCAN + DEL pattern
-                    # self.redis.delete("immune:blacklist") # Deletes only that specific set
-                    # Implement a more thorough clear if full Redis reset is needed
-                    pass
-                logger.info("🛡️ ImmuneSystem Redis data reset.")
+                    # WARNING: Full Redis reset not implemented.
+                    logger.warning("🛡️ Full Redis reset not implemented; skipping.")
             except RedisExceptions.RedisError as e:
                 logger.warning(f"🛡️ Redis error during reset: {e}")
 
@@ -249,15 +307,31 @@ class ImmuneSystem:
         return self._cleaner_thread is not None and self._cleaner_thread.is_alive()
 
     def status(self) -> Dict[str, Any]:
-        """Returns a summary of the immune system state."""
+        """Returns summary of immune system state."""
         with self._in_memory_lock:
+            redis_blacklist_count = 0
+            redis_greylist_count = 0
+            try:
+                if self.redis:
+                    redis_blacklist_count = self.redis.scard("immune:blacklist") or 0
+                    # WARNING: Redis keys() is costly; consider alternative for greylist count in production.
+                    greylist_keys = []
+                    try:
+                        greylist_keys = self.redis.keys("immune:greylist:*")
+                    except RedisExceptions.RedisError:
+                        greylist_keys = []
+                    redis_greylist_count = len(greylist_keys)
+            except Exception as e:
+                logger.warning(f"🛡️ Error fetching Redis counts: {e}")
+
             return {
                 "redis_connected": self.redis is not None,
-                "blacklist_size": (self.redis.scard("immune:blacklist") if self.redis else 0) if self.redis else len(self._blacklist),
-                "greylist_size": (self.redis.dbsize() if self.redis and 'immune:greylist:' in self.redis.keys('immune:greylist:*') else 0) if self.redis else len(self._greylist), # More complex Redis count
-                "cleaner_running": self.is_cleaner_running()
+                "blacklist_size": redis_blacklist_count if self.redis else len(self._blacklist),
+                "greylist_size": redis_greylist_count if self.redis else len(self._greylist),
+                "cleaner_running": self.is_cleaner_running(),
             }
 
 
 # Singleton instance
 immune_system = ImmuneSystem()
+

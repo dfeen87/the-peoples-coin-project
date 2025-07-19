@@ -1,61 +1,37 @@
-import json
 import logging
 import http
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple, Union
 
-from flask import Blueprint, request, jsonify, Response
-from pydantic import BaseModel, Field, ValidationError, field_validator # Ensure all needed imports
+from flask import Blueprint, request, jsonify, make_response, Response, g
+from pydantic import BaseModel, Field, ValidationError, field_validator
 from typing_extensions import Literal
 
-# Import the service instance
 from peoples_coin.services.goodwill_service import goodwill_service
-
-# Original imports remain
-from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import GoodwillAction, UserAccount # Keep these imports if still needed for schema reference, or remove if only service interacts
-from peoples_coin.validation.validate_transaction import validate_transaction # Keep for now if goodwill_service still uses it internally
-from peoples_coin.extensions import db
+from peoples_coin.validation.exceptions import UserNotFoundError  # hypothetical custom exception
+from peoples_coin.validation.schemas import GoodwillActionSchema  # hypothetically moved to shared schema
+from peoples_coin.constants import GoodwillStatus, ApiResponseStatus  # hypothetical enum/constants module
 
 logger = logging.getLogger(__name__)
 
-# --- Constants ---
-KEY_STATUS = "status"
-KEY_ERROR = "error"
-KEY_DETAILS = "details"
-KEY_MESSAGE = "message"
-KEY_ACTION_ID = "action_id"
-
-# Align these with GoodwillAction.status values from models.py
-STATUS_PENDING_VERIFICATION = 'PENDING_VERIFICATION'
-STATUS_ACCEPTED = 'ACCEPTED' # For API response, not DB status
-
-class GoodwillActionSchema(BaseModel):
-    """
-    Schema & validation for incoming goodwill actions.
-    Aligns with GoodwillAction model fields that are submitted by client.
-    """
-    user_id: str # This is the Firebase UID from the frontend
-    action_type: str
-    description: str
-    timestamp: datetime
-    loves_value: int = Field(..., ge=1, le=100, description="Value of goodwill action (1-100 loves)")
-    contextual_data: Dict[str, Any] = Field(default_factory=dict)
-    initial_model_state_v0: Optional[float] = None
-    expected_workload_intensity_w0: Optional[float] = None
-    client_compute_estimate: Optional[float] = None
-    correlation_id: Optional[str] = None
-
-    @field_validator('timestamp')
-    @classmethod
-    def ensure_utc(cls, v: datetime) -> datetime:
-        """Ensure timestamp is timezone-aware & converted to UTC."""
-        if v.tzinfo is None:
-            return v.replace(tzinfo=timezone.utc)
-        return v.astimezone(timezone.utc)
-
-
 metabolic_bp = Blueprint('metabolic', __name__, url_prefix='/metabolic')
+
+
+# Utility: Add correlation ID to logs if available
+def log_with_correlation(level: str, message: str, **kwargs) -> None:
+    correlation_id = getattr(g, "correlation_id", None)
+    prefix = f"[CorrelationID: {correlation_id}] " if correlation_id else ""
+    getattr(logger, level)(prefix + message, **kwargs)
+
+
+@metabolic_bp.before_request
+def extract_correlation_id() -> None:
+    # Extract correlation ID from headers or generate one
+    correlation_id = request.headers.get("X-Correlation-ID")
+    if not correlation_id:
+        import uuid
+        correlation_id = str(uuid.uuid4())
+    g.correlation_id = correlation_id
 
 
 @metabolic_bp.route('/status', methods=['GET'])
@@ -63,62 +39,67 @@ def metabolic_status() -> Tuple[Response, int]:
     """
     Health check endpoint for the Metabolic System.
     """
-    logger.debug("✅ Metabolic system status check called.")
-    return jsonify(status="success", message="Metabolic System operational"), http.HTTPStatus.OK
+    log_with_correlation("debug", "Metabolic system status check called.")
+    return make_response(jsonify(status=ApiResponseStatus.SUCCESS, message="Metabolic System operational"), http.HTTPStatus.OK)
 
 
 @metabolic_bp.route('/submit_goodwill', methods=['POST'])
 def submit_goodwill() -> Tuple[Response, int]:
     """
-    Receives raw goodwill action, validates & delegates to GoodwillService for persistence & queuing.
+    Receives goodwill action, validates & delegates to goodwill_service for processing.
     """
-    logger.info("📥 Received goodwill submission request.")
+    log_with_correlation("info", "Received goodwill submission request.")
 
     if not request.is_json:
-        logger.warning("❌ Missing JSON body or incorrect Content-Type.")
-        return jsonify(status="error", error="Content-Type must be application/json"), http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+        log_with_correlation("warning", "Missing JSON body or incorrect Content-Type.")
+        return make_response(jsonify(status=ApiResponseStatus.ERROR, error="Content-Type must be application/json"), http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
 
-    data = request.get_json()
+    data = request.get_json(silent=True)
     if not data:
-        logger.warning("❌ Empty JSON payload.")
-        return jsonify(status="error", error="No JSON data provided"), http.HTTPStatus.BAD_REQUEST
+        log_with_correlation("warning", "Empty or malformed JSON payload.")
+        return make_response(jsonify(status=ApiResponseStatus.ERROR, error="No valid JSON data provided"), http.HTTPStatus.BAD_REQUEST)
 
     try:
-        # Pydantic schema validation for incoming data
-        # No need to validate here, as goodwill_service does it, but can be left for immediate feedback
-        GoodwillActionSchema(**data) # Quick check, full validation is in service
+        # Validate incoming data early for immediate feedback
+        action_data = GoodwillActionSchema(**data)
 
-        # Delegate the processing, validation, persistence, and queuing to the service layer
-        success, result = goodwill_service.submit_and_queue_goodwill_action(data)
+        # Delegate to service (assumed returns (bool, dict))
+        success, result = goodwill_service.submit_and_queue_goodwill_action(action_data.dict())
 
         if success:
-            action_id = result.get(KEY_ACTION_ID)
             response_payload = {
-                KEY_MESSAGE: "Goodwill action accepted and queued for processing.",
-                KEY_ACTION_ID: action_id,
-                KEY_STATUS: STATUS_ACCEPTED,
+                "message": "Goodwill action accepted and queued for processing.",
+                "action_id": result.get("action_id"),
+                "status": GoodwillStatus.ACCEPTED,
             }
-            if result.get("correlation_id"):
-                response_payload["correlation_id"] = result["correlation_id"]
-            
-            logger.info(f"📤 API: GoodwillAction ID {action_id} accepted & queued successfully.")
-            return jsonify(status="success", **response_payload), http.HTTPStatus.ACCEPTED
+            if correlation_id := result.get("correlation_id"):
+                response_payload["correlation_id"] = correlation_id
+
+            log_with_correlation("info", f"GoodwillAction ID {response_payload['action_id']} accepted and queued.")
+            return make_response(jsonify(status=ApiResponseStatus.SUCCESS, **response_payload), http.HTTPStatus.ACCEPTED)
+
         else:
-            logger.warning(f"🚫 API: Goodwill action submission failed. Details: {result}")
             error_msg = result.get("error", "Unknown error")
-            details = result.get("details", result) # Pass details from service if available
-            status_code = http.HTTPStatus.BAD_REQUEST # Default to Bad Request for validation/user errors
+            details = result.get("details", result)
+            status_code = http.HTTPStatus.BAD_REQUEST
+
             if error_msg == "User not found":
                 status_code = http.HTTPStatus.NOT_FOUND
             elif "Database error" in error_msg:
                 status_code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
-            return jsonify(status="error", error=error_msg, details=details), status_code
+            log_with_correlation("warning", f"Goodwill action submission failed: {error_msg}. Details: {details}")
+            return make_response(jsonify(status=ApiResponseStatus.ERROR, error=error_msg, details=details), status_code)
 
     except ValidationError as ve:
-        logger.warning(f"🚫 API: Pydantic validation failed for incoming payload. Errors: {ve.errors()}")
-        return jsonify(status="error", error="Invalid data format provided", details=ve.errors()), http.HTTPStatus.BAD_REQUEST
+        log_with_correlation("warning", f"Pydantic validation failed: {ve.errors()}")
+        return make_response(jsonify(status=ApiResponseStatus.ERROR, error="Invalid data format provided", details=ve.errors()), http.HTTPStatus.BAD_REQUEST)
+
+    except UserNotFoundError as unfe:
+        log_with_correlation("warning", f"User not found error: {unfe}")
+        return make_response(jsonify(status=ApiResponseStatus.ERROR, error="User not found"), http.HTTPStatus.NOT_FOUND)
 
     except Exception as e:
-        logger.exception(f"💥 API: Unexpected error during goodwill submission: {e}")
-        return jsonify(status="error", error="Internal server error", details=str(e)), http.HTTPStatus.INTERNAL_SERVER_ERROR
+        log_with_correlation("exception", f"Unexpected error during goodwill submission: {e}")
+        return make_response(jsonify(status=ApiResponseStatus.ERROR, error="Internal server error", details=str(e)), http.HTTPStatus.INTERNAL_SERVER_ERROR)
+

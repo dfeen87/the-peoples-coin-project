@@ -1,14 +1,11 @@
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
-from decimal import Decimal
 import uuid
 
 from sqlalchemy.orm import Query, relationship
-from sqlalchemy import event, Column, String, Boolean, DateTime, ForeignKey, Integer, Float, Text, Numeric
+from sqlalchemy import event, Column, String, Boolean, DateTime, ForeignKey, Integer, Float, Text, Numeric, CheckConstraint, Index, UniqueConstraint, BigInteger, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.types import BigInteger # Import BigInteger for block_number
-
 from peoples_coin.extensions import db
 
 
@@ -26,13 +23,6 @@ class SoftDeleteQuery(Query):
 
     _with_deleted = False
 
-    def __new__(cls, *args, **kwargs):
-        obj = super().__new__(cls)
-        return obj
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def with_deleted(self):
         """Return a Query that includes soft-deleted rows."""
         self._with_deleted = True
@@ -49,7 +39,6 @@ class SoftDeleteQuery(Query):
             if isinstance(ident, str) and isinstance(pk.type, PG_UUID):
                 ident = uuid.UUID(ident)
             return self.filter(pk == ident, self._only_not_deleted()).one_or_none()
-
 
     def _only_not_deleted(self):
         for entity in self._entities:
@@ -76,7 +65,7 @@ class BaseModel(db.Model):
     query_class = SoftDeleteQuery
     query: SoftDeleteQuery = db.session.query_property(query_cls=SoftDeleteQuery)
 
-    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text("uuid_generate_v4()"))
 
     def __repr__(self):
         return f"<{self.__class__.__name__} id={self.id}>"
@@ -87,14 +76,16 @@ class BaseModel(db.Model):
 # ==============================================================================
 
 class TimestampMixin:
-    created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False, server_default=text("now()"))
     updated_at = Column(
-        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False, server_default=text("now()")
     )
 
 
 class SoftDeleteMixin:
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
+    deleted_by = Column(PG_UUID(as_uuid=True), nullable=True, index=True)
+    # You can add deletion audit logic on your app side to set deleted_by when soft deleting.
 
 
 # ==============================================================================
@@ -104,12 +95,12 @@ class SoftDeleteMixin:
 class DataEntry(BaseModel, TimestampMixin, SoftDeleteMixin):
     __tablename__ = 'data_entries'
     __table_args__ = (
-        db.Index('idx_processed_created_at', 'processed', 'created_at'),
+        Index('idx_processed_created_at', 'processed', 'created_at'),
         {'extend_existing': True},
     )
 
     value = Column(Text, nullable=True)
-    processed = Column(Boolean, default=False, nullable=False)
+    processed = Column(Boolean, default=False, nullable=False, server_default=text('false'))
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -129,8 +120,8 @@ class UserAccount(BaseModel, TimestampMixin, SoftDeleteMixin):
     __tablename__ = 'users'
 
     firebase_uid = Column(String(128), unique=True, nullable=False, index=True)
-    balance = Column(Numeric(precision=20, scale=8), default=Decimal('0.0'), nullable=False)
-    is_premium = Column(Boolean, default=False, nullable=False) # Added for frontend features
+    balance = Column(Numeric(precision=20, scale=8), default=0, nullable=False, server_default=text('0'))
+    is_premium = Column(Boolean, default=False, nullable=False, server_default=text('false'))  # For frontend features
 
     # Relationships
     goodwill_actions = relationship("GoodwillAction", back_populates="user_account", lazy='dynamic',
@@ -140,12 +131,11 @@ class UserAccount(BaseModel, TimestampMixin, SoftDeleteMixin):
     user_wallets = relationship("UserWallet", back_populates="user_account", lazy='dynamic', cascade="all, delete-orphan",
                                 primaryjoin="UserAccount.id == UserWallet.user_id")
     proposals = relationship("Proposal", back_populates="proposer", lazy='dynamic',
-                             primaryjoin="UserAccount.id == Proposal.proposer_user_id") # New relationship
+                             primaryjoin="UserAccount.id == Proposal.proposer_user_id")
     votes = relationship("Vote", back_populates="voter", lazy='dynamic',
-                         primaryjoin="UserAccount.id == Vote.voter_user_id") # New relationship
+                         primaryjoin="UserAccount.id == Vote.voter_user_id")
     council_memberships = relationship("CouncilMember", back_populates="user_account", lazy='dynamic',
-                                       primaryjoin="UserAccount.id == CouncilMember.user_id") # New relationship
-
+                                       primaryjoin="UserAccount.id == CouncilMember.user_id")
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -167,8 +157,8 @@ class UserWallet(BaseModel, TimestampMixin):
 
     user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
     public_address = Column(String(42), unique=True, nullable=False)
-    blockchain_network = Column(String(50), nullable=False, default='Ethereum Mainnet')
-    is_primary = Column(Boolean, default=False, nullable=False)
+    blockchain_network = Column(String(50), nullable=False, default='Ethereum Mainnet', server_default=text("'Ethereum Mainnet'"))
+    is_primary = Column(Boolean, default=False, nullable=False, server_default=text('false'))
 
     user_account = relationship("UserAccount", back_populates="user_wallets")
 
@@ -190,15 +180,23 @@ class UserWallet(BaseModel, TimestampMixin):
 class GoodwillAction(BaseModel, TimestampMixin, SoftDeleteMixin):
     __tablename__ = 'goodwill_actions'
     __table_args__ = (
-        db.Index('idx_goodwill_status', 'status'),
-        db.Index('idx_goodwill_performer', 'performer_user_id'),
+        Index('idx_goodwill_status', 'status'),
+        Index('idx_goodwill_performer', 'performer_user_id'),
         {'extend_existing': True},
+        CheckConstraint(
+            "status IN ('PENDING_VERIFICATION', 'VERIFIED', 'ISSUED_ON_CHAIN', 'FAILED_ON_CHAIN_MINT', 'FAILED_WALLET_MISSING', 'FAILED_DISPATCH', 'FAILED_ENDOCRINE_BATCH')",
+            name="chk_goodwill_status_valid"
+        ),
+        CheckConstraint(
+            "loves_value BETWEEN 1 AND 100",
+            name="chk_goodwill_loves_value_range"
+        ),
     )
 
     performer_user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
     action_type = Column(String(100), nullable=False)
     description = Column(Text, nullable=False)
-    contextual_data = Column(JSONB, default={})
+    contextual_data = Column(JSONB, default=dict, nullable=False, server_default=text("'{}'::jsonb"))
     loves_value = Column(Integer, default=0, nullable=False)
     resonance_score = Column(Float, nullable=True)
 
@@ -206,7 +204,7 @@ class GoodwillAction(BaseModel, TimestampMixin, SoftDeleteMixin):
     expected_workload_intensity_w0 = Column(Float, nullable=True)
     client_compute_estimate = Column(Float, nullable=True)
 
-    status = Column(String(50), default='PENDING_VERIFICATION', nullable=False)
+    status = Column(String(50), default='PENDING_VERIFICATION', nullable=False, server_default=text("'PENDING_VERIFICATION'"))
     processed_at = Column(DateTime(timezone=True), nullable=True)
     blockchain_tx_hash = Column(String(66), nullable=True, unique=True)
 
@@ -237,6 +235,7 @@ class GoodwillAction(BaseModel, TimestampMixin, SoftDeleteMixin):
             "processed_at": self.processed_at.isoformat() if self.processed_at else None,
             "blockchain_tx_hash": self.blockchain_tx_hash,
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
+            "deleted_by": str(self.deleted_by) if self.deleted_by else None,
             "correlation_id": self.correlation_id,
         }
 
@@ -250,9 +249,9 @@ class GoodwillAction(BaseModel, TimestampMixin, SoftDeleteMixin):
 class LedgerEntry(BaseModel, TimestampMixin):
     __tablename__ = 'ledger_entries'
     __table_args__ = (
-        db.Index('idx_ledger_tx_hash', 'blockchain_tx_hash'),
-        db.Index('idx_ledger_block_time', 'block_timestamp', postgresql_using='btree'),
-        db.Index('idx_ledger_sender_receiver', 'sender_address', 'receiver_address'),
+        Index('idx_ledger_tx_hash', 'blockchain_tx_hash'),
+        Index('idx_ledger_block_time', 'block_timestamp', postgresql_using='btree'),
+        Index('idx_ledger_sender_receiver', 'sender_address', 'receiver_address'),
         {'extend_existing': True},
     )
 
@@ -261,18 +260,17 @@ class LedgerEntry(BaseModel, TimestampMixin):
 
     transaction_type = Column(String(50), nullable=False)
     amount = Column(Numeric(precision=20, scale=8), nullable=False)
-    token_symbol = Column(String(10), nullable=False, default='GOODWILL')
+    token_symbol = Column(String(10), nullable=False, default='GOODWILL', server_default=text("'GOODWILL'"))
     sender_address = Column(String(42), nullable=False)
     receiver_address = Column(String(42), nullable=False)
-    block_number = Column(BigInteger, nullable=False)
+    block_number = Column(BigInteger, nullable=False, index=True)
     block_timestamp = Column(DateTime(timezone=True), nullable=False)
-    status = Column(String(20), nullable=False, default='CONFIRMED')
-    metadata = Column(JSONB)
+    status = Column(String(20), nullable=False, default='CONFIRMED', server_default=text("'CONFIRMED'"))
+    metadata = Column(JSONB, default=dict, nullable=True, server_default=text("'{}'::jsonb"))
 
     initiator_user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=True, index=True)
     receiver_user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=True, index=True)
 
-    # Relationships
     goodwill_action = relationship("GoodwillAction", backref="ledger_entry", uselist=False,
                                     primaryjoin="LedgerEntry.goodwill_action_id == GoodwillAction.id")
     initiator_user = relationship("UserAccount", foreign_keys=[initiator_user_id], backref="initiated_ledger_entries")
@@ -305,7 +303,7 @@ class LedgerEntry(BaseModel, TimestampMixin):
 class EventLog(BaseModel, TimestampMixin):
     __tablename__ = 'event_logs'
     __table_args__ = (
-        db.Index('idx_event_type_timestamp', 'event_type', 'timestamp'),
+        Index('idx_event_type_timestamp', 'event_type', 'created_at'),
         {'extend_existing': True},
     )
 
@@ -352,7 +350,7 @@ class ChainBlock(BaseModel):
     block_number = Column(Integer, unique=True, nullable=False, index=True)
     timestamp = Column(DateTime(timezone=True), nullable=False)
     previous_hash = Column(String(64), nullable=False)
-    nonce = Column(Integer, default=0, nullable=False)
+    nonce = Column(Integer, default=0, nullable=False, server_default=text('0'))
     hash = Column(String(64), unique=True, nullable=False, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -376,10 +374,10 @@ class ChainBlock(BaseModel):
 class ApiKey(BaseModel, TimestampMixin):
     __tablename__ = "api_keys"
 
-    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text("uuid_generate_v4()"))
     key = Column(String(64), unique=True, nullable=False, index=True)
     user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    revoked = Column(Boolean, default=False)
+    revoked = Column(Boolean, default=False, nullable=False, server_default=text('false'))
 
     user_account = relationship("UserAccount", back_populates="api_keys",
                                 primaryjoin="ApiKey.user_id == UserAccount.id")
@@ -394,146 +392,23 @@ class ApiKey(BaseModel, TimestampMixin):
 
 class Proposal(BaseModel, TimestampMixin, SoftDeleteMixin):
     __tablename__ = 'proposals'
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('DRAFT', 'VOTING', 'PASSED', 'FAILED', 'EXECUTED')",
+            name='chk_proposal_status_valid'
+        ),
+        {'extend_existing': True},
+    )
 
     proposer_user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
-    status = Column(String(50), default='DRAFT', nullable=False) # e.g., DRAFT, VOTING, PASSED, FAILED, EXECUTED
+    status = Column(String(50), default='DRAFT', nullable=False, server_default=text("'DRAFT'"))
     vote_start_time = Column(DateTime(timezone=True), nullable=True)
     vote_end_time = Column(DateTime(timezone=True), nullable=True)
-    required_quorum = Column(Numeric(precision=5, scale=2), default=Decimal('0.0'), nullable=False) # e.g., 0.50 for 50%
-    proposal_type = Column(String(100), nullable=False) # e.g., PROTOCOL_CHANGE, TREASURY_SPEND, COUNCIL_ELECTION
-    details = Column(JSONB) # Specific parameters for the proposal (e.g., new mint rate, recipient address)
+    required_quorum = Column(Numeric(precision=5, scale=2), default=0, nullable=False, server_default=text('0'))  # Between 0.0 and 1.0
+    proposal_type = Column(String(100), nullable=False)  # e.g., PROTOCOL_CHANGE, TREASURY_SPEND, COUNCIL_ELECTION
+    details = Column(JSONB, default=dict, nullable=True, server_default=text("'{}'::jsonb"))
 
-    proposer = relationship("UserAccount", back_populates="proposals", lazy='joined')
-    votes = relationship("Vote", back_populates="proposal", lazy='dynamic', cascade="all, delete-orphan")
+    proposer = relationship("
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "id": str(self.id),
-            "proposer_user_id": str(self.proposer_user_id),
-            "title": self.title,
-            "description": self.description,
-            "status": self.status,
-            "vote_start_time": self.vote_start_time.isoformat() if self.vote_start_time else None,
-            "vote_end_time": self.vote_end_time.isoformat() if self.vote_end_time else None,
-            "required_quorum": str(self.required_quorum),
-            "proposal_type": self.proposal_type,
-            "details": self.details,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
-            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
-        }
-
-    def __repr__(self) -> str:
-        return f"<Proposal id={self.id} title='{self.title[:20]}...' status={self.status}>"
-
-
-class Vote(BaseModel, TimestampMixin):
-    __tablename__ = 'votes'
-    __table_args__ = (
-        db.UniqueConstraint('proposal_id', 'voter_user_id', name='_proposal_voter_uc'), # Ensure one vote per user per proposal
-        db.Index('idx_vote_proposal_voter', 'proposal_id', 'voter_user_id'),
-        {'extend_existing': True},
-    )
-
-    proposal_id = Column(PG_UUID(as_uuid=True), ForeignKey('proposals.id'), nullable=False, index=True)
-    voter_user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
-    vote_choice = Column(String(50), nullable=False) # e.g., 'YES', 'NO', 'ABSTAIN'
-    vote_weight = Column(Numeric(precision=20, scale=8), nullable=False) # Amount of token/power spent for quadratic voting
-    actual_vote_power = Column(Numeric(precision=20, scale=8), nullable=False) # Calculated power after quadratic logic
-
-    proposal = relationship("Proposal", back_populates="votes")
-    voter = relationship("UserAccount", back_populates="votes")
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "id": str(self.id),
-            "proposal_id": str(self.proposal_id),
-            "voter_user_id": str(self.voter_user_id),
-            "vote_choice": self.vote_choice,
-            "vote_weight": str(self.vote_weight),
-            "actual_vote_power": str(self.actual_vote_power),
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
-        }
-
-    def __repr__(self) -> str:
-        return f"<Vote id={self.id} proposal={self.proposal_id} voter={self.voter_user_id} choice={self.vote_choice}>"
-
-
-class CouncilMember(BaseModel, TimestampMixin, SoftDeleteMixin):
-    __tablename__ = 'council_members'
-    __table_args__ = (
-        db.UniqueConstraint('user_id', 'role', name='_user_role_uc'), # Ensure one role per user
-        {'extend_existing': True},
-    )
-
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
-    role = Column(String(100), nullable=False) # e.g., 'CORE_COUNCIL', 'TREASURY_COMMITTEE'
-    term_start_date = Column(DateTime(timezone=True), nullable=False)
-    term_end_date = Column(DateTime(timezone=True), nullable=True) # Nullable for indefinite terms
-    status = Column(String(50), default='ACTIVE', nullable=False) # e.g., ACTIVE, INACTIVE, SUSPENDED
-
-    user_account = relationship("UserAccount", back_populates="council_memberships")
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "id": str(self.id),
-            "user_id": str(self.user_id),
-            "role": self.role,
-            "term_start_date": self.term_start_date.isoformat(),
-            "term_end_date": self.term_end_date.isoformat() if self.term_end_date else None,
-            "status": self.status,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
-            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
-        }
-
-    def __repr__(self) -> str:
-        return f"<CouncilMember id={self.id} user={self.user_id} role={self.role}>"
-
-
-# ==============================================================================
-# 7. Event Listeners & Validation Hooks
-# ==============================================================================
-
-@event.listens_for(GoodwillAction, "before_insert")
-def goodwill_before_insert(mapper, connection, target: GoodwillAction) -> None:
-    if not (1 <= target.loves_value <= 100):
-        raise ValueError("Loves value must be between 1 and 100.")
-    if target.status not in ('PENDING_VERIFICATION', 'VERIFIED', 'ISSUED_ON_CHAIN', 'FAILED_ON_CHAIN_MINT', 'FAILED_WALLET_MISSING', 'FAILED_DISPATCH', 'FAILED_ENDOCRINE_BATCH'): # Added new statuses
-        target.status = 'PENDING_VERIFICATION'
-
-
-@event.listens_for(UserAccount.balance, "set", retval=False)
-def balance_set(target: UserAccount, value, oldvalue, initiator):
-    if value is not None and value < 0:
-        raise ValueError("UserAccount balance cannot be negative.")
-    return value
-
-
-@event.listens_for(Proposal, "before_insert")
-def proposal_before_insert(mapper, connection, target: Proposal) -> None:
-    if target.status not in ('DRAFT', 'VOTING', 'PASSED', 'FAILED', 'EXECUTED'):
-        target.status = 'DRAFT'
-    if target.required_quorum is not None and not (0.0 <= target.required_quorum <= 1.0):
-        raise ValueError("Required quorum must be between 0.0 and 1.0.")
-
-
-@event.listens_for(Vote, "before_insert")
-def vote_before_insert(mapper, connection, target: Vote) -> None:
-    if target.vote_choice not in ('YES', 'NO', 'ABSTAIN'):
-        raise ValueError("Vote choice must be 'YES', 'NO', or 'ABSTAIN'.")
-    if target.vote_weight is not None and target.vote_weight < 0:
-        raise ValueError("Vote weight cannot be negative.")
-    if target.actual_vote_power is not None and target.actual_vote_power < 0:
-        raise ValueError("Actual vote power cannot be negative.")
-
-
-@event.listens_for(CouncilMember, "before_insert")
-def council_member_before_insert(mapper, connection, target: CouncilMember) -> None:
-    if target.status not in ('ACTIVE', 'INACTIVE', 'SUSPENDED'):
-        target.status = 'ACTIVE'
-    if target.term_start_date and target.term_end_date and target.term_start_date >= target.term_end_date:
-        raise ValueError("Term end date must be after term start date.")

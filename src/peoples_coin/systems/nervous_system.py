@@ -2,14 +2,16 @@ import logging
 import json
 import http
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, List, Union
+import uuid
 
 from flask import Blueprint, request, jsonify, Response
-from pydantic import BaseModel, Field, ValidationError # Added Field for optional defaults
+from pydantic import BaseModel, Field, ValidationError, validator
+from typing_extensions import Literal
 
-from peoples_coin.extensions import immune_system, cognitive_system, db # Removed validate_transaction
+from peoples_coin.extensions import immune_system, cognitive_system, db
 from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import EventLog # DataEntry removed as it's not used here anymore
+from peoples_coin.db.models import EventLog
 
 logger = logging.getLogger(__name__)
 
@@ -18,139 +20,185 @@ KEY_STATUS = "status"
 KEY_ERROR = "error"
 KEY_DETAILS = "details"
 KEY_MESSAGE = "message"
-KEY_RECEIVED_ID = "received_id" # More generic ID for incoming data
+KEY_RECEIVED_ID = "received_id"  
 EVENT_NERVOUS_DATA_RECEIVED = 'nervous_node_data_received'
 EVENT_NERVOUS_DATA_PROCESSING_FAILED = 'nervous_node_data_processing_failed'
 
 
 # ==============================================================================
-# 1. Internal Node Data Schema (PLACEHOLDER)
-#    Define specific Pydantic models for data exchanged between nodes.
-#    Examples: BlockSyncMessage, TransactionPoolUpdate, PeerStatusUpdate
+# 1. Define Strong Typed Pydantic Models for Internal Node Data
 # ==============================================================================
 
-class InternalNodeDataSchema(BaseModel):
-    """
-    Placeholder schema for internal data exchanged between nodes.
-    You will replace this with specific Pydantic models like:
-    - BlockSyncMessage(BaseModel): block_number: int, block_hash: str, transactions: List[Dict[str, Any]]
-    - TransactionPoolUpdate(BaseModel): new_transactions: List[Dict[str, Any]]
-    - PeerStatusUpdate(BaseModel): peer_id: str, status: str, last_seen: datetime
-    """
-    data_type: str = Field(..., description="Type of internal node data (e.g., 'block_sync', 'tx_pool_update')")
-    payload: Dict[str, Any] = Field(..., description="The actual data payload from the peer node")
-    source_node_id: Optional[str] = Field(None, description="ID of the node sending this data")
+class BlockPayloadSchema(BaseModel):
+    block_number: int
+    block_hash: str
+    transactions: List[Dict[str, Any]]
+
+
+class TransactionListSchema(BaseModel):
+    new_transactions: List[Dict[str, Any]]
+
+
+class InternalNodeDataBase(BaseModel):
+    data_type: str = Field(..., description="Type of internal node data")
+    payload: Dict[str, Any] = Field(..., description="Payload data")
+    source_node_id: Optional[str] = Field(None, description="ID of source node")
+    correlation_id: Optional[str] = Field(None, description="Optional correlation ID for tracing")
+
+    @validator("data_type")
+    def data_type_must_be_known(cls, v):
+        allowed_types = {"block_sync", "tx_pool_update"}
+        if v not in allowed_types:
+            raise ValueError(f"data_type must be one of {allowed_types}")
+        return v
+
+
+class BlockSyncMessage(InternalNodeDataBase):
+    data_type: Literal["block_sync"]
+    payload: BlockPayloadSchema
+
+
+class TxPoolUpdateMessage(InternalNodeDataBase):
+    data_type: Literal["tx_pool_update"]
+    payload: TransactionListSchema
+
+
+InternalNodeDataSchema = Union[BlockSyncMessage, TxPoolUpdateMessage]
 
 
 # ==============================================================================
-# 2. Helper: Enqueue Cognitive Event
+# 2. Helper: Enqueue Cognitive Event with rich metadata
 # ==============================================================================
 
 def _create_and_enqueue_cognitive_event(session, event_type: str, payload: dict):
     """
-    Helper to create and enqueue a rich event for the Cognitive System,
-    and log it to the local database.
+    Create and enqueue a rich event for the Cognitive System and log it locally.
+    Adds timestamps and correlation_id if present.
     """
-    # This assumes cognitive_system has an enqueue_event method
-    # and that the EventLog model is properly linked to db.session
+    event_payload = {
+        **payload,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event_id": str(uuid.uuid4()),
+    }
+
     try:
         cognitive_system.enqueue_event({
             "type": event_type,
             "source": "NervousSystem",
-            "payload": payload
+            "payload": event_payload
         })
         log_message = f"Cognitive event '{event_type}' triggered. Payload keys: {list(payload.keys())}"
         event_log_entry = EventLog(event_type=event_type, message=log_message)
         session.add(event_log_entry)
+        logger.info(f"[Nervous] Enqueued cognitive event '{event_type}' with event_id {event_payload['event_id']}")
     except Exception as e:
         logger.error(f"[Nervous] Failed to log or enqueue cognitive event '{event_type}': {e}", exc_info=True)
 
 
-metabolic_bp = Blueprint('metabolic', __name__, url_prefix='/metabolic') # This blueprint should be renamed if moved
+# ==============================================================================
+# 3. Blueprint & Routes
+# ==============================================================================
 
 nervous_bp = Blueprint('nervous', __name__, url_prefix='/nervous')
+
+
+def json_response(data: dict, status_code: int = http.HTTPStatus.OK) -> Tuple[Response, int]:
+    """Helper for consistent JSON responses."""
+    return jsonify(data), status_code
 
 
 @nervous_bp.route("/status", methods=["GET"])
 def nervous_status() -> Tuple[Response, int]:
     """Health check for the Nervous System."""
     logger.debug("✅ Nervous system status check called.")
-    return jsonify({KEY_STATUS: "success", KEY_MESSAGE: "Nervous System operational"}), http.HTTPStatus.OK
+    return json_response({KEY_STATUS: "success", KEY_MESSAGE: "Nervous System operational"})
 
 
-@nervous_bp.route("/receive_node_data", methods=["POST"]) # Renamed endpoint
-@immune_system.check() # Assumed this checks internal API keys between nodes
+@nervous_bp.route("/receive_node_data", methods=["POST"])
+@immune_system.check()  # Security decorator for internal nodes
 def receive_node_data() -> Tuple[Response, int]:
     """
-    Receives and processes internal data (e.g., blocks, transactions, peer status) from other nodes.
+    Receives and processes internal data from peer nodes with strict schema validation.
+    Supports multiple message types with strict payload validation.
     """
+
     if not request.is_json:
-        logger.warning("[Nervous] Missing JSON body or incorrect Content-Type.")
-        return jsonify({
+        logger.warning("[Nervous] Missing or invalid JSON body.")
+        return json_response({
             KEY_STATUS: "error",
             KEY_ERROR: "Content-Type must be application/json"
-        }), http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+        }, http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
 
-    # Check payload size (optional, but good for internal communication)
-    if request.content_length and request.content_length > 5_000_000: # Increased limit for larger blocks/data
+    if request.content_length and request.content_length > 5_000_000:
         logger.warning("[Nervous] Payload too large.")
-        return jsonify({
+        return json_response({
             KEY_STATUS: "error",
             KEY_ERROR: "Payload too large"
-        }), http.HTTPStatus.REQUEST_ENTITY_TOO_LARGE
+        }, http.HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
 
-    data = request.get_json()
-    source_node_id = data.get("source_node_id", "UNKNOWN") # Example: ID of the sending node
-    logger.info(f"[Nervous] Received data from node: {source_node_id}, Type: {data.get('data_type', 'N/A')}")
+    raw_data = request.get_json()
+    source_node_id = raw_data.get("source_node_id", "UNKNOWN")
+    correlation_id = raw_data.get("correlation_id")
 
+    logger.info(f"[Nervous] Received data from node: {source_node_id}, Type: {raw_data.get('data_type', 'N/A')}")
+
+    # Validate against appropriate schema dynamically
     try:
-        # Step 1: Validate incoming internal node data against its specific schema
-        # Replace InternalNodeDataSchema with your actual schema for inter-node messages
-        validated_internal_data = InternalNodeDataSchema(**data)
-        logger.info(f"✅ Internal node data schema validated for type: {validated_internal_data.data_type}")
+        data_type = raw_data.get("data_type")
+        if data_type == "block_sync":
+            validated_data = BlockSyncMessage(**raw_data)
+        elif data_type == "tx_pool_update":
+            validated_data = TxPoolUpdateMessage(**raw_data)
+        else:
+            raise ValidationError([{
+                "loc": ("data_type",),
+                "msg": f"Unsupported data_type '{data_type}'",
+                "type": "value_error"
+            }], model=InternalNodeDataBase)
 
         with get_session_scope(db) as session:
-            # Step 2: Process the validated internal data (e.g., sync block, update transaction pool)
-            # This is where your core inter-node logic resides.
-            # Example:
-            if validated_internal_data.data_type == 'block_sync':
-                # Call consensus system to validate and potentially add block
-                # self.app.consensus.add_block_from_peer(validated_internal_data.payload)
-                logger.info(f"Processing block sync data from {source_node_id}.")
-                # You would add logic to verify the block and persist it
-            elif validated_internal_data.data_type == 'tx_pool_update':
-                # Update local transaction pool
-                logger.info(f"Processing transaction pool update from {source_node_id}.")
-                # You would add logic to merge transactions
-            else:
-                logger.warning(f"[Nervous] Unrecognized internal data type: {validated_internal_data.data_type}")
-                return jsonify({
-                    KEY_STATUS: "error",
-                    KEY_ERROR: "Unrecognized internal data type"
-                }), http.HTTPStatus.BAD_REQUEST
-
-
+            # TODO: Add your business logic here for each data_type
+            if data_type == "block_sync":
+                logger.info(f"Processing block sync from {source_node_id}, block #{validated_data.payload.block_number}")
+                # Call consensus or blockchain sync logic here
+                
+            elif data_type == "tx_pool_update":
+                logger.info(f"Processing transaction pool update from {source_node_id}, {len(validated_data.payload.new_transactions)} txs")
+                # Update transaction pool or mempool here
+                
             _create_and_enqueue_cognitive_event(
                 session,
                 EVENT_NERVOUS_DATA_RECEIVED,
-                {"data_type": validated_internal_data.data_type, "source_node_id": source_node_id}
+                {
+                    "data_type": data_type,
+                    "source_node_id": source_node_id,
+                    "correlation_id": correlation_id,
+                }
             )
-            logger.info(f"[Nervous] Data from node {source_node_id} processed successfully.")
 
-        return jsonify({
+        logger.info(f"[Nervous] Data from node {source_node_id} processed successfully.")
+        return json_response({
             KEY_STATUS: "success",
-            KEY_MESSAGE: f"Data of type '{validated_internal_data.data_type}' from node '{source_node_id}' accepted and processed."
-        }), http.HTTPStatus.ACCEPTED
+            KEY_MESSAGE: f"Data of type '{data_type}' from node '{source_node_id}' accepted and processed."
+        }, http.HTTPStatus.ACCEPTED)
 
     except ValidationError as ve:
-        logger.warning(f"🚫 Pydantic validation failed for internal node data. Errors: {ve.errors()}")
+        logger.warning(f"🚫 Validation failed for internal node data: {ve.errors()}")
         with get_session_scope(db) as session:
             _create_and_enqueue_cognitive_event(
                 session,
                 EVENT_NERVOUS_DATA_PROCESSING_FAILED,
-                {"validation_details": ve.errors(), "source_node_id": source_node_id}
+                {
+                    "validation_errors": ve.errors(),
+                    "source_node_id": source_node_id,
+                    "correlation_id": correlation_id
+                }
             )
-        return jsonify(status="error", error="Invalid internal data format", details=ve.errors()), http.HTTPStatus.BAD_REQUEST
+        return json_response({
+            KEY_STATUS: "error",
+            KEY_ERROR: "Invalid internal data format",
+            KEY_DETAILS: ve.errors()
+        }, http.HTTPStatus.BAD_REQUEST)
 
     except Exception as e:
         logger.exception(f"💥 Unexpected error processing internal node data from {source_node_id}.")
@@ -158,9 +206,14 @@ def receive_node_data() -> Tuple[Response, int]:
             _create_and_enqueue_cognitive_event(
                 session,
                 EVENT_NERVOUS_DATA_PROCESSING_FAILED,
-                {"error_message": str(e), "source_node_id": source_node_id}
+                {
+                    "error_message": str(e),
+                    "source_node_id": source_node_id,
+                    "correlation_id": correlation_id
+                }
             )
-        return jsonify({
+        return json_response({
             KEY_STATUS: "error",
             KEY_ERROR: "Internal server error during node data processing"
-        }), http.HTTPStatus.INTERNAL_SERVER_ERROR
+        }, http.HTTPStatus.INTERNAL_SERVER_ERROR)
+
