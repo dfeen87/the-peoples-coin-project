@@ -15,8 +15,11 @@ from sqlalchemy import text  # Explicit import for raw SQL queries
 from .config import Config
 from .extensions import db, immune_system, cognitive_system, endocrine_system, circulatory_system
 from .db.models import GoodwillAction, ChainBlock
+from flask_migrate import Migrate
 
 logger = logging.getLogger(__name__)
+
+migrate = Migrate()
 
 def setup_logging(app: Flask) -> None:
     log_level = app.config.get("LOG_LEVEL", "INFO").upper()
@@ -91,6 +94,8 @@ def create_app(config_class=Config) -> Flask:
 
     # Initialize extensions & systems
     db.init_app(app)
+    migrate.init_app(app, db)
+
     immune_system.init_app(app)
     cognitive_system.init_app(app)
     circulatory_system.init_app(app, db)

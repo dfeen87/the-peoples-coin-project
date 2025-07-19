@@ -1,8 +1,17 @@
 import logging
 from logging.config import fileConfig
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 from flask import current_app
 from alembic import context
+
+from peoples_coin import create_app
+
+app = create_app()
+app.app_context().push()
 
 # Alembic Config object, provides access to .ini file values.
 config = context.config

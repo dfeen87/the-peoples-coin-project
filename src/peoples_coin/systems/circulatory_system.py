@@ -158,3 +158,6 @@ class CirculatorySystem:
                 )
                 return False, "An internal error occurred during custom chain minting."
 
+
+circulatory_system = CirculatorySystem()
+
