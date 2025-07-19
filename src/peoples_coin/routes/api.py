@@ -8,8 +8,8 @@ from flask import Blueprint, request, jsonify, current_app
 from pydantic import ValidationError
 from sqlalchemy import func
 
-from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import GoodwillAction, ChainBlock, ApiKey, UserAccount
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models.models import GoodwillAction, ChainBlock, ApiKey, UserAccount
 from peoples_coin.systems.metabolic_system import GoodwillActionSchema, validate_transaction
 from peoples_coin.extensions import db
 

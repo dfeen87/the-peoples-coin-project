@@ -4,9 +4,9 @@ from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 
-from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import GoodwillAction, UserAccount
-from peoples_coin.validation.validate_transaction import validate_transaction, ValidationSuccess, ValidationFailure
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models.models import GoodwillAction, UserAccount
+from peoples_coin.utils.validation.validate_transaction import validate_transaction, ValidationSuccess, ValidationFailure
 from peoples_coin.extensions import db
 
 logger = logging.getLogger(__name__)

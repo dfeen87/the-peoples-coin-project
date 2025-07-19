@@ -7725,3 +7725,53 @@ Traceback (most recent call last):
     immune_system.stop_cleaner()  # Verify this method name matches your immune_system's shutdown method
 AttributeError: 'ImmuneSystem' object has no attribute 'stop_cleaner'
 2025-07-16 13:59:08 [INFO] peoples_coin: ✅ All background systems shut down successfully.
+2025-07-19 16:34:19 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-19 16:34:19 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/instance/peoples_coin.db
+2025-07-19 16:39:48 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-19 16:39:48 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/instance/peoples_coin.db
+2025-07-19 16:51:31 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-19 16:51:31 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/instance/peoples_coin.models
+2025-07-19 16:51:31 [INFO] peoples_coin.systems.immune_system: 🫀 ImmuneSystem instance created.
+2025-07-19 16:51:31 [INFO] cognitive_system: 🧠 Cognitive System instance created.
+2025-07-19 16:51:31 [INFO] peoples_coin.systems.endocrine_system: 🧠 EndocrineSystem instance created.
+2025-07-19 16:51:31 [INFO] peoples_coin.systems.circulatory_system: 🫀 CirculatorySystem instance created.
+2025-07-19 16:51:31 [INFO] peoples_coin.services.governance_service: GovernanceService initialized.
+2025-07-19 16:51:31 [INFO] peoples_coin.services.user_service: UserService instance created.
+2025-07-19 16:56:54 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-19 16:56:54 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/instance/peoples_coin.models
+2025-07-19 16:56:54 [INFO] peoples_coin.systems.immune_system: 🫀 ImmuneSystem instance created.
+2025-07-19 16:56:54 [INFO] cognitive_system: 🧠 Cognitive System instance created.
+2025-07-19 16:56:54 [INFO] peoples_coin.systems.endocrine_system: 🧠 EndocrineSystem instance created.
+2025-07-19 16:56:54 [INFO] peoples_coin.systems.circulatory_system: 🫀 CirculatorySystem instance created.
+2025-07-19 16:56:54 [INFO] peoples_coin.services.governance_service: GovernanceService initialized.
+2025-07-19 16:56:54 [INFO] peoples_coin.services.user_service: UserService instance created.
+2025-07-19 17:12:07 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-19 17:12:07 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/instance/peoples_coin.models
+2025-07-19 17:12:07 [INFO] peoples_coin.systems.immune_system: 🫀 ImmuneSystem instance created.
+2025-07-19 17:12:07 [INFO] cognitive_system: 🧠 Cognitive System instance created.
+2025-07-19 17:12:07 [INFO] peoples_coin.systems.endocrine_system: 🧠 EndocrineSystem instance created.
+2025-07-19 17:12:07 [INFO] peoples_coin.systems.circulatory_system: 🫀 CirculatorySystem instance created.
+2025-07-19 17:12:07 [INFO] peoples_coin.services.governance_service: GovernanceService initialized.
+2025-07-19 17:12:07 [INFO] peoples_coin.services.user_service: UserService instance created.
+2025-07-19 17:36:15 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-19 17:36:15 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/instance/peoples_coin.models
+2025-07-19 17:36:15 [INFO] peoples_coin.systems.immune_system: 🫀 ImmuneSystem instance created.
+2025-07-19 17:36:15 [INFO] cognitive_system: 🧠 Cognitive System instance created.
+2025-07-19 17:36:15 [INFO] peoples_coin.systems.endocrine_system: 🧠 EndocrineSystem instance created.
+2025-07-19 17:36:15 [INFO] peoples_coin.systems.circulatory_system: 🫀 CirculatorySystem instance created.
+2025-07-19 17:36:15 [INFO] peoples_coin.services.governance_service: GovernanceService initialized.
+2025-07-19 17:36:15 [INFO] peoples_coin.services.user_service: UserService instance created.
+2025-07-19 17:36:16 [INFO] peoples_coin.systems.reproductive_system: 🌱 ReproductiveSystem instance created.
+2025-07-19 17:45:23 [INFO] peoples_coin: Creating Flask application instance.
+2025-07-19 17:45:23 [INFO] peoples_coin: Using database URI: sqlite:////Users/donfeeney/the-peoples-coin-project/instance/peoples_coin.models
+2025-07-19 17:45:23 [INFO] peoples_coin.systems.immune_system: 🫀 ImmuneSystem instance created.
+2025-07-19 17:45:24 [INFO] cognitive_system: 🧠 Cognitive System instance created.
+2025-07-19 17:45:24 [INFO] peoples_coin.systems.endocrine_system: 🧠 EndocrineSystem instance created.
+2025-07-19 17:45:24 [INFO] peoples_coin.systems.circulatory_system: 🫀 CirculatorySystem instance created.
+2025-07-19 17:45:24 [INFO] peoples_coin.services.governance_service: GovernanceService initialized.
+2025-07-19 17:45:24 [INFO] peoples_coin.services.user_service: UserService instance created.
+2025-07-19 17:45:24 [INFO] peoples_coin.systems.reproductive_system: 🌱 ReproductiveSystem instance created.
+2025-07-19 17:45:24 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem received db instance (not used currently).
+2025-07-19 17:45:24 [INFO] peoples_coin.systems.immune_system: 🛡️ Connected to Redis on attempt 1.
+2025-07-19 17:45:24 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem in-memory cleaner thread started.
+2025-07-19 17:45:24 [INFO] peoples_coin.systems.immune_system: 🛡️ ImmuneSystem initialized.

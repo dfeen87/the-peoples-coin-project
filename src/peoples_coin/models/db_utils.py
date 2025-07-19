@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from sqlalchemy.orm import Session
 
-from peoples_coin.db import db  # Your existing SQLAlchemy db instance
+from peoples_coin.models import db  # Your existing SQLAlchemy db instance
 
 logger = logging.getLogger(__name__)
 

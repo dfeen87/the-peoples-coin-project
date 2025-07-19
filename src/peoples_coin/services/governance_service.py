@@ -8,8 +8,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
 
-from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import Proposal, Vote, UserAccount, CouncilMember
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models.models import Proposal, Vote, UserAccount, CouncilMember
 from peoples_coin.extensions import db
 
 logger = logging.getLogger(__name__)

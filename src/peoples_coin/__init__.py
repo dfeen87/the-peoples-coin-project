@@ -10,16 +10,16 @@ import click
 from flask import Flask, jsonify
 from flask.cli import with_appcontext
 from celery import Celery
-from sqlalchemy import text  # Explicit import for raw SQL queries
+from sqlalchemy import text
 
 from .config import Config
-from .extensions import db, immune_system, cognitive_system, endocrine_system, circulatory_system
-from .db.models import GoodwillAction, ChainBlock
+from peoples_coin.extensions import db
+from peoples_coin.models.models import GoodwillAction, ChainBlock
 from flask_migrate import Migrate
 
 logger = logging.getLogger(__name__)
-
 migrate = Migrate()
+
 
 def setup_logging(app: Flask) -> None:
     log_level = app.config.get("LOG_LEVEL", "INFO").upper()
@@ -63,70 +63,71 @@ def make_celery(app: Flask) -> Celery:
     return celery
 
 
-def create_app(config_class=Config) -> Flask:
-    app = Flask(__name__)
-    app.config.from_object(config_class)
+def mask_uri(db_uri: str) -> str:
+    if '://' in db_uri and '@' in db_uri:
+        protocol, rest = db_uri.split('://', 1)
+        userinfo, hostinfo = rest.split('@', 1)
+        if ':' in userinfo:
+            user, _ = userinfo.split(':', 1)
+            return f"{protocol}://{user}:****@{hostinfo}"
+    return db_uri
 
-    # Setup absolute path to DB file dynamically
+
+def create_app(config_name=None):
+    app = Flask(__name__)
+    app.config.from_object(config_name or Config)
+
+    # Setup instance path & db
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
     instance_path = os.path.join(project_root, 'instance')
     os.makedirs(instance_path, exist_ok=True)
-    db_file_path = os.path.join(instance_path, 'peoples_coin.db')
-
-    # Support env var override for DATABASE_URL, else use local SQLite
+    db_file_path = os.path.join(instance_path, 'peoples_coin.models')
     db_uri = os.environ.get('DATABASE_URL') or f"sqlite:///{db_file_path}"
-
-    # Mask credentials before logging DB URI
-    masked_db_uri = db_uri
-    if '://' in db_uri and '@' in db_uri:
-        protocol, rest = db_uri.split('://', 1)
-        if '@' in rest:
-            userinfo, hostinfo = rest.split('@', 1)
-            if ':' in userinfo:
-                user, _ = userinfo.split(':', 1)
-                masked_db_uri = f"{protocol}://{user}:****@{hostinfo}"
-
     app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    # Logging
     setup_logging(app)
     logger.info("Creating Flask application instance.")
-    logger.info(f"Using database URI: {masked_db_uri}")
+    logger.info(f"Using database URI: {mask_uri(db_uri)}")
 
-    # Initialize extensions & systems
+    # Init extensions
     db.init_app(app)
     migrate.init_app(app, db)
 
-    immune_system.init_app(app)
-    cognitive_system.init_app(app)
-    circulatory_system.init_app(app, db)
-    endocrine_system.init_app(
-        app,
-        loop_delay=app.config.get("AILEE_LOOP_DELAY", 5),
-        max_workers=app.config.get("AILEE_MAX_WORKERS", 2)
-    )
+    # Init systems & blueprints
+    with app.app_context():
+        from peoples_coin.systems.immune_system import immune_system
+        from peoples_coin.systems.cognitive_system import cognitive_system, cognitive_bp
+        from peoples_coin.systems.endocrine_system import endocrine_system
+        from peoples_coin.systems.circulatory_system import circulatory_system
+        from peoples_coin.systems.reproductive_system import reproductive_system
+        from peoples_coin.systems.nervous_system import nervous_bp
+        from peoples_coin.systems.metabolic_system import metabolic_bp
+        from peoples_coin.routes.api import api_bp
+        from peoples_coin.consensus import Consensus
 
-    logger.info("All systems initialized.")
+        immune_system.init_app(app, db)
+        cognitive_system.init_app(app)
+        endocrine_system.init_app(
+            app,
+            loop_delay=app.config.get("AILEE_LOOP_DELAY", 5),
+            max_workers=app.config.get("AILEE_MAX_WORKERS", 2)
+        )
+        circulatory_system.init_app(app, db)
+        reproductive_system.init_app(app, db)
 
-    # Register blueprints
-    from .systems.nervous_system import nervous_bp
-    from .systems.metabolic_system import metabolic_bp
-    from .systems.cognitive_system import cognitive_bp
-    from .routes.api import api_bp
+        app.register_blueprint(cognitive_bp)
+        app.register_blueprint(nervous_bp)
+        app.register_blueprint(metabolic_bp)
+        app.register_blueprint(api_bp)
 
-    app.register_blueprint(nervous_bp)
-    app.register_blueprint(metabolic_bp)
-    app.register_blueprint(cognitive_bp)
-    app.register_blueprint(api_bp)
+        # Consensus
+        consensus = Consensus()
+        consensus.init_app(app, db)
+        logger.info("Consensus system initialized.")
 
-    logger.info("All blueprints registered.")
-
-    # Initialize consensus system
-    from .consensus import Consensus
-    consensus = Consensus()
-    consensus.init_app(app, db)
-    logger.info("Consensus system initialized.")
-
-    # Setup Celery and attach for global access
+    # Celery
     celery = make_celery(app)
     app.extensions['celery'] = celery
     logger.info("Celery initialized and attached to app.extensions.")
@@ -135,8 +136,10 @@ def create_app(config_class=Config) -> Flask:
     def health() -> tuple[dict, int]:
         return jsonify(status="healthy"), 200
 
+    # CLI commands
     register_cli_commands(app, consensus)
 
+    # Graceful shutdown handlers
     def shutdown_systems(*args: Any, **kwargs: Any) -> None:
         logger.info("Initiating graceful shutdown of background systems...")
         try:
@@ -150,7 +153,7 @@ def create_app(config_class=Config) -> Flask:
             logger.error(f"Error stopping endocrine_system: {e}", exc_info=True)
 
         try:
-            immune_system.stop_cleaner()  # Verify this method name matches your immune_system's shutdown method
+            immune_system.stop_cleaner()
         except Exception as e:
             logger.error(f"Error stopping immune_system cleaner: {e}", exc_info=True)
 
@@ -199,7 +202,6 @@ def register_cli_commands(app: Flask, consensus: 'Consensus') -> None:
                         db.session.remove()
                         if hasattr(db, 'engine') and db.engine:
                             db.engine.dispose()
-                            logger.debug("Disposed SQLAlchemy engine to release DB file lock.")
                         os.remove(db_path)
                         logger.warning(f"Deleted existing DB file: {db_path}")
                     except Exception as e:
@@ -218,7 +220,6 @@ def register_cli_commands(app: Flask, consensus: 'Consensus') -> None:
     def create_genesis_block_command() -> None:
         with app.app_context():
             try:
-                # Use public method on Consensus instead of private
                 consensus.create_genesis_block_if_needed()
                 click.secho("✅ Genesis block creation checked/completed.", fg='green')
             except Exception as e:

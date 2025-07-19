@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field, ValidationError, validator
 from typing_extensions import Literal
 
 from peoples_coin.extensions import immune_system, cognitive_system, db
-from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import EventLog
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models.models import EventLog
 
 logger = logging.getLogger(__name__)
 

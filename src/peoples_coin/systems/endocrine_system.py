@@ -6,8 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 from flask import Flask
 
-from peoples_coin.db.db_utils import get_session_scope, retry_db_operation
-from peoples_coin.db.models import GoodwillAction
+from peoples_coin.models.db_utils import get_session_scope, retry_db_operation
+from peoples_coin.models.models import GoodwillAction
 from peoples_coin.config import Config
 
 # AI goodwill action processor function

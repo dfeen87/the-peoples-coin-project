@@ -14,7 +14,6 @@ from peoples_coin.extensions import db
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
-
 # Custom Query class for soft delete filtering
 class SoftDeleteQuery(Query):
     _with_deleted = False
@@ -73,6 +72,26 @@ class SoftDeleteMixin:
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
     deleted_by = Column(PG_UUID(as_uuid=True), nullable=True, index=True)
 
+class EventLog(BaseModel, TimestampMixin):
+    __tablename__ = 'event_logs'
+    __table_args__ = (
+        Index('idx_event_type_timestamp', 'event_type', 'created_at'),
+        {'extend_existing': True},
+    )
+
+    event_type = Column(String(64), nullable=False, index=True)
+    message = Column(Text, nullable=False)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": str(self.id),
+            "event_type": self.event_type,
+            "message": self.message,
+            "timestamp": self.created_at.isoformat(),
+        }
+
+    def __repr__(self) -> str:
+        return f"<EventLog id={self.id} event_type={self.event_type}>"
 
 # Models below
 
@@ -179,6 +198,28 @@ class LedgerEntry(BaseModel, TimestampMixin):
     def __repr__(self) -> str:
         return f"<LedgerEntry id={self.id} tx_hash={self.blockchain_tx_hash[:8]}... type={self.transaction_type}>"
 
+class ChainBlock(BaseModel, TimestampMixin):
+    __tablename__ = 'chain_blocks'
+
+    id = db.Column(db.Integer, primary_key=True)
+    block_hash = db.Column(db.String(128), nullable=False, unique=True)
+    previous_hash = db.Column(db.String(128), nullable=True)
+    data = db.Column(db.JSON, nullable=False)
+    height = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f"<ChainBlock {self.height} - {self.block_hash}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "block_hash": self.block_hash,
+            "previous_hash": self.previous_hash,
+            "data": self.data,
+            "height": self.height,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
 
 class Proposal(BaseModel, TimestampMixin, SoftDeleteMixin):
     __tablename__ = 'proposals'

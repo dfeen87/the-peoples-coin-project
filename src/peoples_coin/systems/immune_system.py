@@ -41,7 +41,7 @@ class ImmuneSystem:
         self._initialized = False
         logger.info("🫀 ImmuneSystem instance created.")
 
-    def init_app(self, app: Flask):
+    def init_app(self, app: Flask, db=None):
         """Initializes the Immune System with the Flask app context."""
         if self._initialized:
             logger.warning("🛡️ ImmuneSystem already initialized.")
@@ -49,6 +49,10 @@ class ImmuneSystem:
 
         self.app = app
         self.config = app.config
+
+        # Optional db argument, can be used if needed
+        if db:
+            logger.info("🛡️ ImmuneSystem received db instance (not used currently).")
 
         # Set default config values if not present
         self.config.setdefault("IMMUNE_QUARANTINE_TIME_SEC", 300)

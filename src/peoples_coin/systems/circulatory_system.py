@@ -7,8 +7,8 @@ import uuid
 
 from flask import Flask
 
-from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import GoodwillAction, UserAccount, LedgerEntry, ChainBlock, UserWallet
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models.models import GoodwillAction, UserAccount, LedgerEntry, ChainBlock, UserWallet
 from peoples_coin.consensus import Consensus
 
 logger = logging.getLogger(__name__)

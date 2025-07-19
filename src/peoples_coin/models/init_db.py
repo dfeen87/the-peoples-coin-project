@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 
 # Import Base and db from your package's db module
-from peoples_coin.db import db, Base
+from peoples_coin.models import db, Base
 
 try:
     from dotenv import load_dotenv
@@ -39,7 +39,7 @@ def init_db(drop: bool = False) -> int:
     Returns:
         int: Exit code (0=success, >0=failure)
     """
-    db_url = os.getenv('DATABASE_URL', 'sqlite:///instance/peoples_coin.db')
+    db_url = os.getenv('DATABASE_URL', 'sqlite:///instance/peoples_coin.models')
     logger.info(f"Using database URL: {db_url}")
 
     # Ensure SQLite folder exists if needed

@@ -1,39 +1,37 @@
 # Use official lightweight Python Alpine image
 FROM python:3.9-alpine
 
-# Set environment variables
+# Environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_ENV=production
 
-# Create non-root user and group
+# Create non-root user & group
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Set working directory to /app/src where your 'peoples_coin' package is
-WORKDIR /app/src
+# Set working directory
+WORKDIR /app
 
-# Install build dependencies and runtime dependencies
-RUN apk update && apk add --no-cache \
+# Install build & runtime dependencies
+RUN apk add --no-cache \
     build-base \
     libffi-dev \
     openssl-dev \
     gcc \
     musl-dev \
     linux-headers \
-    bash \
-    && rm -rf /var/cache/apk/*
+    # bash optional, remove if not needed
+    bash
 
-# Copy only requirements first to leverage Docker cache
-COPY requirements.txt /app/src/
+# Copy & install Python dependencies first
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Upgrade pip and install Python dependencies
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy source code
+COPY . .
 
-# Copy application source code into /app (so src is here)
-COPY . /app
-
-# Change ownership to the non-root user for the entire /app directory
+# Change ownership to non-root user
 RUN chown -R appuser:appgroup /app
 
 # Switch to non-root user
@@ -42,6 +40,6 @@ USER appuser
 # Expose port 8080 for Cloud Run
 EXPOSE 8080
 
-# Run Gunicorn with 4 workers binding to port 8080
+# Start with Gunicorn
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "peoples_coin.run:app"]
 

@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 from typing_extensions import Literal
 
 from peoples_coin.services.goodwill_service import goodwill_service
-from peoples_coin.validation.exceptions import UserNotFoundError  # hypothetical custom exception
-from peoples_coin.validation.schemas import GoodwillActionSchema  # hypothetically moved to shared schema
+from peoples_coin.utils.validation.exceptions import UserNotFoundError  # hypothetical custom exception
+from peoples_coin.utils.validation.schemas import GoodwillActionSchema  # hypothetically moved to shared schema
 from peoples_coin.constants import GoodwillStatus, ApiResponseStatus  # hypothetical enum/constants module
 
 logger = logging.getLogger(__name__)

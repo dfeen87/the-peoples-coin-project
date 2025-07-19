@@ -10,10 +10,10 @@ from typing import Optional, Dict, Any, Tuple
 from flask import Blueprint, request, jsonify, Flask, Response
 import http
 
-from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import EventLog
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models.models import EventLog
+from peoples_coin.extensions import db  # 🔷 Fix: import db explicitly
 
-# Conditional imports for RabbitMQ and Firestore
 try:
     import pika
     RABBIT_AVAILABLE = True
@@ -32,6 +32,9 @@ logger = logging.getLogger("cognitive_system")
 
 
 class CognitiveSystem:
+    """
+    Cognitive System — handles event processing with support for RabbitMQ, Firestore, and DB persistence.
+    """
     def __init__(self):
         self.app: Optional[Flask] = None
         self.config: Dict[str, Any] = {}
@@ -207,7 +210,6 @@ cognitive_bp = Blueprint('cognitive_bp', __name__, url_prefix="/api/v1/cognitive
 @cognitive_bp.route('/event', methods=['POST'])
 def cognitive_event() -> Tuple[Response, int]:
     from ..extensions import cognitive_system  # Import singleton instance
-
     event = request.get_json()
     if not event or not isinstance(event, dict) or "type" not in event:
         return jsonify({"error": "Event must be a JSON object with a 'type' field."}), http.HTTPStatus.BAD_REQUEST
@@ -215,8 +217,4 @@ def cognitive_event() -> Tuple[Response, int]:
     cognitive_system.enqueue_event(event)
     logger.info(f"🧠 API: Event '{event.get('type')}' accepted for cognitive processing.")
     return jsonify({"message": "Event accepted for processing."}), http.HTTPStatus.ACCEPTED
-
-
-# Singleton instance
-cognitive_system = CognitiveSystem()
 

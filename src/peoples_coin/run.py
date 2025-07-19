@@ -65,7 +65,7 @@ def create_app() -> Flask:
     app = Flask(__name__, instance_path=os.path.abspath(os.path.join(os.getcwd(), 'instance')))
     os.makedirs(app.instance_path, exist_ok=True)
 
-    db_uri = os.getenv('DATABASE_URL', f"sqlite:///{os.path.join(app.instance_path, 'peoples_coin.db')}")
+    db_uri = os.getenv('DATABASE_URL', f"sqlite:///{os.path.join(app.instance_path, 'peoples_coin.models')}")
     app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['DEBUG'] = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'

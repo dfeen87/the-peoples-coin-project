@@ -1,13 +1,13 @@
-kimport time
+import time
 import logging
-from typing import List, Union, Dict, Any
-
+from typing import List, Union, Dict, Any, Callable, Type
 from pydantic import BaseModel, ValidationError, Field, field_validator, Extra
+from functools import wraps
+from flask import request, jsonify
 
 logger = logging.getLogger(__name__)
 
 # --- Configuration ---
-# This can be loaded from Flask app.config for more flexibility
 MAX_FUTURE_DRIFT_SECONDS = 60
 
 
@@ -35,7 +35,6 @@ class Contribution(BaseModel):
         return v
 
     class Config:
-        # Enforce strict schema (no extra fields allowed).
         extra = Extra.forbid
 
 
@@ -54,7 +53,7 @@ class BatchValidationResult(BaseModel):
     """A self-describing result for a batch validation attempt."""
     all_valid: bool
     valid_items: List[Contribution] = []
-    invalid_items: List[Dict] = [] # Holds original data plus error details
+    invalid_items: List[Dict] = []  # Holds original data plus error details
 
 
 # ==============================================================================
@@ -69,7 +68,6 @@ def validate_contribution(data: dict) -> ValidationResult:
         A ValidationResult object that is unambiguous and easy to use.
     """
     try:
-        # Pydantic v2's model_validate handles the parsing and validation.
         validated_contribution = Contribution.model_validate(data)
         return ValidationResult(is_valid=True, data=validated_contribution)
     except ValidationError as e:
@@ -92,7 +90,6 @@ def validate_contributions_batch(transactions: List[dict]) -> BatchValidationRes
         if result.is_valid:
             valid_items.append(result.data)
         else:
-            # Append the original data along with the errors for context.
             invalid_items.append({
                 "index": i,
                 "original_data": tx_data,
@@ -104,4 +101,44 @@ def validate_contributions_batch(transactions: List[dict]) -> BatchValidationRes
         valid_items=valid_items,
         invalid_items=invalid_items
     )
+
+
+# ==============================================================================
+# 4. Flask Request Validation Decorator
+# ==============================================================================
+
+def validate_with(schema: Type[BaseModel]) -> Callable:
+    """
+    Decorator for Flask routes that validates JSON request data against a Pydantic schema.
+
+    Usage:
+        @app.route('/endpoint', methods=['POST'])
+        @validate_with(MySchema)
+        def endpoint():
+            validated_data = request.validated_data
+            ...
+
+    Args:
+        schema: A Pydantic BaseModel class to validate against.
+
+    Returns:
+        A decorated function that injects validated data or returns JSON error on failure.
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            try:
+                json_data = request.get_json(force=True)
+                validated = schema.model_validate(json_data)
+                request.validated_data = validated
+            except ValidationError as e:
+                logger.warning(f"Request validation error: {e.errors()}")
+                return jsonify({"errors": e.errors()}), 400
+            except Exception as e:
+                logger.error(f"Unexpected error during validation: {e}")
+                return jsonify({"error": "Invalid request data"}), 400
+
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
 

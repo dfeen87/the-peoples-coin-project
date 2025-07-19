@@ -6,8 +6,8 @@ from decimal import Decimal
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 
-from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import UserAccount, UserWallet
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models.models import UserAccount, UserWallet
 from peoples_coin.extensions import db
 
 try:

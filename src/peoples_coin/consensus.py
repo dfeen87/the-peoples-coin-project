@@ -7,8 +7,8 @@ import uuid
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
-from peoples_coin.db.db_utils import get_session_scope
-from peoples_coin.db.models import ChainBlock, LedgerEntry, UserAccount
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models.models import ChainBlock, LedgerEntry, UserAccount
 from peoples_coin.validate.validate_transaction import validate_transaction
 
 logger = logging.getLogger(__name__)
