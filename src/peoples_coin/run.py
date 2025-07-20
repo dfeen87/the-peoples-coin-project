@@ -40,27 +40,23 @@ def setup_logging():
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
-
 setup_logging()
 logger = logging.getLogger(__name__)
 
-# --- Imports that require logging set up ---
-from .db import db
-from .systems.endocrine_system import AILEEController
-from .systems.cognitive_system import register_cognitive_system, start_thought_loop, stop_thought_loop, _thought_loop_running
-from .systems.immune_system import start_immune_system_cleaner, stop_immune_system_cleaner, _cleaner_thread
-from .consensus import get_consensus_instance
-from .systems.metabolic_system import metabolic_bp
-from .systems.nervous_system import nervous_bp
-
+# --- Absolute imports ---
+from peoples_coin.extensions import db
+from peoples_coin.systems.endocrine_system import EndocrineSystem
+from peoples_coin.systems.cognitive_system import register_cognitive_system, start_thought_loop, stop_thought_loop, _thought_loop_running
+from peoples_coin.systems.immune_system import start_immune_system_cleaner, stop_immune_system_cleaner, _cleaner_thread
+from peoples_coin.consensus import get_consensus_instance
+from peoples_coin.systems.metabolic_system import metabolic_bp
+from peoples_coin.systems.nervous_system import nervous_bp
 
 ailee_controller = None
 shutdown_event = threading.Event()
 
-
 # --- App Factory ---
 def create_app() -> Flask:
-    """Create and configure the Flask app."""
     logger.info("Creating main Flask application...")
     app = Flask(__name__, instance_path=os.path.abspath(os.path.join(os.getcwd(), 'instance')))
     os.makedirs(app.instance_path, exist_ok=True)
@@ -84,6 +80,12 @@ def create_app() -> Flask:
     app.register_blueprint(nervous_bp)
     register_cognitive_system(app)
 
+    from peoples_coin.routes.auth import auth_bp
+    from peoples_coin.routes.goodwill import goodwill_bp
+
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(goodwill_bp)
+
     # CLI Commands
     @app.cli.command('init-db')
     @click.option('--drop', is_flag=True, help="Drop all tables before creating them.")
@@ -99,7 +101,6 @@ def create_app() -> Flask:
     @app.cli.command('healthcheck')
     @with_appcontext
     def healthcheck():
-        """Check health of database & background systems."""
         try:
             db.session.execute('SELECT 1')
             click.echo("✅ Database OK")
@@ -110,7 +111,6 @@ def create_app() -> Flask:
         click.echo(f"{'✅' if _thought_loop_running else '⚠️'} Cognitive loop running")
         click.echo(f"{'✅' if _cleaner_thread and _cleaner_thread.is_alive() else '⚠️'} Immune cleaner running")
 
-    # App-level status route
     @app.route('/status', methods=['GET'])
     def app_status():
         try:
@@ -128,25 +128,22 @@ def create_app() -> Flask:
 
     return app
 
-
 # --- Background Systems ---
 def start_background_systems(app: Flask) -> None:
-    """Start all core background processing systems in correct order."""
     logger.info("Starting all background systems...")
     global ailee_controller
     with app.app_context():
         try:
             start_immune_system_cleaner()
             start_thought_loop()
-            ailee_controller = AILEEController.get_instance(app=app, db=db)
+            ailee_controller = EndocrineSystem()
+            ailee_controller.init_app(app)
             ailee_controller.start()
             logger.info("🚀 All core background systems launched.")
         except Exception as e:
             logger.error(f"Error starting background systems: {e}", exc_info=True)
 
-
 def stop_all_background_systems() -> None:
-    """Graceful shutdown for all background systems."""
     logger.info("Initiating graceful shutdown of background systems...")
     try:
         if ailee_controller:
@@ -157,7 +154,6 @@ def stop_all_background_systems() -> None:
     except Exception as e:
         logger.error(f"Error during shutdown of background systems: {e}", exc_info=True)
 
-
 # --- Graceful SIGTERM & SIGINT Handler ---
 def handle_exit_signal(*args) -> None:
     logger.info("Exit signal received. Shutting down gracefully.")
@@ -165,15 +161,12 @@ def handle_exit_signal(*args) -> None:
     stop_all_background_systems()
     sys.exit(0)
 
-
 signal.signal(signal.SIGTERM, handle_exit_signal)
 signal.signal(signal.SIGINT, handle_exit_signal)
 atexit.register(stop_all_background_systems)
 
-
 # --- Main ---
 if __name__ == '__main__':
-    """Main entry point for running background services."""
     logger.info("Starting application in background service mode.")
     app = None
     try:

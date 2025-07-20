@@ -93,6 +93,18 @@ class EventLog(BaseModel, TimestampMixin):
     def __repr__(self) -> str:
         return f"<EventLog id={self.id} event_type={self.event_type}>"
 
+
+class ApiKey(BaseModel, TimestampMixin):
+    __tablename__ = 'api_keys'
+
+    key = Column(String(64), unique=True, nullable=False, index=True)
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
+
+    user_account = relationship("UserAccount", back_populates="api_keys")
+
+    def __repr__(self):
+        return f"<ApiKey id={self.id} key={self.key[:8]} user_id={self.user_id}>"
+
 # Models below
 
 class UserAccount(BaseModel, TimestampMixin, SoftDeleteMixin):

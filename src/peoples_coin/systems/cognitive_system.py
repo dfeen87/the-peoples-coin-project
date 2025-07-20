@@ -203,13 +203,29 @@ class CognitiveSystem:
         self._persist_event(event)
 
 
-# Blueprint with URL prefix for Cognitive API
+# Singleton instance for import and usage
+cognitive_system = CognitiveSystem()
+
+
+# Helper functions for run.py and elsewhere
+def register_cognitive_system(app: Flask):
+    cognitive_system.init_app(app)
+
+def start_thought_loop():
+    cognitive_system.start_background_loop()
+
+def stop_thought_loop():
+    cognitive_system.stop_background_loop()
+
+_thought_loop_running = property(lambda: cognitive_system.is_running())
+
+
+# Flask Blueprint for cognitive endpoints
 cognitive_bp = Blueprint('cognitive_bp', __name__, url_prefix="/api/v1/cognitive")
 
 
 @cognitive_bp.route('/event', methods=['POST'])
 def cognitive_event() -> Tuple[Response, int]:
-    from ..extensions import cognitive_system  # Import singleton instance
     event = request.get_json()
     if not event or not isinstance(event, dict) or "type" not in event:
         return jsonify({"error": "Event must be a JSON object with a 'type' field."}), http.HTTPStatus.BAD_REQUEST

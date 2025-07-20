@@ -319,3 +319,13 @@ class Consensus:
         user = session.query(UserAccount).filter_by(firebase_uid=firebase_uid).first()
         return user.id if user else None
 
+_consensus_instance = None
+
+def get_consensus_instance(app=None, db=None) -> Consensus:
+    global _consensus_instance
+    if _consensus_instance is None:
+        _consensus_instance = Consensus()
+        if app and db:
+            _consensus_instance.init_app(app, db)
+            _consensus_instance.create_genesis_block_if_needed()
+    return _consensus_instance

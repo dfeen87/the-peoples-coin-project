@@ -39,6 +39,7 @@ instance/
 # Logs
 *.log
 app.log
+app.log*
 
 # IDE/editor folders
 .idea/
@@ -87,3 +88,5 @@ src/peoples_coin_backup/
 *.swp
 *.swo
 
+# Ignore cloud sql proxy binary
+cloud_sql_proxy
