@@ -177,3 +177,16 @@ CREATE TABLE council_members (
 );
 CREATE INDEX IF NOT EXISTS idx_council_members_role ON council_members(role);
 CREATE TRIGGER update_council_members_updated_at BEFORE UPDATE ON council_members FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+
+-- === System Controller ===
+CREATE TABLE IF NOT EXISTS controller_actions (
+    id SERIAL PRIMARY KEY,
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    user_id UUID NULL REFERENCES user_accounts(id) ON DELETE SET NULL, -- Added Line
+    recommendations JSONB,
+    actions_taken JSONB
+);
+CREATE INDEX IF NOT EXISTS idx_controller_actions_user_id ON controller_actions(user_id);
+CREATE INDEX IF NOT EXISTS idx_controller_actions_timestamp ON controller_actions(timestamp);
+
