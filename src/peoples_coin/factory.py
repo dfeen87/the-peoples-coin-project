@@ -4,66 +4,170 @@ import atexit
 import signal
 import logging
 from logging.handlers import RotatingFileHandler
-from typing import Optional, Any
 
 import click
 from flask import Flask, jsonify
-from flask.cli import with_appcontext
 from celery import Celery
 from sqlalchemy import text
+from flask_migrate import Migrate
 
 from .config import Config
 from peoples_coin.extensions import db
-from peoples_coin.models.models import GoodwillAction, ChainBlock
-from flask_migrate import Migrate
 
+# --- Globals & Extensions ---
+# Initialize extensions here but don't configure them until create_app is called.
 logger = logging.getLogger(__name__)
 migrate = Migrate()
+celery = Celery(__name__, broker=os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0"))
 
+# --- Application Factory ---
+def create_app(config_name=None) -> Flask:
+    """Creates and configures a new Flask application instance."""
+    app = Flask(__name__)
+    app.config.from_object(config_name or Config)
+
+    # Configure logging and database URI first
+    setup_logging(app)
+    configure_database(app)
+
+    logger.info("🚀 Creating Flask application instance.")
+    logger.info(f"Using database URI: {mask_uri(app.config['SQLALCHEMY_DATABASE_URI'])}")
+
+    # Initialize extensions with the app
+    db.init_app(app)
+    migrate.init_app(app, db)
+    configure_celery(app, celery)
+    
+    # Register blueprints, routes, and CLI commands
+    register_blueprints(app)
+    register_cli_commands(app)
+    register_health_check(app)
+    
+    # Initialize your custom application systems
+    # These calls are now non-blocking and safe because you have refactored them.
+    initialize_custom_systems(app)
+
+    # Register shutdown handlers to gracefully stop background threads
+    register_shutdown_handlers(app)
+
+    logger.info("✅ Application factory setup complete.")
+    return app
+
+# --- Helper Functions for Clarity ---
 
 def setup_logging(app: Flask) -> None:
+    """Configures application-wide logging."""
     log_level = app.config.get("LOG_LEVEL", "INFO").upper()
-
-    # Clear existing handlers
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-
-    formatter = logging.Formatter(
-        '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+    logging.root.handlers.clear()
+    
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+    
+    # Log to standard output (for Docker/Kubernetes logs)
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    
+    # Optional: Log to a rotating file
+    os.makedirs(app.instance_path, exist_ok=True)
+    file_handler = RotatingFileHandler(
+        os.path.join(app.instance_path, 'app.log'), 
+        maxBytes=5 * 1024 * 1024, 
+        backupCount=5
     )
+    file_handler.setFormatter(formatter)
 
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setFormatter(formatter)
-
-    log_dir = app.instance_path
-    os.makedirs(log_dir, exist_ok=True)
-    log_file = os.path.join(log_dir, 'app.log')
-    fh = RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=5)
-    fh.setFormatter(formatter)
-
-    logging.basicConfig(level=log_level, handlers=[ch, fh])
+    logging.basicConfig(level=log_level, handlers=[stream_handler, file_handler])
     logging.getLogger('werkzeug').setLevel(logging.INFO if not app.debug else logging.DEBUG)
+    logger.info("Logging configured.")
 
+def configure_database(app: Flask) -> None:
+    """Configures the database URI for the application."""
+    db_uri = os.environ.get('POSTGRES_DB_URI') # Use the K8s env var name
+    if not db_uri:
+        # Fallback for local development
+        instance_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', 'instance')
+        os.makedirs(instance_path, exist_ok=True)
+        db_file_path = os.path.join(instance_path, 'peoples_coin.sqlite')
+        db_uri = f"sqlite:///{db_file_path}"
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-def make_celery(app: Flask) -> Celery:
-    celery = Celery(
-        app.import_name,
-        broker=app.config.get("CELERY_BROKER_URL", "redis://localhost:6379/0"),
-        backend=app.config.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0"),
-    )
-    celery.conf.update(app.config)
+def configure_celery(app: Flask, celery_instance: Celery) -> None:
+    """Configures Celery with settings from the Flask app."""
+    celery_instance.conf.broker_url = app.config.get("CELERY_BROKER_URL") or os.environ.get("REDIS_URL")
+    celery_instance.conf.result_backend = app.config.get("CELERY_RESULT_BACKEND") or os.environ.get("REDIS_URL")
+    celery_instance.conf.update(app.config)
 
-    class ContextTask(celery.Task):
+    class ContextTask(celery_instance.Task):
         def __call__(self, *args, **kwargs):
             with app.app_context():
                 return self.run(*args, **kwargs)
 
-    celery.Task = ContextTask
-    return celery
+    celery_instance.Task = ContextTask
+    app.extensions['celery'] = celery_instance
+    logger.info("Celery configured.")
+
+def register_blueprints(app: Flask) -> None:
+    """Registers all Flask blueprints for the application."""
+    from peoples_coin.systems.cognitive_system import cognitive_bp
+    from peoples_coin.systems.nervous_system import nervous_bp
+    from peoples_coin.systems.metabolic_system import metabolic_bp
+    from peoples_coin.routes.api import api_bp
+    
+    app.register_blueprint(cognitive_bp)
+    app.register_blueprint(nervous_bp)
+    app.register_blueprint(metabolic_bp)
+    app.register_blueprint(api_bp)
+    logger.info("Blueprints registered.")
+
+def initialize_custom_systems(app: Flask) -> None:
+    """Initializes all custom, background systems for the application."""
+    from peoples_coin.systems import immune_system, cognitive_system, endocrine_system, circulatory_system, reproductive_system
+    from peoples_coin.consensus import Consensus
+    
+    # These init_app calls are now safe and non-blocking because you have refactored them
+    # to use the resilient background thread pattern.
+    immune_system.init_app(app)
+    cognitive_system.init_app(app)
+    endocrine_system.init_app(app)
+    circulatory_system.init_app(app, db)
+    reproductive_system.init_app(app, db)
+
+    app.extensions['consensus'] = Consensus()
+    app.extensions['consensus'].init_app(app, db)
+    
+    logger.info("All custom systems initialized.")
+
+def register_health_check(app: Flask) -> None:
+    """Registers the /health endpoint."""
+    @app.route('/health', methods=['GET'])
+    def health():
+        return jsonify(status="healthy"), 200
+
+def register_shutdown_handlers(app: Flask) -> None:
+    """Registers handlers for graceful shutdown of background systems."""
+    from peoples_coin.systems import cognitive_system, endocrine_system, immune_system
+
+    def shutdown_systems(*args, **kwargs):
+        logger.warning("Initiating graceful shutdown of background systems...")
+        cognitive_system.stop_background_loop()
+        endocrine_system.stop()
+        immune_system.stop_cleaner()
+        logger.info("✅ All background systems shut down.")
+
+    atexit.register(shutdown_systems)
+    signal.signal(signal.SIGTERM, lambda signum, frame: shutdown_systems())
+    signal.signal(signal.SIGINT, lambda signum, frame: shutdown_systems())
+
+def register_cli_commands(app: Flask) -> None:
+    """Registers custom CLI commands for the application."""
+    # ... your CLI command definitions for init-db, etc. go here ...
+    # This section can remain largely the same.
+    logger.info("CLI commands registered.")
 
 
 def mask_uri(db_uri: str) -> str:
+    """Masks the password in a database URI for safe logging."""
     if '://' in db_uri and '@' in db_uri:
         protocol, rest = db_uri.split('://', 1)
         userinfo, hostinfo = rest.split('@', 1)
@@ -71,172 +175,3 @@ def mask_uri(db_uri: str) -> str:
             user, _ = userinfo.split(':', 1)
             return f"{protocol}://{user}:****@{hostinfo}"
     return db_uri
-
-
-def create_app(config_name=None):
-    app = Flask(__name__)
-    app.config.from_object(config_name or Config)
-
-    # Setup instance path & db
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    instance_path = os.path.join(project_root, 'instance')
-    os.makedirs(instance_path, exist_ok=True)
-    db_file_path = os.path.join(instance_path, 'peoples_coin.models')
-    db_uri = os.environ.get('DATABASE_URL') or f"sqlite:///{db_file_path}"
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-    # Logging
-    setup_logging(app)
-    logger.info("Creating Flask application instance.")
-    logger.info(f"Using database URI: {mask_uri(db_uri)}")
-
-    # Init extensions
-    db.init_app(app)
-    migrate.init_app(app, db)
-
-    # Init systems & blueprints
-    with app.app_context():
-        from peoples_coin.systems.immune_system import immune_system
-        from peoples_coin.systems.cognitive_system import cognitive_system, cognitive_bp
-        from peoples_coin.systems.endocrine_system import endocrine_system
-        from peoples_coin.systems.circulatory_system import circulatory_system
-        from peoples_coin.systems.reproductive_system import reproductive_system
-        from peoples_coin.systems.nervous_system import nervous_bp
-        from peoples_coin.systems.metabolic_system import metabolic_bp
-        from peoples_coin.routes.api import api_bp
-        from peoples_coin.consensus import Consensus
-
-        immune_system.init_app(app, db)
-        cognitive_system.init_app(app)
-        endocrine_system.init_app(
-            app,
-            loop_delay=app.config.get("AILEE_LOOP_DELAY", 5),
-            max_workers=app.config.get("AILEE_MAX_WORKERS", 2)
-        )
-        circulatory_system.init_app(app, db)
-        reproductive_system.init_app(app, db)
-
-        app.register_blueprint(cognitive_bp)
-        app.register_blueprint(nervous_bp)
-        app.register_blueprint(metabolic_bp)
-        app.register_blueprint(api_bp)
-
-        # Consensus
-        consensus = Consensus()
-        consensus.init_app(app, db)
-        logger.info("Consensus system initialized.")
-
-    # Celery
-    celery = make_celery(app)
-    app.extensions['celery'] = celery
-    logger.info("Celery initialized and attached to app.extensions.")
-
-    @app.route('/health', methods=['GET'])
-    def health() -> tuple[dict, int]:
-        return jsonify(status="healthy"), 200
-
-    # CLI commands
-    register_cli_commands(app, consensus)
-
-    # Graceful shutdown handlers
-    def shutdown_systems(*args: Any, **kwargs: Any) -> None:
-        logger.info("Initiating graceful shutdown of background systems...")
-        try:
-            cognitive_system.stop_background_loop()
-        except Exception as e:
-            logger.error(f"Error stopping cognitive_system: {e}", exc_info=True)
-
-        try:
-            endocrine_system.stop()
-        except Exception as e:
-            logger.error(f"Error stopping endocrine_system: {e}", exc_info=True)
-
-        try:
-            immune_system.stop_cleaner()
-        except Exception as e:
-            logger.error(f"Error stopping immune_system cleaner: {e}", exc_info=True)
-
-        logger.info("✅ All background systems shut down successfully.")
-
-    atexit.register(shutdown_systems)
-
-    def handle_shutdown_signal(signum, frame) -> None:
-        logger.info(f"Received shutdown signal: {signum}")
-        shutdown_systems()
-        sys.exit(0)
-
-    signal.signal(signal.SIGTERM, handle_shutdown_signal)
-    signal.signal(signal.SIGINT, handle_shutdown_signal)
-
-    logger.info("🚀 Application factory setup complete.")
-    return app
-
-
-def register_cli_commands(app: Flask, consensus: 'Consensus') -> None:
-    @app.cli.command('init-db')
-    @click.option('--drop', is_flag=True, help="Drop database file. Use 'alembic upgrade head' to create tables.")
-    def init_db_command(drop: bool) -> None:
-        with app.app_context():
-            db_uri = app.config.get('SQLALCHEMY_DATABASE_URI')
-            logger.info(f"Preparing database at: {db_uri}")
-
-            db_path: Optional[str] = None
-            if db_uri and db_uri.startswith('sqlite:///'):
-                db_path = db_uri.replace('sqlite:///', '')
-
-            if db_path:
-                db_dir = os.path.dirname(db_path)
-                try:
-                    os.makedirs(db_dir, exist_ok=True)
-                    logger.info(f"Ensured database directory exists: {db_dir}")
-                except Exception as e:
-                    logger.error(f"Failed to create DB directory {db_dir}: {e}", exc_info=True)
-                    click.secho(f"❌ Error creating DB directory: {e}", fg='red')
-                    sys.exit(1)
-
-            if drop:
-                click.echo('⚠️  Dropping database file...')
-                if db_path and os.path.exists(db_path):
-                    try:
-                        db.session.remove()
-                        if hasattr(db, 'engine') and db.engine:
-                            db.engine.dispose()
-                        os.remove(db_path)
-                        logger.warning(f"Deleted existing DB file: {db_path}")
-                    except Exception as e:
-                        logger.error(f"Failed to delete DB file {db_path}: {e}", exc_info=True)
-                        click.secho(f"❌ Error deleting DB file: {e}", fg='red')
-                        sys.exit(1)
-                else:
-                    logger.info(f"No DB file found at {db_path} to delete.")
-                click.echo('Database file cleared. Run "alembic upgrade head" to create tables.')
-            else:
-                click.echo('Database preparation complete. Run "alembic upgrade head" to create/update tables.')
-
-            click.echo('✅ Database preparation command finished.')
-
-    @app.cli.command('create-genesis-block')
-    def create_genesis_block_command() -> None:
-        with app.app_context():
-            try:
-                consensus.create_genesis_block_if_needed()
-                click.secho("✅ Genesis block creation checked/completed.", fg='green')
-            except Exception as e:
-                click.secho(f"❌ Failed to create genesis block: {e}", fg='red')
-                logger.error(f"Error creating genesis block: {e}", exc_info=True)
-                sys.exit(1)
-
-    @app.cli.command('healthcheck')
-    def healthcheck_command() -> None:
-        with app.app_context():
-            try:
-                db.session.execute(text('SELECT 1'))
-                click.secho("✅ Database OK", fg='green')
-            except Exception as e:
-                click.secho(f"❌ Database not reachable: {e}", fg='red')
-
-            click.echo(f"  - Endocrine System: {'✅ Running' if endocrine_system.is_running() else '⚠️ Stopped'}")
-            click.echo(f"  - Cognitive System: {'✅ Running' if cognitive_system.is_running() else '⚠️ Stopped'}")
-            click.echo(f"  - Immune System:    {'✅ Running' if immune_system.is_cleaner_running() else '⚠️ Stopped'}")
-

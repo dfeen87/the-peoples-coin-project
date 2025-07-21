@@ -1,69 +1,50 @@
-import logging
-from logging.config import fileConfig
 import os
 import sys
+from logging.config import fileConfig
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
 
-from flask import current_app
 from alembic import context
 
-from peoples_coin.factory import create_app
+# --- Add project root to path to allow imports ---
+# This ensures we can import your models and extensions
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-app = create_app()
-app.app_context().push()
-
-# Alembic Config object, provides access to .ini file values.
+# --- Alembic Config object ---
 config = context.config
 
-# Set up Python logging from config file.
-fileConfig(config.config_file_name)
-logger = logging.getLogger('alembic.env')
+# --- Setup Logging ---
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+# --- 1. Get Target Metadata ---
+# Import your extensions and models directly
+from peoples_coin.extensions import db
+from peoples_coin.models import models # Make sure this import grabs all your models
+
+target_metadata = db.metadata
+
+# --- 2. Get Database URL ---
+# Get the DB URL from the same environment variable your app uses
+db_uri = os.getenv('POSTGRES_DB_URI')
+if not db_uri:
+    # Fallback to local SQLite for development if the env var isn't set
+    instance_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', 'instance')
+    os.makedirs(instance_path, exist_ok=True)
+    db_file_path = os.path.join(instance_path, 'peoples_coin.sqlite')
+    db_uri = f"sqlite:///{db_file_path}"
+
+# Set the sqlalchemy.url in the Alembic config for the runner
+config.set_main_option('sqlalchemy.url', db_uri)
 
 
-def get_engine():
-    """
-    Get SQLAlchemy engine from Flask-Migrate extension.
-    Supports Flask-SQLAlchemy v2 and v3+ compatibility.
-    """
-    try:
-        # Flask-SQLAlchemy < 3
-        return current_app.extensions['migrate'].db.get_engine()
-    except (TypeError, AttributeError):
-        # Flask-SQLAlchemy >= 3
-        return current_app.extensions['migrate'].db.engine
-
-
-def get_engine_url():
-    """
-    Get DB connection URL as string, for offline migration mode.
-    """
-    try:
-        return get_engine().url.render_as_string(hide_password=False).replace('%', '%%')
-    except AttributeError:
-        return str(get_engine().url).replace('%', '%%')
-
-
-def get_metadata():
-    """
-    Get the metadata object for Alembic autogenerate support.
-    """
-    target_db = current_app.extensions['migrate'].db
-    if hasattr(target_db, 'metadatas'):
-        # Flask-SQLAlchemy >= 3 supports multiple metadata
-        return target_db.metadatas[None]
-    return target_db.metadata
-
-
-def run_migrations_offline():
-    """
-    Run migrations in 'offline' mode.
-    Uses URL string and skips DBAPI connection.
-    """
+def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
-        target_metadata=get_metadata(),
+        target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -72,31 +53,17 @@ def run_migrations_offline():
         context.run_migrations()
 
 
-def run_migrations_online():
-    """
-    Run migrations in 'online' mode.
-    Creates an Engine and connects for running migrations.
-    """
-
-    # Prevent auto-generation when no schema changes detected
-    def process_revision_directives(context, revision, directives):
-        if getattr(config.cmd_opts, 'autogenerate', False):
-            script = directives[0]
-            if script.upgrade_ops.is_empty():
-                directives[:] = []
-                logger.info('No changes in schema detected.')
-
-    conf_args = current_app.extensions['migrate'].configure_args
-    if conf_args.get("process_revision_directives") is None:
-        conf_args["process_revision_directives"] = process_revision_directives
-
-    connectable = get_engine()
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection,
-            target_metadata=get_metadata(),
-            **conf_args
+            connection=connection, target_metadata=target_metadata
         )
 
         with context.begin_transaction():
@@ -107,4 +74,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
