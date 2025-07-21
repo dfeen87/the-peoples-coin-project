@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: peoples-coin-service
+spec:
+  selector:
+    app: peoples-coin
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: LoadBalancer
+

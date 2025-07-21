@@ -90,3 +90,15 @@ src/peoples_coin_backup/
 
 # Ignore cloud sql proxy binary
 cloud_sql_proxy
+
+
+# Ignore local environment and credentials files
+*.env
+*.json
+*.key
+*.pem
+*.crt
+service-account.json
+credentials.json
+
+secrets.yaml

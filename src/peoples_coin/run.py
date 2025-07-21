@@ -126,6 +126,14 @@ def create_app() -> Flask:
             "immune_cleaner": _cleaner_thread.is_alive() if _cleaner_thread else False
         })
 
+    @app.route('/health', methods=['GET'])
+    def health():
+        try:
+            db.session.execute('SELECT 1')
+            return "OK", 200
+        except Exception:
+            return "DB Connection Error", 500
+
     return app
 
 # --- Background Systems ---
