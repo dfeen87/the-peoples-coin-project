@@ -15,7 +15,6 @@ from .config import Config
 from peoples_coin.extensions import db
 
 # --- Globals & Extensions ---
-# Initialize extensions here but don't configure them until create_app is called.
 logger = logging.getLogger(__name__)
 migrate = Migrate()
 celery = Celery(__name__, broker=os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0"))
@@ -44,7 +43,6 @@ def create_app(config_name=None) -> Flask:
     register_health_check(app)
     
     # Initialize your custom application systems
-    # These calls are now non-blocking and safe because you have refactored them.
     initialize_custom_systems(app)
 
     # Register shutdown handlers to gracefully stop background threads
@@ -62,11 +60,9 @@ def setup_logging(app: Flask) -> None:
     
     formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
     
-    # Log to standard output (for Docker/Kubernetes logs)
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
     
-    # Optional: Log to a rotating file
     os.makedirs(app.instance_path, exist_ok=True)
     file_handler = RotatingFileHandler(
         os.path.join(app.instance_path, 'app.log'), 
@@ -81,9 +77,8 @@ def setup_logging(app: Flask) -> None:
 
 def configure_database(app: Flask) -> None:
     """Configures the database URI for the application."""
-    db_uri = os.environ.get('POSTGRES_DB_URI') # Use the K8s env var name
+    db_uri = os.environ.get('POSTGRES_DB_URI')
     if not db_uri:
-        # Fallback for local development
         instance_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', 'instance')
         os.makedirs(instance_path, exist_ok=True)
         db_file_path = os.path.join(instance_path, 'peoples_coin.sqlite')
@@ -122,11 +117,14 @@ def register_blueprints(app: Flask) -> None:
 
 def initialize_custom_systems(app: Flask) -> None:
     """Initializes all custom, background systems for the application."""
-    from peoples_coin.systems import immune_system, cognitive_system, endocrine_system, circulatory_system, reproductive_system
+    # 🔷 FIX: Import the singleton INSTANCES directly from their modules
+    from peoples_coin.systems.immune_system import immune_system
+    from peoples_coin.systems.cognitive_system import cognitive_system
+    from peoples_coin.systems.endocrine_system import endocrine_system
+    from peoples_coin.systems.circulatory_system import circulatory_system
+    from peoples_coin.systems.reproductive_system import reproductive_system
     from peoples_coin.consensus import Consensus
     
-    # These init_app calls are now safe and non-blocking because you have refactored them
-    # to use the resilient background thread pattern.
     immune_system.init_app(app)
     cognitive_system.init_app(app)
     endocrine_system.init_app(app)
@@ -146,13 +144,17 @@ def register_health_check(app: Flask) -> None:
 
 def register_shutdown_handlers(app: Flask) -> None:
     """Registers handlers for graceful shutdown of background systems."""
-    from peoples_coin.systems import cognitive_system, endocrine_system, immune_system
+    # 🔷 FIX: Import the singleton INSTANCES directly from their modules
+    from peoples_coin.systems.cognitive_system import cognitive_system
+    from peoples_coin.systems.endocrine_system import endocrine_system
+    from peoples_coin.systems.immune_system import immune_system
 
     def shutdown_systems(*args, **kwargs):
         logger.warning("Initiating graceful shutdown of background systems...")
-        cognitive_system.stop_background_loop()
+        # 🔷 FIX: Method names updated to match what's in the refactored files
+        cognitive_system.stop()
         endocrine_system.stop()
-        immune_system.stop_cleaner()
+        immune_system.stop()
         logger.info("✅ All background systems shut down.")
 
     atexit.register(shutdown_systems)
@@ -161,7 +163,6 @@ def register_shutdown_handlers(app: Flask) -> None:
 
 def register_cli_commands(app: Flask) -> None:
     """Registers custom CLI commands for the application."""
-    # ... your CLI command definitions for init-db, etc. go here ...
     # This section can remain largely the same.
     logger.info("CLI commands registered.")
 
