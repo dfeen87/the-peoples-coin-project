@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: peoples-coin-backend
-        image: gcr.io/heroic-tide-428421-q7/peoples-coin-backend:latest
+        image: gcr.io/heroic-tide-428421-q7/peoples-coin-backend:v1.2
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

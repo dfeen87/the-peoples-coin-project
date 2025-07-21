@@ -47,7 +47,7 @@ spec:
               name: peoples-coin-secrets
         - name: RABBITMQ_URL
           value: amqp://guest:guest@35.199.15.190:5672/
-        image: gcr.io/heroic-tide-428421-q7/peoples-coin-backend:latest
+        image: gcr.io/heroic-tide-428421-q7/peoples-coin-backend:v1.1
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3
