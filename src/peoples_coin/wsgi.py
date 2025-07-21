@@ -14,7 +14,7 @@ src_path = os.path.join(project_root, 'src')
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
-from peoples_coin import create_app
+from peoples_coin.factory import create_app
 
 # Create Flask application instance using default config
 app = create_app()

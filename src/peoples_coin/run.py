@@ -173,6 +173,9 @@ signal.signal(signal.SIGTERM, handle_exit_signal)
 signal.signal(signal.SIGINT, handle_exit_signal)
 atexit.register(stop_all_background_systems)
 
+app = create_app()
+start_background_systems(app)
+
 # --- Main ---
 if __name__ == '__main__':
     logger.info("Starting application in background service mode.")

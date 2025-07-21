@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 from flask import current_app
 from alembic import context
 
-from peoples_coin import create_app
+from peoples_coin.factory import create_app
 
 app = create_app()
 app.app_context().push()

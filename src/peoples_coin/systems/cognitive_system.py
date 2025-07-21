@@ -30,11 +30,19 @@ except ImportError:
 
 logger = logging.getLogger("cognitive_system")
 
+# Default RabbitMQ URL and queue — update as needed or via environment variables
+DEFAULT_RABBITMQ_URL = os.getenv(
+    "COGNITIVE_RABBITMQ_URL",
+    "amqp://myuser:JmTa1tvVHcG3UB9F@rabbitmq.default.svc.cluster.local:5672/"
+)
+DEFAULT_RABBITMQ_QUEUE = os.getenv("COGNITIVE_RABBIT_QUEUE", "cognitive_events")
+
 
 class CognitiveSystem:
     """
     Cognitive System — handles event processing with support for RabbitMQ, Firestore, and DB persistence.
     """
+
     def __init__(self):
         self.app: Optional[Flask] = None
         self.config: Dict[str, Any] = {}
@@ -43,6 +51,7 @@ class CognitiveSystem:
         self._loop_thread: Optional[threading.Thread] = None
         self._in_memory_queue = Queue()
         self._initialized = False
+        self._rabbit_connection: Optional[pika.BlockingConnection] = None
         logger.info("🧠 Cognitive System instance created.")
 
     def init_app(self, app: Flask):
@@ -51,12 +60,12 @@ class CognitiveSystem:
         self.app = app
         self.config = app.config
         self.config.setdefault("COGNITIVE_LOOP_DELAY", 5.0)
-        self.config.setdefault("COGNITIVE_RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
-        self.config.setdefault("COGNITIVE_RABBIT_QUEUE", "cognitive_events")
+        self.config.setdefault("COGNITIVE_RABBITMQ_URL", DEFAULT_RABBITMQ_URL)
+        self.config.setdefault("COGNITIVE_RABBIT_QUEUE", DEFAULT_RABBITMQ_QUEUE)
 
         self._initialize_firestore_client()
         self._initialized = True
-        logger.info("🧠 Cognitive System initialized and ready to start.")
+        logger.info(f"🧠 Cognitive System initialized. RabbitMQ → {self.config['COGNITIVE_RABBITMQ_URL']}")
 
     def _initialize_firestore_client(self):
         if GCP_AVAILABLE and not self.firestore_client:
@@ -68,16 +77,26 @@ class CognitiveSystem:
                 self.firestore_client = None
 
     def _get_rabbit_connection(self, max_retries: int = 5, retry_delay: int = 5) -> Optional[pika.BlockingConnection]:
+        # Return cached connection if still open
+        if self._rabbit_connection and self._rabbit_connection.is_open:
+            return self._rabbit_connection
+
         for attempt in range(1, max_retries + 1):
             try:
                 params = pika.URLParameters(self.config["COGNITIVE_RABBITMQ_URL"])
                 connection = pika.BlockingConnection(params)
-                logger.debug(f"🐇 RabbitMQ connection established on attempt {attempt}.")
+                self._rabbit_connection = connection
+                logger.info(f"🐇 RabbitMQ connection established on attempt {attempt}.")
                 return connection
             except pika.exceptions.AMQPConnectionError as e:
-                logger.warning(f"🐇 RabbitMQ connection attempt {attempt} failed: {e}")
+                logger.warning(f"🐇 RabbitMQ connection attempt {attempt}/{max_retries} failed: {e}")
                 time.sleep(retry_delay)
-        logger.error("🐇 RabbitMQ connection failed after max retries, falling back to in-memory queue.")
+            except Exception as e:
+                logger.warning(f"🐇 RabbitMQ unexpected error on attempt {attempt}/{max_retries}: {e}")
+                time.sleep(retry_delay)
+
+        logger.error("🐇 RabbitMQ connection failed after max retries — using in-memory queue.")
+        self._rabbit_connection = None
         return None
 
     def enqueue_event(self, event: dict):
@@ -94,11 +113,17 @@ class CognitiveSystem:
                         body=json.dumps(event),
                         properties=pika.BasicProperties(delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE)
                     )
-                    connection.close()
                     logger.debug(f"🐇 Event enqueued to RabbitMQ: {event.get('type')}")
                     return
                 except Exception as e:
                     logger.warning(f"🐇 RabbitMQ publish failed: {e}, falling back to in-memory queue.")
+                    # Close faulty connection to force reconnect later
+                    try:
+                        if self._rabbit_connection:
+                            self._rabbit_connection.close()
+                    except Exception:
+                        pass
+                    self._rabbit_connection = None
             else:
                 logger.info("🐇 RabbitMQ connection unavailable, using in-memory queue.")
         self._in_memory_queue.put(event)
@@ -111,9 +136,18 @@ class CognitiveSystem:
         if self.is_running():
             logger.warning("⚠️ CognitiveSystem already running.")
             return
-        logger.info("▶️ Starting Cognitive background loop...")
+
         self._stop_event.clear()
-        target = self._rabbit_consumer_loop if RABBIT_AVAILABLE else self._in_memory_consumer_loop
+        logger.info("▶️ Starting Cognitive background loop...")
+
+        connection = self._get_rabbit_connection()
+        if RABBIT_AVAILABLE and connection:
+            logger.info("🐇 Using RabbitMQ consumer loop.")
+            target = self._rabbit_consumer_loop
+        else:
+            logger.info("🧠 Using in-memory consumer loop.")
+            target = self._in_memory_consumer_loop
+
         self._loop_thread = threading.Thread(target=target, daemon=True, name="CognitiveLoop")
         self._loop_thread.start()
         logger.info("🧠 Cognitive background loop started.")
@@ -188,14 +222,17 @@ class CognitiveSystem:
                         time.sleep(5)
                 channel.cancel()
                 connection.close()
+                self._rabbit_connection = None
             except pika.exceptions.AMQPConnectionError as e:
                 logger.warning(f"🐇 RabbitMQ consumer connection lost: {e}, retrying...")
                 if self._stop_event.wait(timeout=10):
                     break
+                self._rabbit_connection = None
             except Exception as e:
                 logger.error(f"🐇 Unexpected error in RabbitMQ consumer loop: {e}", exc_info=True)
                 if self._stop_event.wait(timeout=10):
                     break
+                self._rabbit_connection = None
 
     def _process_event(self, event: dict):
         logger.info(f"🧠 Processing cognitive event: {event.get('type')}")

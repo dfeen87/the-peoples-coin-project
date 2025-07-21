@@ -1,18 +1,19 @@
 # Use official lightweight Python Alpine image
 FROM python:3.9-alpine
 
-# Set environment variables
+# Environment
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    FLASK_ENV=production
+    FLASK_ENV=production \
+    PYTHONPATH=/app/src
 
-# Create non-root user and group
+# Create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Set working directory
+# Set working dir
 WORKDIR /app
 
-# Install build and runtime dependencies
+# Install build/runtime deps
 RUN apk add --no-cache \
     build-base \
     libffi-dev \
@@ -22,25 +23,20 @@ RUN apk add --no-cache \
     musl-dev \
     linux-headers
 
-# Copy dependency specs first for caching
+# Copy requirements & install
 COPY requirements.txt .
-
-# Upgrade pip and install dependencies
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy the actual source code
+COPY src/ src/
 
-# Fix permissions for non-root user
+# Fix ownership
 RUN chown -R appuser:appgroup /app
 
-# Switch to non-root user
 USER appuser
 
-# Expose port 8080 (for Cloud Run or Kubernetes)
 EXPOSE 8080
 
-# Run Gunicorn server with 4 workers binding to all interfaces
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "peoples_coin.run:app"]
 
