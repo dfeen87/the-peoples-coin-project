@@ -10,6 +10,7 @@ from flask import Flask, jsonify
 from celery import Celery
 from sqlalchemy import text
 from flask_migrate import Migrate
+from flask_cors import CORS
 
 from .config import Config
 from peoples_coin.extensions import db
