@@ -29,7 +29,7 @@ RUN apk add --no-cache \
 COPY requirements.txt .
 
 # Temporarily install Flask-Cors explicitly (diagnostic step - will remove later if successful)
-RUN pip install Flask-Cors==4.0.0 # <<< THIS LINE IS THE ONE THAT HAD THE TYPO - ENSURE 'RUN pip' IS CORRECT
+RUN pip install Flask-Cors==4.0.0 # <<< This line
 
 # Install Python dependencies
 RUN pip install --upgrade pip && \
@@ -48,12 +48,11 @@ USER appuser
 EXPOSE 8080
 
 # Command to run the application using Gunicorn
-# TEMPORARY DIAGNOSTIC CMD: This will just print a message and sleep.
-# It will confirm if the container and Python interpreter are starting.
-CMD ["python", "-c", "import os; print('Container starting up! PORT:', os.environ.get('PORT', 'N/A'), flush=True); import time; time.sleep(30); print('Container finished sleeping.', flush=True);"]
+# CRITICAL FIX: Change CMD back to Gunicorn to start the web server
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "peoples_coin.wsgi:app"]
 
-# REMEMBER TO CHANGE THIS BACK TO YOUR ORIGINAL GUNICORN CMD AFTER DIAGNOSIS!
-# Original CMD was likely: CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "peoples_coin.wsgi:app"]
+# REMEMBER TO REMOVE THE TEMPORARY Flask-Cors INSTALL LINE (RUN pip install Flask-Cors==4.0.0) AFTER THIS WORKS!
+# It's better to keep requirements.txt as the single source for dependencies.
 
 # Metadata labels (usually automatically added by Cloud Build)
 LABEL google.build_id=$BUILD_ID
