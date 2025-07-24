@@ -38,5 +38,8 @@ USER appuser
 
 EXPOSE 8080
 
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "peoples_coin.wsgi:app"]
+# CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "peoples_coin.wsgi:app"]
+
+CMD ["python", "-c", "import os; print('Container starting up! PORT:', os.environ.get('PORT', 'N/A'), flush=True); import time; time.sleep(30); print('Container finished sleeping.', flush=True);"]
+
 
