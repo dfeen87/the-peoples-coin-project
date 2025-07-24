@@ -22,6 +22,7 @@ RUN apk add --no-cache \
     gcc \
     musl-dev \
     linux-headers
+    pip install Flask-Cors==4.0.0
 
 # Copy requirements & install
 COPY requirements.txt .
