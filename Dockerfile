@@ -1,7 +1,7 @@
 # Dockerfile
 
-# Use the official Python image as a base
-FROM python:3.9-alpine
+# Change base image from alpine to slim-buster for better compatibility
+FROM python:3.9-slim-buster # <<< CRITICAL CHANGE: Use a Debian-based slim image
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -9,27 +9,28 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     FLASK_ENV=production \
     PYTHONPATH=/app/src
 
-# Create a non-root user and group
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# Create a non-root user and group (Debian/Ubuntu specific syntax for system users)
+RUN groupadd --system appgroup && useradd --system -g appgroup -d /app -s /bin/bash appuser
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache \
-    build-base \
+# Install build dependencies (using apt for Debian-based image)
+# These are essential for compiling some Python packages like psycopg2, cryptography.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     libffi-dev \
-    openssl-dev \
+    libssl-dev \
+    libpq-dev \ # Needed for psycopg2-binary to connect to PostgreSQL
     bash \
-    gcc \
-    musl-dev \
-    linux-headers
+    # Clean up apt caches to reduce image size
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements.txt into the container
 COPY requirements.txt .
 
 # Temporarily install Flask-Cors explicitly (diagnostic step - will remove later if successful)
-RUN pip install Flask-Cors==4.0.0 # <<< This line
+RUN pip install Flask-Cors==4.0.0
 
 # Install Python dependencies
 RUN pip install --upgrade pip && \
@@ -47,13 +48,13 @@ USER appuser
 # Expose the port your Flask app will listen on
 EXPOSE 8080
 
-# In your Dockerfile (near the very end)
-
-# CRITICAL DIAGNOSTIC CMD: This will force application startup errors to logs.
-CMD ["bash", "-c", "echo '--- Bash is working! ---' && sleep 30 && echo '--- Bash finished sleeping ---' && exit 0"]
+# ULTIMATE DIAGNOSTIC CMD: This will just print a message from bash and sleep.
+# It will confirm if the container and bash shell are starting and outputting logs.
+CMD ["bash", "-c", "echo '--- Bash is working (Buster)! ---' && sleep 30 && echo '--- Bash finished sleeping ---' && exit 0"]
 
 # REMEMBER TO CHANGE THIS CMD BACK TO YOUR ORIGINAL GUNICORN CMD AFTER DIAGNOSIS!
 # Original CMD was: CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "peoples_coin.wsgi:app"]
+
 # Metadata labels (usually automatically added by Cloud Build)
 LABEL google.build_id=$BUILD_ID
 LABEL google.source=$SOURCE_LOCATION
