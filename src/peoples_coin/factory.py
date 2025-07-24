@@ -43,7 +43,7 @@ def create_app(config_name=None) -> Flask:
     # TEMPORARY FOR DIAGNOSIS: CORS configuration with wildcard origin
     # WARNING: origins="*" is NOT secure for production. You MUST change this back
     #          to specific domains (like "https://brightacts.com") once tested!
-    cors.init_app(app, resources={r"/api/*": {"origins": "*"}}) # Using init_app here
+    cors.init_app(app, resources={r"/api/*": {"origins": "https:brightacts.com"}}) # Using init_app here
 
     register_blueprints(app)
     register_cli_commands(app)
