@@ -1,7 +1,7 @@
 # Dockerfile
 
 # Change base image from alpine to slim-buster for better compatibility
-FROM python:3.9-slim-buster # <<< CRITICAL CHANGE: Use a Debian-based slim image
+FROM python:3.9-slim-buster # <<< This line must be exactly as is, without extra characters or comments on it
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
