@@ -33,6 +33,7 @@ CREATE TABLE user_accounts (
     email VARCHAR(256) UNIQUE NULL,
     username VARCHAR(64) NULL,
     balance NUMERIC(20, 4) NOT NULL DEFAULT 0.0,
+    goodwill_coins INTEGER NOT NULL DEFAULT 0, -- Added: Non-spendable coins for goodwill acts
     bio TEXT NULL CHECK (length(bio) <= 120),
     profile_image_url TEXT NULL,
     created_at TIMESTAMP WITH TIME ZONE NULL DEFAULT now(),
@@ -189,4 +190,3 @@ CREATE TABLE IF NOT EXISTS controller_actions (
 );
 CREATE INDEX IF NOT EXISTS idx_controller_actions_user_id ON controller_actions(user_id);
 CREATE INDEX IF NOT EXISTS idx_controller_actions_timestamp ON controller_actions(timestamp);
-

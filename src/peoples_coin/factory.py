@@ -34,6 +34,8 @@ def create_app(config_name=None) -> Flask:
     db.init_app(app)
     migrate.init_app(app, db)
     configure_celery(app, celery)
+
+    CORS(app, resources={r"/api/*": {"origins": "https://brightacts.com"}}) 
     
     register_blueprints(app)
     register_cli_commands(app)
