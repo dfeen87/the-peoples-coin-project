@@ -9,6 +9,7 @@ SQLAlchemy==2.0.19
 alembic==1.13.0
 Flask-Migrate==4.0.3
 psycopg2-binary==2.9.7
+Flask-Cors==4.0.0 # Or use the latest stable version if you know it, e.g., Flask-Cors
 
 # Validation & Utilities
 pydantic==2.7.0
