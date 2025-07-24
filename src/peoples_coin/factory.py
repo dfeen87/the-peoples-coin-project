@@ -1,3 +1,5 @@
+# In your Flask backend's factory.py file
+
 import os
 import sys
 import atexit
@@ -10,7 +12,7 @@ from flask import Flask, jsonify
 from celery import Celery
 from sqlalchemy import text
 from flask_migrate import Migrate
-from flask_cors import CORS
+from flask_cors import CORS # Ensure this import is present
 
 from .config import Config
 from peoples_coin.extensions import db
@@ -19,6 +21,7 @@ from peoples_coin.extensions import db
 logger = logging.getLogger(__name__)
 migrate = Migrate()
 celery = Celery(__name__, broker=os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0"))
+cors = CORS() # ADDED: Initialize CORS as a global extension object
 
 # --- Application Factory ---
 def create_app(config_name=None) -> Flask:
@@ -35,9 +38,13 @@ def create_app(config_name=None) -> Flask:
     db.init_app(app)
     migrate.init_app(app, db)
     configure_celery(app, celery)
-
-    CORS(app, resources={r"/api/*": {"origins": "*"}}) 
     
+    # MODIFIED: Initialize CORS using the init_app pattern
+    # TEMPORARY FOR DIAGNOSIS: CORS configuration with wildcard origin
+    # WARNING: origins="*" is NOT secure for production. You MUST change this back
+    #          to specific domains (like "https://brightacts.com") once tested!
+    cors.init_app(app, resources={r"/api/*": {"origins": "*"}}) # Using init_app here
+
     register_blueprints(app)
     register_cli_commands(app)
     register_health_check(app)
