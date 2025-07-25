@@ -1,4 +1,4 @@
-k# Use a modern Python base image
+# Use a modern Python base image
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
