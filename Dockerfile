@@ -1,4 +1,4 @@
-# Use a modern Python base image
+k# Use a modern Python base image
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -20,6 +20,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
+
+# --- NEW DIAGNOSTIC STEP ---
+RUN echo "--- Contents of requirements.txt in container ---" && cat requirements.txt && echo "------------------------------------------------"
+# --- END NEW DIAGNOSTIC STEP ---
 
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
