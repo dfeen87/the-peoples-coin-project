@@ -33,6 +33,9 @@ google-cloud-firestore==2.14.0
 # Cryptography
 cryptography==41.0.0
 
+# Firebase Admin SDK
+firebase-admin==6.3.0 
+
 # Schedule	
 apscheduler==3.11.0
 
