@@ -5,11 +5,11 @@ python-dotenv==1.0.1
 
 # Database and migrations
 Flask-SQLAlchemy==3.1.1
-SQLAlchemy==2.0.19
-alembic==1.13.0
+SQLAlchemy==2.0.41
+alembic==1.16.4
 Flask-Migrate==4.0.3
-psycopg2-binary==2.9.7
-Flask-Cors==4.0.0 # Or use the latest stable version if you know it, e.g., Flask-Cors
+psycopg2-binary==2.9.10
+Flask-Cors==4.0.0
 
 # Validation & Utilities
 pydantic==2.7.0
@@ -36,4 +36,6 @@ cryptography==41.0.0
 # Schedule	
 apscheduler==3.11.0
 
+# Kubernetes client
 kubernetes
+

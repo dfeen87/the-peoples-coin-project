@@ -42,16 +42,24 @@ class UserService:
         logger.info("UserService initialized and configured.")
 
     def get_user_by_id(self, user_id: UUID) -> Optional[Dict[str, Any]]:
-        """Retrieve user account by internal UUID ID."""
+        """Retrieve user account by internal UUID ID, including goodwill_coins."""
         with get_session_scope(self.db) as session:
             user = session.query(UserAccount).filter_by(id=user_id).first()
-            return user.to_dict() if user else None
+            if not user:
+                return None
+            user_dict = user.to_dict()
+            user_dict['goodwill_coins'] = user.goodwill_coins
+            return user_dict
 
     def get_user_by_firebase_uid(self, firebase_uid: str) -> Optional[Dict[str, Any]]:
-        """Retrieve user account by Firebase UID."""
+        """Retrieve user account by Firebase UID, including goodwill_coins."""
         with get_session_scope(self.db) as session:
             user = session.query(UserAccount).filter_by(firebase_uid=firebase_uid).first()
-            return user.to_dict() if user else None
+            if not user:
+                return None
+            user_dict = user.to_dict()
+            user_dict['goodwill_coins'] = user.goodwill_coins
+            return user_dict
 
     def create_or_get_user_account(self, firebase_uid: str, email: str, username: str) -> Tuple[UserAccount, bool]:
         """
@@ -69,6 +77,7 @@ class UserService:
                     email=email,
                     username=username,
                     balance=Decimal('0.0'),
+                    goodwill_coins=0,  # initialize goodwill coins
                     is_premium=False
                 )
                 session.add(new_user)
@@ -99,7 +108,50 @@ class UserService:
                 logger.exception(f"UserService: Error updating balance for user {user_id}.")
                 return False, f"Internal error: {e}"
 
-    def link_user_wallet(self, user_id: UUID, public_address: str, blockchain_network: str, is_primary: bool = False) -> Tuple[bool, str]:
+    def increment_goodwill_coins(self, user_id: UUID, amount: int = 1) -> Tuple[bool, str]:
+        """Increment goodwill_coins atomically."""
+        if amount < 0:
+            return False, "Amount must be positive"
+        with get_session_scope(self.db) as session:
+            try:
+                user = session.query(UserAccount).filter_by(id=user_id).with_for_update().one()
+                user.goodwill_coins += amount
+                logger.info(f"UserService: Incremented goodwill_coins for user {user_id} by {amount}. New total: {user.goodwill_coins}.")
+                return True, f"Goodwill coins incremented by {amount}."
+            except NoResultFound:
+                logger.warning(f"UserService: User {user_id} not found for goodwill_coins increment.")
+                return False, "User not found."
+            except Exception as e:
+                logger.exception(f"UserService: Error incrementing goodwill_coins for user {user_id}.")
+                return False, f"Internal error: {e}"
+
+    def decrement_goodwill_coins(self, user_id: UUID, amount: int = 1) -> Tuple[bool, str]:
+        """Decrement goodwill_coins atomically."""
+        if amount < 0:
+            return False, "Amount must be positive"
+        with get_session_scope(self.db) as session:
+            try:
+                user = session.query(UserAccount).filter_by(id=user_id).with_for_update().one()
+                if user.goodwill_coins < amount:
+                    return False, "Not enough goodwill coins"
+                user.goodwill_coins -= amount
+                logger.info(f"UserService: Decremented goodwill_coins for user {user_id} by {amount}. New total: {user.goodwill_coins}.")
+                return True, f"Goodwill coins decremented by {amount}."
+            except NoResultFound:
+                logger.warning(f"UserService: User {user_id} not found for goodwill_coins decrement.")
+                return False, "User not found."
+            except Exception as e:
+                logger.exception(f"UserService: Error decrementing goodwill_coins for user {user_id}.")
+                return False, f"Internal error: {e}"
+
+    def link_user_wallet(
+        self,
+        user_id: UUID,
+        public_address: str,
+        encrypted_private_key: str,
+        blockchain_network: str,
+        is_primary: bool = False
+    ) -> Tuple[bool, str]:
         """Link a blockchain wallet to a user. Demotes existing primary wallet if needed."""
         with get_session_scope(self.db) as session:
             try:
@@ -117,6 +169,7 @@ class UserService:
                 new_wallet = UserWallet(
                     user_id=user_id,
                     public_address=public_address,
+                    encrypted_private_key=encrypted_private_key,
                     blockchain_network=blockchain_network,
                     is_primary=is_primary
                 )

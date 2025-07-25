@@ -45,16 +45,22 @@ class SoftDeleteMixin:
 
 class UserAccount(BaseModel, SoftDeleteMixin):
     __tablename__ = 'users'
+
     firebase_uid = Column(String(128), unique=True, nullable=False, index=True)
+    email = Column(String(256), unique=True, nullable=True, index=True)
+    username = Column(String(64), nullable=True, index=True)  # Added username
     balance = Column(Numeric(20, 8), default=0, nullable=False)
-    
+    goodwill_coins = Column(Integer, nullable=False, default=0)  # Added goodwill_coins
+    bio = Column(Text, nullable=True)  # Add a length constraint in your app layer (<=120 chars)
+    profile_image_url = Column(Text, nullable=True)
+    is_premium = Column(Boolean, default=False, nullable=False)  # Added is_premium
+
     # Relationships
     api_keys = relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
     goodwill_actions = relationship("GoodwillAction", back_populates="performer", lazy='dynamic')
     user_wallets = relationship("UserWallet", back_populates="user", cascade="all, delete-orphan")
     proposals = relationship("Proposal", back_populates="proposer", lazy='dynamic')
     votes = relationship("Vote", back_populates="voter", lazy='dynamic')
-    # **FIX**: Corrected back_populates to match CouncilMember's relationship
     council_member_profile = relationship("CouncilMember", back_populates="user", uselist=False)
 
 class ApiKey(BaseModel):
@@ -82,6 +88,7 @@ class UserWallet(BaseModel):
     __tablename__ = 'user_wallets'
     user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
     public_address = Column(String(42), unique=True, nullable=False)
+    encrypted_private_key = Column(Text, nullable=True)  # Added encrypted_private_key
     is_primary = Column(Boolean, default=False, nullable=False)
     user = relationship("UserAccount", back_populates="user_wallets")
 
@@ -96,11 +103,9 @@ class LedgerEntry(BaseModel):
     block_number = Column(BigInteger, nullable=False)
     block_timestamp = Column(DateTime(timezone=True), nullable=False)
 
-# **FIX**: ChainBlock should not inherit from BaseModel due to different PK type.
-# It also doesn't need soft-delete functionality.
 class ChainBlock(db.Model):
     __tablename__ = 'chain_blocks'
-    id = Column(Integer, primary_key=True) # Integer primary key
+    id = Column(Integer, primary_key=True)
     block_hash = Column(String(128), nullable=False, unique=True)
     previous_hash = Column(String(128), nullable=True)
     data = Column(JSONB, nullable=False)
@@ -142,3 +147,4 @@ class CouncilMember(BaseModel, SoftDeleteMixin):
     start_date = Column(DateTime(timezone=True), nullable=False, default=utcnow)
     end_date = Column(DateTime(timezone=True), nullable=True)
     user = relationship("UserAccount", back_populates="council_member_profile")
+
