@@ -1,8 +1,19 @@
 # cloudbuild.yaml
 steps:
+  # This step builds your Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/${PROJECT_ID}/peoples-coin-service:latest', '.']
+
 images:
+  # Specifies the Docker image that will be pushed to Container Registry
   - 'gcr.io/${PROJECT_ID}/peoples-coin-service:latest'
+
 options:
+  # This tells Cloud Build to send all build logs directly to Google Cloud Logging.
+  # This is crucial when a custom serviceAccount is specified, as per your error.
   logging: CLOUD_LOGGING_ONLY
+
+# Specifies the service account to use for this build.
+# This is your project's default Compute Engine service account.
+# The format is 'projects/PROJECT_NUMBER/serviceAccounts/SERVICE_ACCOUNT_EMAIL'
+serviceAccount: 'projects/105378934751/serviceAccounts/105378934751-compute@developer.gserviceaccount.com'
