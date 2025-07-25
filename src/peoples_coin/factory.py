@@ -9,11 +9,10 @@ import click
 from flask import Flask, jsonify
 import firebase_admin
 from firebase_admin import credentials
-# Import Celery for type hinting in configure_celery function signature
-from celery import Celery # <<< ADDED IMPORT
+from celery import Celery # Added import for Celery type hinting
 
 from peoples_coin.config import Config
-from peoples_coin.extensions import db, migrate, cors, limiter, swagger, celery # Assuming 'celery' is an instance of Celery
+from peoples_coin.extensions import db, migrate, cors, limiter, swagger, celery
 from peoples_coin.routes.api import api_bp
 
 def create_app(config_object=Config) -> Flask:
@@ -39,16 +38,16 @@ def init_extensions(app: Flask):
     """Initialize all Flask extensions."""
     db.init_app(app)
     migrate.init_app(app, db)
-    # --- CORS FIX ---
-    # Explicitly allow your frontend's origin for production.
-    # For local development, you might also need to add 'http://localhost:XXXX'
-    # For example: origins=["https://brightacts.com", "http://localhost:3000"]
-    cors.init_app(app, resources={r"/api/*": {"origins": "https://brightacts.com"}}) # <<< UPDATED LINE
+    # --- AGGRESSIVE CORS FIX FOR DEBUGGING ---
+    # This allows ALL origins (*) to access ALL routes (/*).
+    # This is NOT recommended for production, but will help us confirm if CORS is the issue.
+    # Once confirmed, we will narrow this down for security.
+    cors.init_app(app, resources={r"/*": {"origins": "*"}}) # <<< IMPORTANT CHANGE
     limiter.init_app(app)
     swagger.init_app(app)
     configure_celery(app, celery)
 
-def configure_celery(app: Flask, celery_instance: Celery): # <<< Added Celery type hint
+def configure_celery(app: Flask, celery_instance: Celery):
     """Configures Celery to run within the Flask application context."""
     celery_instance.conf.broker_url = app.config["CELERY_BROKER_URL"]
     celery_instance.conf.result_backend = app.config["CELERY_RESULT_BACKEND"]
