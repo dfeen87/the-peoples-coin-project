@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Tuple, List, Union
 import uuid
 
 from flask import Blueprint, request, jsonify, Response
-from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic import BaseModel, Field, ValidationError, validator, parse_obj_as
 from typing_extensions import Literal
 
 from peoples_coin.extensions import immune_system, cognitive_system, db
@@ -20,13 +20,13 @@ KEY_STATUS = "status"
 KEY_ERROR = "error"
 KEY_DETAILS = "details"
 KEY_MESSAGE = "message"
-KEY_RECEIVED_ID = "received_id"  
+KEY_RECEIVED_ID = "received_id"
 EVENT_NERVOUS_DATA_RECEIVED = 'nervous_node_data_received'
 EVENT_NERVOUS_DATA_PROCESSING_FAILED = 'nervous_node_data_processing_failed'
 
 
 # ==============================================================================
-# 1. Define Strong Typed Pydantic Models for Internal Node Data
+# 1. Pydantic Models for Internal Node Data
 # ==============================================================================
 
 class BlockPayloadSchema(BaseModel):
@@ -34,47 +34,39 @@ class BlockPayloadSchema(BaseModel):
     block_hash: str
     transactions: List[Dict[str, Any]]
 
-
 class TransactionListSchema(BaseModel):
     new_transactions: List[Dict[str, Any]]
 
+# A Union of all possible message types. Pydantic will automatically
+# select the correct model based on the 'data_type' field.
+InternalNodeDataSchema = Union[
+    "BlockSyncMessage",
+    "TxPoolUpdateMessage"
+]
 
-class InternalNodeDataBase(BaseModel):
-    data_type: str = Field(..., description="Type of internal node data")
-    payload: Dict[str, Any] = Field(..., description="Payload data")
-    source_node_id: Optional[str] = Field(None, description="ID of source node")
-    correlation_id: Optional[str] = Field(None, description="Optional correlation ID for tracing")
-
-    @validator("data_type")
-    def data_type_must_be_known(cls, v):
-        allowed_types = {"block_sync", "tx_pool_update"}
-        if v not in allowed_types:
-            raise ValueError(f"data_type must be one of {allowed_types}")
-        return v
-
-
-class BlockSyncMessage(InternalNodeDataBase):
+class BlockSyncMessage(BaseModel):
     data_type: Literal["block_sync"]
     payload: BlockPayloadSchema
+    source_node_id: Optional[str] = None
+    correlation_id: Optional[str] = None
 
-
-class TxPoolUpdateMessage(InternalNodeDataBase):
+class TxPoolUpdateMessage(BaseModel):
     data_type: Literal["tx_pool_update"]
     payload: TransactionListSchema
+    source_node_id: Optional[str] = None
+    correlation_id: Optional[str] = None
 
-
-InternalNodeDataSchema = Union[BlockSyncMessage, TxPoolUpdateMessage]
+# Update forward references after all models are defined
+BlockSyncMessage.update_forward_refs()
+TxPoolUpdateMessage.update_forward_refs()
 
 
 # ==============================================================================
-# 2. Helper: Enqueue Cognitive Event with rich metadata
+# 2. Helper: Enqueue Cognitive Event
 # ==============================================================================
 
 def _create_and_enqueue_cognitive_event(session, event_type: str, payload: dict):
-    """
-    Create and enqueue a rich event for the Cognitive System and log it locally.
-    Adds timestamps and correlation_id if present.
-    """
+    """Creates and enqueues a rich event for the Cognitive System and logs it."""
     event_payload = {
         **payload,
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -115,62 +107,43 @@ def nervous_status() -> Tuple[Response, int]:
 
 
 @nervous_bp.route("/receive_node_data", methods=["POST"])
-@immune_system.check()  # Security decorator for internal nodes
+@immune_system.check()
 def receive_node_data() -> Tuple[Response, int]:
-    """
-    Receives and processes internal data from peer nodes with strict schema validation.
-    Supports multiple message types with strict payload validation.
-    """
-
+    """Receives and processes internal data from peer nodes with strict schema validation."""
     if not request.is_json:
         logger.warning("[Nervous] Missing or invalid JSON body.")
-        return json_response({
-            KEY_STATUS: "error",
-            KEY_ERROR: "Content-Type must be application/json"
-        }, http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
+        return json_response({KEY_STATUS: "error", KEY_ERROR: "Content-Type must be application/json"}, http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
 
     if request.content_length and request.content_length > 5_000_000:
         logger.warning("[Nervous] Payload too large.")
-        return json_response({
-            KEY_STATUS: "error",
-            KEY_ERROR: "Payload too large"
-        }, http.HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
+        return json_response({KEY_STATUS: "error", KEY_ERROR: "Payload too large"}, http.HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
 
     raw_data = request.get_json()
     source_node_id = raw_data.get("source_node_id", "UNKNOWN")
     correlation_id = raw_data.get("correlation_id")
-
+    
     logger.info(f"[Nervous] Received data from node: {source_node_id}, Type: {raw_data.get('data_type', 'N/A')}")
 
-    # Validate against appropriate schema dynamically
     try:
-        data_type = raw_data.get("data_type")
-        if data_type == "block_sync":
-            validated_data = BlockSyncMessage(**raw_data)
-        elif data_type == "tx_pool_update":
-            validated_data = TxPoolUpdateMessage(**raw_data)
-        else:
-            raise ValidationError([{
-                "loc": ("data_type",),
-                "msg": f"Unsupported data_type '{data_type}'",
-                "type": "value_error"
-            }], model=InternalNodeDataBase)
+        # **IMPROVEMENT**: This single line replaces the manual if/elif block.
+        # Pydantic automatically parses the data into the correct model from the Union.
+        validated_data = parse_obj_as(InternalNodeDataSchema, raw_data)
 
         with get_session_scope(db) as session:
-            # TODO: Add your business logic here for each data_type
-            if data_type == "block_sync":
+            # Business logic is now handled by checking the model's type
+            if isinstance(validated_data, BlockSyncMessage):
                 logger.info(f"Processing block sync from {source_node_id}, block #{validated_data.payload.block_number}")
-                # Call consensus or blockchain sync logic here
-                
-            elif data_type == "tx_pool_update":
-                logger.info(f"Processing transaction pool update from {source_node_id}, {len(validated_data.payload.new_transactions)} txs")
-                # Update transaction pool or mempool here
-                
+                # TODO: Call consensus or blockchain sync logic here
+            
+            elif isinstance(validated_data, TxPoolUpdateMessage):
+                logger.info(f"Processing tx pool update from {source_node_id}, {len(validated_data.payload.new_transactions)} txs")
+                # TODO: Update transaction pool or mempool here
+            
             _create_and_enqueue_cognitive_event(
                 session,
                 EVENT_NERVOUS_DATA_RECEIVED,
                 {
-                    "data_type": data_type,
+                    "data_type": validated_data.data_type,
                     "source_node_id": source_node_id,
                     "correlation_id": correlation_id,
                 }
@@ -179,41 +152,17 @@ def receive_node_data() -> Tuple[Response, int]:
         logger.info(f"[Nervous] Data from node {source_node_id} processed successfully.")
         return json_response({
             KEY_STATUS: "success",
-            KEY_MESSAGE: f"Data of type '{data_type}' from node '{source_node_id}' accepted and processed."
+            KEY_MESSAGE: f"Data of type '{validated_data.data_type}' from node '{source_node_id}' accepted."
         }, http.HTTPStatus.ACCEPTED)
 
     except ValidationError as ve:
         logger.warning(f"🚫 Validation failed for internal node data: {ve.errors()}")
         with get_session_scope(db) as session:
-            _create_and_enqueue_cognitive_event(
-                session,
-                EVENT_NERVOUS_DATA_PROCESSING_FAILED,
-                {
-                    "validation_errors": ve.errors(),
-                    "source_node_id": source_node_id,
-                    "correlation_id": correlation_id
-                }
-            )
-        return json_response({
-            KEY_STATUS: "error",
-            KEY_ERROR: "Invalid internal data format",
-            KEY_DETAILS: ve.errors()
-        }, http.HTTPStatus.BAD_REQUEST)
+            _create_and_enqueue_cognitive_event(session, EVENT_NERVOUS_DATA_PROCESSING_FAILED, {"validation_errors": ve.errors(), "source_node_id": source_node_id, "correlation_id": correlation_id})
+        return json_response({KEY_STATUS: "error", KEY_ERROR: "Invalid internal data format", KEY_DETAILS: ve.errors()}, http.HTTPStatus.BAD_REQUEST)
 
     except Exception as e:
         logger.exception(f"💥 Unexpected error processing internal node data from {source_node_id}.")
         with get_session_scope(db) as session:
-            _create_and_enqueue_cognitive_event(
-                session,
-                EVENT_NERVOUS_DATA_PROCESSING_FAILED,
-                {
-                    "error_message": str(e),
-                    "source_node_id": source_node_id,
-                    "correlation_id": correlation_id
-                }
-            )
-        return json_response({
-            KEY_STATUS: "error",
-            KEY_ERROR: "Internal server error during node data processing"
-        }, http.HTTPStatus.INTERNAL_SERVER_ERROR)
-
+            _create_and_enqueue_cognitive_event(session, EVENT_NERVOUS_DATA_PROCESSING_FAILED, {"error_message": str(e), "source_node_id": source_node_id, "correlation_id": correlation_id})
+        return json_response({KEY_STATUS: "error", KEY_ERROR: "Internal server error"}, http.HTTPStatus.INTERNAL_SERVER_ERROR)

@@ -1,3 +1,5 @@
+# src/peoples_coin/systems/immune_system.py
+
 import os
 import time
 import threading
@@ -7,7 +9,10 @@ from functools import wraps
 from collections import defaultdict
 from typing import Optional, Callable, Dict, Any
 
-from flask import request, jsonify, Flask, g
+from flask import request, jsonify, Flask, g, Blueprint
+
+# Use our secure decorator for the management endpoints
+from peoples_coin.utils.auth import require_api_key
 
 try:
     from redis import Redis, exceptions as RedisExceptions
@@ -16,6 +21,12 @@ except ImportError:
     RedisExceptions = None
 
 logger = logging.getLogger(__name__)
+
+#
+# The ImmuneSystem class is already excellent and requires no changes.
+# All the code from your original file for the class goes here.
+# ... (The entire ImmuneSystem class from your submission)
+#
 
 class ImmuneSystem:
     """
@@ -124,14 +135,13 @@ class ImmuneSystem:
 
     def _get_identifier(self) -> str:
         """Returns a unique identifier for the client (IP, API Key, or User ID)."""
-        # This method remains the same as your original
-        if hasattr(g, "user_id") and g.user_id:
-            return f"user:{g.user_id}"
+        # In our refined auth decorators, g.user will be the UserAccount object
+        if hasattr(g, "user") and g.user:
+            return f"user:{g.user.id}"
+        # For API key auth, g.user is also set
         if (api_key := request.headers.get("X-API-Key")):
             return f"api_key:{api_key}"
         return f"ip:{request.remote_addr or 'unknown'}"
-
-    # --- Main Security Methods (using the lazy connection) ---
 
     def is_blacklisted(self, identifier: str) -> bool:
         """Checks if an identifier is on the blacklist."""
@@ -162,8 +172,6 @@ class ImmuneSystem:
 
     def record_invalid_attempt(self, identifier: str):
         """Tracks a failed attempt, blacklisting if a threshold is exceeded."""
-        # This method's logic is complex and well-written.
-        # The only change is replacing `self.redis` with `self.connection`.
         if self.is_blacklisted(identifier):
             return
 
@@ -193,7 +201,6 @@ class ImmuneSystem:
 
     def _is_rate_limited(self, identifier: str) -> bool:
         """Checks if a client has exceeded their request rate limit."""
-        # This logic also remains the same, just using the lazy connection.
         max_reqs = self.config.get("IMMUNE_MAX_REQUESTS_PER_WINDOW", 30)
         window = self.config.get("IMMUNE_RATE_LIMIT_WINDOW_SEC", 60)
         
@@ -221,7 +228,6 @@ class ImmuneSystem:
 
     def check(self) -> Callable:
         """A Flask route decorator that applies all immune system checks."""
-        # This decorator logic is perfect, no changes needed.
         def decorator(f: Callable) -> Callable:
             @wraps(f)
             def wrapper(*args, **kwargs):
@@ -239,12 +245,10 @@ class ImmuneSystem:
         logger.info("🛡️ ImmuneSystem cleaner thread started.")
         while not self._stop_event.is_set():
             try:
-                # The cleaner only runs if Redis is down, so no Redis check needed here.
                 now = time.time()
                 quarantine = self.config["IMMUNE_QUARANTINE_TIME_SEC"]
                 
                 with self._in_memory_lock:
-                    # Clean greylist
                     expired_keys = [k for k, v in self._greylist.items() if now - v["last_seen"] > quarantine]
                     for k in expired_keys:
                         del self._greylist[k]
@@ -258,6 +262,62 @@ class ImmuneSystem:
             self._stop_event.wait(600)
         logger.info("🛡️ ImmuneSystem cleaner thread stopped.")
 
+
 # --- Singleton Instance ---
-# This single instance is imported and used across the application.
 immune_system = ImmuneSystem()
+
+# ========== Flask Blueprint for Immune System Endpoints ==========
+
+immune_bp = Blueprint("immune", __name__, url_prefix="/immune")
+
+
+@immune_bp.route("/status", methods=["GET"])
+@require_api_key # Secure this endpoint
+def immune_status():
+    """Returns basic status of the immune system."""
+    redis_conn = immune_system.connection
+    # For security, avoid leaking too much internal state in a public status check
+    status = {
+        "redis_connected": redis_conn is not None,
+    }
+    return jsonify(status), http.HTTPStatus.OK
+
+
+@immune_bp.route("/blacklist", methods=["POST"])
+@require_api_key # Secure this endpoint
+def add_blacklist():
+    """
+    Adds an identifier (IP, API key, user ID) to the blacklist.
+    Requires a valid API key with administrative privileges.
+    Request JSON: {"identifier": "string"}
+    """
+    data = request.get_json(silent=True)
+    if not data or "identifier" not in data:
+        return jsonify({"error": "Missing 'identifier' in request body"}), http.HTTPStatus.BAD_REQUEST
+
+    identifier = data["identifier"]
+    immune_system.add_to_blacklist(identifier)
+    return jsonify({"status": "success", "blacklisted": identifier}), http.HTTPStatus.CREATED
+
+
+@immune_bp.route("/blacklist", methods=["GET"])
+@require_api_key # Secure this endpoint
+def get_blacklist():
+    """
+S    Returns the list of currently blacklisted identifiers from Redis.
+    Requires a valid API key.
+    """
+    redis = immune_system.connection
+    blacklist = []
+    if redis:
+        try:
+            blacklist = list(redis.smembers("immune:blacklist"))
+        except RedisExceptions.RedisError as e:
+            logger.error(f"Could not retrieve blacklist from Redis: {e}")
+            return jsonify({"error": "Failed to retrieve blacklist from Redis"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
+    else:
+        # Fallback to in-memory if Redis is down
+        with immune_system._in_memory_lock:
+            blacklist = list(immune_system._blacklist)
+
+    return jsonify({"blacklist": blacklist}), http.HTTPStatus.OK

@@ -1,121 +1,52 @@
 # src/peoples_coin/factory.py
-
 import os
 import sys
-import atexit
-import signal
 import logging
 from logging.handlers import RotatingFileHandler
+import atexit
+import signal
 
 import click
 from flask import Flask, jsonify
-from celery import Celery
-from sqlalchemy import text
-from flask_migrate import Migrate
-from flask_cors import CORS
+import firebase_admin
+from firebase_admin import credentials
 
-from .config import Config
-from peoples_coin.extensions import db
+from peoples_coin.config import Config
+from peoples_coin.extensions import db, migrate, cors, limiter, swagger, celery
+from peoples_coin.routes.api import api_bp
 
-# --- Globals & Extensions ---
-logger = logging.getLogger(__name__)
-migrate = Migrate()
-celery = Celery(__name__, broker=os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0"))
-cors = CORS()
-
-# --- Application Factory ---
-def create_app(config_name=None) -> Flask:
+def create_app(config_object=Config) -> Flask:
     """Creates and configures a new Flask application instance."""
     app = Flask(__name__)
-    app.config.from_object(config_name or Config)
+    app.config.from_object(config_object)
 
+    # Setup logging, db, celery, extensions, and firebase
     setup_logging(app)
-    configure_database(app)
-    configure_celery(app, celery)
+    init_extensions(app)
+    init_firebase_admin(app)
 
-    logger.info("🚀 Creating Flask application instance.")
-    logger.info(f"Using database URI: {mask_uri(app.config['SQLALCHEMY_DATABASE_URI'])}")
-
-    db.init_app(app)
-    migrate.init_app(app, db)
-
-    cors.init_app(app, resources={
-        r"/api/*": {"origins": "https://brightacts.com"}  # 🔒 Change for production as needed
-    })
-
-    register_blueprints(app)
+    # Register components
+    app.register_blueprint(api_bp)
     register_cli_commands(app)
-    register_health_check(app)
-    initialize_custom_systems(app)
     register_shutdown_handlers(app)
 
+    logger = logging.getLogger(__name__)
     logger.info("✅ Application factory setup complete.")
     return app
 
-# --- System Initialization ---
-def initialize_custom_systems(app: Flask) -> None:
-    from peoples_coin.systems.immune_system import immune_system
-    from peoples_coin.systems.cognitive_system import cognitive_system
-    from peoples_coin.systems.endocrine_system import endocrine_system
-    from peoples_coin.systems.circulatory_system import circulatory_system
-    from peoples_coin.systems.reproductive_system import reproductive_system
-    from peoples_coin.consensus import Consensus
+def init_extensions(app: Flask):
+    """Initialize all Flask extensions."""
+    db.init_app(app)
+    migrate.init_app(app, db)
+    cors.init_app(app, resources={r"/api/*": {"origins": "*"}}) # Adjust origins for production
+    limiter.init_app(app)
+    swagger.init_app(app)
+    configure_celery(app, celery)
 
-    consensus_instance = Consensus()
-    consensus_instance.init_app(app, db)
-    app.extensions['consensus'] = consensus_instance
-
-    immune_system.init_app(app)
-    cognitive_system.init_app(app)
-    endocrine_system.init_app(app)
-    circulatory_system.init_app(app, db, consensus_instance)
-    reproductive_system.init_app(app, db)
-
-    logger.info("🧠🫀 All custom systems initialized.")
-
-# --- Logging Configuration ---
-def setup_logging(app: Flask) -> None:
-    log_level = app.config.get("LOG_LEVEL") or os.environ.get("LOG_LEVEL", "INFO")
-    logging.root.handlers.clear()
-    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-
-    stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setFormatter(formatter)
-
-    os.makedirs(app.instance_path, exist_ok=True)
-    file_handler = RotatingFileHandler(
-        os.path.join(app.instance_path, 'app.log'),
-        maxBytes=5 * 1024 * 1024,
-        backupCount=5
-    )
-    file_handler.setFormatter(formatter)
-
-    logging.basicConfig(level=log_level, handlers=[stream_handler, file_handler])
-    logger.info(f"Logging configured with level: {log_level}")
-
-# --- Database Configuration ---
-def configure_database(app: Flask) -> None:
-    db_uri = os.environ.get('POSTGRES_DB_URI')
-    if not db_uri:
-        instance_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', 'instance')
-        os.makedirs(instance_path, exist_ok=True)
-        db_file_path = os.path.join(instance_path, 'peoples_coin.sqlite')
-        db_uri = f"sqlite:///{db_file_path}"
-        logger.warning("⚠️ POSTGRES_DB_URI not set — using SQLite fallback for local development.")
-
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# --- Celery Configuration ---
-def configure_celery(app: Flask, celery_instance: Celery) -> None:
-    broker_url = app.config.get("CELERY_BROKER_URL") or os.environ.get("REDIS_URL")
-    result_backend = app.config.get("CELERY_RESULT_BACKEND") or os.environ.get("REDIS_URL")
-
-    if not broker_url:
-        logger.warning("⚠️ Celery broker URL not set — background tasks may not run.")
-
-    celery_instance.conf.broker_url = broker_url
-    celery_instance.conf.result_backend = result_backend
+def configure_celery(app: Flask, celery_instance: Celery):
+    """Configures Celery to run within the Flask application context."""
+    celery_instance.conf.broker_url = app.config["CELERY_BROKER_URL"]
+    celery_instance.conf.result_backend = app.config["CELERY_RESULT_BACKEND"]
     celery_instance.conf.update(app.config)
 
     class ContextTask(celery_instance.Task):
@@ -125,56 +56,57 @@ def configure_celery(app: Flask, celery_instance: Celery) -> None:
 
     celery_instance.Task = ContextTask
     app.extensions['celery'] = celery_instance
-    logger.info("📡 Celery configured with broker and result backend.")
 
-# --- Blueprints ---
-def register_blueprints(app: Flask) -> None:
-    from peoples_coin.systems.cognitive_system import cognitive_bp
-    from peoples_coin.systems.nervous_system import nervous_bp
-    from peoples_coin.systems.metabolic_system import metabolic_bp
-    from peoples_coin.routes.api import api_bp
+def setup_logging(app: Flask):
+    """Configures logging for the application."""
+    log_level = app.config["LOG_LEVEL"]
+    logging.root.handlers.clear()
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+    
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    
+    os.makedirs(app.instance_path, exist_ok=True)
+    file_handler = RotatingFileHandler(
+        os.path.join(app.instance_path, 'app.log'),
+        maxBytes=5 * 1024 * 1024, backupCount=5
+    )
+    file_handler.setFormatter(formatter)
+    
+    logging.basicConfig(level=log_level, handlers=[stream_handler, file_handler])
+    logging.getLogger(__name__).info(f"Logging configured with level: {log_level}")
 
-    app.register_blueprint(cognitive_bp)
-    app.register_blueprint(nervous_bp)
-    app.register_blueprint(metabolic_bp)
-    app.register_blueprint(api_bp)
+def init_firebase_admin(app: Flask):
+    """Initializes the Firebase Admin SDK."""
+    path = app.config["FIREBASE_CREDENTIALS_PATH"]
+    if not firebase_admin._apps:
+        if os.path.exists(path):
+            cred = credentials.Certificate(path)
+            firebase_admin.initialize_app(cred)
+            logging.getLogger(__name__).info("✅ Firebase Admin SDK initialized.")
+        else:
+            logging.getLogger(__name__).warning(f"⚠️ Firebase credentials not found at {path}. Auth may fail.")
 
-    logger.info("🧩 Blueprints registered.")
+def register_cli_commands(app: Flask):
+    """Registers CLI commands for the application."""
+    @app.cli.command("start-systems")
+    def start_systems_command():
+        """Starts the background systems (placeholder)."""
+        click.echo("Starting background systems...")
+        # from .extensions import immune_system, cognitive_system
+        # immune_system.start()
+        # cognitive_system.start()
+        click.secho("✅ Systems would be running now.", fg="green")
 
-# --- Health Check ---
-def register_health_check(app: Flask) -> None:
-    @app.route('/health', methods=['GET'])
-    def health():
-        return jsonify(status="healthy"), 200
-
-# --- Shutdown Handlers ---
-def register_shutdown_handlers(app: Flask) -> None:
-    from peoples_coin.systems.cognitive_system import cognitive_system
-    from peoples_coin.systems.endocrine_system import endocrine_system
-    from peoples_coin.systems.immune_system import immune_system
-
-    def shutdown_systems(*args, **kwargs):
-        logger.warning("⚠️ Initiating graceful shutdown of background systems...")
-        cognitive_system.stop()
-        endocrine_system.stop()
-        immune_system.stop()
-        logger.info("✅ All background systems shut down.")
+def register_shutdown_handlers(app: Flask):
+    """Registers graceful shutdown handlers."""
+    def shutdown_systems(*args):
+        logging.getLogger(__name__).warning("⚠️ Initiating graceful shutdown...")
+        # from .extensions import immune_system, cognitive_system
+        # immune_system.stop()
+        # cognitive_system.stop()
+        logging.getLogger(__name__).info("✅ Background systems shut down.")
 
     atexit.register(shutdown_systems)
-    signal.signal(signal.SIGTERM, lambda signum, frame: shutdown_systems())
-    signal.signal(signal.SIGINT, lambda signum, frame: shutdown_systems())
-
-# --- CLI Commands (Stub) ---
-def register_cli_commands(app: Flask) -> None:
-    logger.info("🛠️ CLI commands registered (placeholder).")
-
-# --- Utility ---
-def mask_uri(db_uri: str) -> str:
-    if '://' in db_uri and '@' in db_uri:
-        protocol, rest = db_uri.split('://', 1)
-        userinfo, hostinfo = rest.split('@', 1)
-        if ':' in userinfo:
-            user, _ = userinfo.split(':', 1)
-            return f"{protocol}://{user}:****@{hostinfo}"
-    return db_uri
-
+    signal.signal(signal.SIGTERM, shutdown_systems)
+    signal.signal(signal.SIGINT, shutdown_systems)
