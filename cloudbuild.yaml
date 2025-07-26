@@ -1,7 +1,7 @@
 steps:
-  # Step 1: Build the Docker image
+  # Step 1: Build the Docker image (FORCE amd64 to match Cloud Run runtime)
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest', '.']
+    args: ['build', '--platform=linux/amd64', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest', '.']
 
   # Step 2: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
