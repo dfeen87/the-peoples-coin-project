@@ -1,5 +1,5 @@
 # Use a modern Python base image for a lean production environment
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
 # Set environment variables for Python and Flask application
 # PYTHONDONTWRITEBYTECODE=1: Prevents Python from writing .pyc files to disk.
@@ -9,7 +9,7 @@ FROM python:3.11-slim
 #             It includes /app/src (where your 'peoples_coin' package is)
 #             and /usr/local/lib/python3.11/site-packages (where pip installs packages).
 
-LABEL build_version="20250726.2"
+LABEL build_version="20250726.4-alpine"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
