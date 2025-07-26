@@ -7,7 +7,7 @@ metadata:
     run.googleapis.com/ingress: all
     run.googleapis.com/ingress-status: all
     run.googleapis.com/client-name: gcloud
-    run.googleapis.com/client-version: 531.0.0 # Or your current gcloud version
+    run.googleapis.com/client-version: 531.0.0
   labels:
     cloud.googleapis.com/location: us-east4
     run.googleapis.com/satisfiesPzs: 'true'
@@ -18,18 +18,17 @@ spec:
         autoscaling.knative.dev/maxScale: '20'
         run.googleapis.com/startup-cpu-boost: 'true'
         run.googleapis.com/vpc-access-connector: pc-backend-connector
-        run.googleapis.com/vpc-access-egress: private-ranges-only # Or 'all-traffic' if you need internet access
+        run.googleapis.com/vpc-access-egress: private-ranges-only
     spec:
       containerConcurrency: 80
-      timeoutSeconds: 300 # Overall request timeout for a single request
+      timeoutSeconds: 300
       serviceAccountName: peoples-coin-sa@heroic-tide-428421-q7.iam.gserviceaccount.com
       containers:
-      - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:20250726-062902
+      - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest # Ensure this is your latest image
         ports:
         - containerPort: 8080
           name: http1
         env:
-        # --- Environment Variables ---
         - name: FIREBASE_CREDENTIALS_PATH
           value: /app/firebase-admin-sdk-key.json
         - name: REDIS_URL
@@ -38,29 +37,25 @@ spec:
           limits:
             cpu: '1'
             memory: 4Gi
-        # --- Startup Probe Configuration ---
         startupProbe:
           httpGet:
             path: /api/v1/healthz
             port: 8080
-          timeoutSeconds: 10     # Must be less than periodSeconds
-          periodSeconds: 30      # How often to probe
-          failureThreshold: 10   # Number of consecutive failures (10 * 30s = 300s total startup time)
-          initialDelaySeconds: 0 # Start probing immediately
-        # --- Volume Mounts for Secrets ---
+          timeoutSeconds: 10
+          periodSeconds: 30
+          failureThreshold: 10
+          initialDelaySeconds: 0
         volumeMounts:
         - mountPath: /app
-          name: firebase-backend-service-account-bap-lis-woc # This name matches the volume below
-      # --- Volumes for Secrets ---
+          name: firebase-backend-service-account-bap-lis-woc
       volumes:
-      - name: firebase-backend-service-account-bap-lis-woc # This name matches the volumeMount above
+      - name: firebase-backend-service-account-bap-lis-woc
         secret:
           secretName: firebase-backend-service-account
           items:
           - key: latest
-            path: firebase-admin-sdk-key.json # Path of the secret file within the mounted volume
-  # --- Traffic Routing Configuration ---
+            path: firebase-admin-sdk-key.json
   traffic:
   - latestRevision: true
     percent: 100
-
+    
