@@ -1,21 +1,22 @@
-ROM python:3.11-slim # <<< CRITICAL CHANGE: Revert to slim
+# Use a modern, slim Python base image
+FROM python:3.11-slim
 
-# --- Unique Identifier ---
-LABEL build_version="20250726.8-slim-final" # <<< UPDATE THIS LABEL
-# ---
+# Unique build version label for tracking
+LABEL build_version="20250726.10-streamlined-paths"
 
+# Environment variables for Python behavior
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_ENV=production \
-    PYTHONPATH=/app # <<< Ensure this is still /app for --chdir
+    PYTHONPATH=/src
 
-# Create a non-root user and group for enhanced security
-# Revert useradd/groupadd commands for Debian-based 'slim' image
-RUN groupadd --system appgroup && useradd --system -g appgroup -d /app -s /bin/bash appuser # <<< CRITICAL CHANGE
+# Create non-root user and group for security
+RUN groupadd --system appgroup && useradd --system -g appgroup -d /src -s /bin/bash appuser
 
-WORKDIR /app
+# Set working directory to /src where your code will live
+WORKDIR /src
 
-# Revert apt-get commands for Debian-based 'slim' image
+# Install system dependencies needed for building Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libffi-dev \
@@ -24,21 +25,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bash && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+# Copy requirements.txt and install Python dependencies
+COPY requirements.txt /requirements.txt
+RUN pip install --upgrade pip && pip install --no-cache-dir -r /requirements.txt
 
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+# Copy your application source code into /src
+COPY src/ /src/
 
-COPY src/ src/
+# Set ownership of /src to the non-root user
+RUN chown -R appuser:appgroup /src
 
-# Copy entrypoint.sh (if still present, though not used by CMD)
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
-RUN chown -R appuser:appgroup /app
-
+# Switch to non-root user for running the app
 USER appuser
 
+# Expose the port your app listens on
 EXPOSE 8080
 
-CMD ["gunicorn", "--chdir", "src/peoples_coin", "wsgi:app", "--bind", "0.0.0.0:8080", "--workers=1", "--timeout=300"]
+# Run Gunicorn pointing to your app's wsgi.py inside peoples_coin package
+CMD ["gunicorn", "--chdir", "peoples_coin", "wsgi:app", "--bind", "0.0.0.0:8080", "--workers=1", "--timeout=300"]
 
