@@ -5,10 +5,10 @@ import logging
 from logging.handlers import RotatingFileHandler
 import atexit
 import signal
-import http # Import http for HTTPStatus
+import http # Ensure http is imported for HTTPStatus
 
 import click
-from flask import Flask, jsonify
+from flask import Flask, jsonify # Ensure Flask and jsonify are imported
 import firebase_admin
 from firebase_admin import credentials
 from celery import Celery # Ensure Celery is imported for type hinting
@@ -24,6 +24,16 @@ def create_app(config_object=Config) -> Flask:
     """Creates and configures a new Flask application instance."""
     app = Flask(__name__)
     app.config.from_object(config_object)
+
+    # --- NEW: Root Health Check endpoint for early startup probe ---
+    # This route is registered immediately after app creation to ensure it's
+    # available as early as possible for Cloud Run's startup probe.
+    @app.route('/healthz_root', methods=['GET'])
+    def healthz_root():
+        """Basic health check at root for early startup probe."""
+        logger.info("Received /healthz_root probe.")
+        return "OK", http.HTTPStatus.OK
+    # --- END NEW ---
 
     logger.info("Starting Flask application creation...")
 
@@ -49,6 +59,7 @@ def create_app(config_object=Config) -> Flask:
         raise
 
     # Register components
+    # Blueprints should be registered after app creation and essential extensions
     try:
         app.register_blueprint(api_bp)
         logger.info("API blueprint registered.")
@@ -69,14 +80,6 @@ def create_app(config_object=Config) -> Flask:
     except Exception as e:
         logger.error(f"Error registering shutdown handlers: {e}", exc_info=True)
         raise
-
-    # --- NEW: Root Health Check endpoint for early startup probe ---
-    @app.route('/healthz_root', methods=['GET'])
-    def healthz_root():
-        """Basic health check at root for early startup probe."""
-        logger.info("Received /healthz_root probe.")
-        return "OK", http.HTTPStatus.OK
-    # --- END NEW ---
 
     logger.info("✅ Application factory setup complete. Returning app instance.")
     return app
