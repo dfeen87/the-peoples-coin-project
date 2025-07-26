@@ -11,6 +11,13 @@ from peoples_coin.extensions import db
 
 logger = logging.getLogger(__name__)
 
+# --- FIX: Define GoodwillError class ---
+# This class was being imported/expected but not defined in this file.
+class GoodwillError(Exception):
+    """Custom exception raised for goodwill service related issues."""
+    pass
+# --- END FIX ---
+
 class GoodwillService:
     def __init__(self):
         self.app = None
@@ -50,7 +57,11 @@ class GoodwillService:
                 # Link Firebase UID to internal UserAccount UUID
                 user_account = session.query(UserAccount).filter_by(firebase_uid=validated_data['user_id']).first()
                 if not user_account:
-                    logger.warning(f"UserAccount not found for Firebase UID: {validatedated_data['user_id']}")
+                    # --- FIX: Typo corrected ---
+                    logger.warning(f"UserAccount not found for Firebase UID: {validated_data['user_id']}")
+                    # --- END FIX ---
+                    # It's good practice to raise a specific error here if this is a critical failure
+                    # For example: raise GoodwillError(f"User not found for Firebase UID: {validated_data['user_id']}")
                     return False, {"error": "User not found", "details": f"No UserAccount for Firebase UID {validated_data['user_id']}"}
 
                 goodwill_action = GoodwillAction(
@@ -59,7 +70,7 @@ class GoodwillService:
                     description=validated_data['description'],
                     contextual_data=validated_data.get('contextual_data', {}),
                     loves_value=validated_data['loves_value'],
-                    correlation_id=validated_data.get('correlation_id'),
+                    correlation_id=validated_data.get('correlation_id'), # Assuming GoodwillAction model supports this
                     status='PENDING_VERIFICATION',
                 )
                 session.add(goodwill_action)
@@ -82,9 +93,13 @@ class GoodwillService:
 
             except IntegrityError as e:
                 logger.error("Database integrity error during goodwill action processing.", exc_info=True)
+                # It's good to raise a specific error here if this is a known type of failure
+                # For example: raise GoodwillError("Duplicate entry or constraint violation.") from e
                 return False, {"error": "Database error", "details": "Possible duplicate or constraint violation."}
             except Exception as e:
                 logger.exception("Unexpected error processing goodwill action.")
+                # It's good to raise a specific error here if this is a known type of failure
+                # For example: raise GoodwillError(f"Unexpected error: {str(e)}") from e
                 return False, {"error": "Internal server error", "details": str(e)}
 
 goodwill_service = GoodwillService()
