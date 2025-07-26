@@ -1,16 +1,16 @@
 steps:
-  # Step 1: Build the Docker image (FORCE amd64 to match Cloud Run runtime)
+  # Step 1: Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '--platform=linux/amd64', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest', '.']
 
-  # Step 2: Deploy to Cloud Run
+  # Step 2: Deploy to Cloud Run in us-central1
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       [
         'run', 'deploy', 'peoples-coin-service',
         '--image', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest',
-        '--region', 'us-east4',
+        '--region', 'us-central1',  # <-- THE FIX IS HERE
         '--platform', 'managed',
         '--allow-unauthenticated'
       ]
@@ -22,4 +22,3 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 serviceAccount: 'projects/105378934751/serviceAccounts/105378934751-compute@developer.gserviceaccount.com'
-
