@@ -1,7 +1,7 @@
-steps:  
+steps:
   # Step 1: Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/${PROJECT_ID}/peoples-coin-service:latest', '.']
+    args: ['build', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest', '.']
 
   # Step 2: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -9,14 +9,14 @@ steps:
     args:
       [
         'run', 'deploy', 'peoples-coin-service',
-        '--image', 'gcr.io/${PROJECT_ID}/peoples-coin-service:latest',
+        '--image', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest',
         '--region', 'us-east4',
         '--platform', 'managed',
         '--allow-unauthenticated'
       ]
 
 images:
-  - 'gcr.io/${PROJECT_ID}/peoples-coin-service:latest'
+  - 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY

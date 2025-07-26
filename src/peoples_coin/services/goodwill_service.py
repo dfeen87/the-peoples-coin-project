@@ -1,22 +1,17 @@
 import logging
-from typing import Dict, Any, Tuple, Union, List
-from uuid import UUID
-
+from typing import Dict, Any
 from sqlalchemy.exc import IntegrityError
 
 from peoples_coin.models.db_utils import get_session_scope
 from peoples_coin.models.models import GoodwillAction, UserAccount
-from peoples_coin.validate.validate_transaction import validate_transaction, ValidationSuccess, ValidationFailure
+from peoples_coin.validate.validate_transaction import validate_transaction
 from peoples_coin.extensions import db
 
 logger = logging.getLogger(__name__)
 
-# --- FIX: Define GoodwillError class ---
-# This class was being imported/expected but not defined in this file.
 class GoodwillError(Exception):
     """Custom exception raised for goodwill service related issues."""
     pass
-# --- END FIX ---
 
 class GoodwillService:
     def __init__(self):
@@ -30,9 +25,7 @@ class GoodwillService:
         self.message_queue_client = message_queue_client
         logger.info("GoodwillService initialized.")
 
-    def submit_and_queue_goodwill_action(
-        self, data: Dict[str, Any]
-    ) -> Tuple[bool, Union[Dict[str, Any], List[Dict[str, Any]]]]:
+    def submit_action(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Validates goodwill action data, persists it, and queues it for blockchain minting.
 
@@ -40,7 +33,10 @@ class GoodwillService:
             data: Incoming goodwill action data dict.
 
         Returns:
-            Tuple: (success flag, dict of action_id/status or list of validation errors)
+            Dict with action_id and status on success.
+
+        Raises:
+            GoodwillError on validation or processing errors.
         """
         logger.info("GoodwillService: Processing goodwill submission.")
 
@@ -48,7 +44,7 @@ class GoodwillService:
         validation_result = validate_transaction(data)
         if not validation_result.is_valid:
             logger.warning(f"Validation failed: {validation_result.errors}")
-            return False, validation_result.errors
+            raise GoodwillError(f"Validation failed: {validation_result.errors}")
 
         validated_data = validation_result.data
 
@@ -57,12 +53,8 @@ class GoodwillService:
                 # Link Firebase UID to internal UserAccount UUID
                 user_account = session.query(UserAccount).filter_by(firebase_uid=validated_data['user_id']).first()
                 if not user_account:
-                    # --- FIX: Typo corrected ---
                     logger.warning(f"UserAccount not found for Firebase UID: {validated_data['user_id']}")
-                    # --- END FIX ---
-                    # It's good practice to raise a specific error here if this is a critical failure
-                    # For example: raise GoodwillError(f"User not found for Firebase UID: {validated_data['user_id']}")
-                    return False, {"error": "User not found", "details": f"No UserAccount for Firebase UID {validated_data['user_id']}"}
+                    raise GoodwillError(f"No UserAccount found for Firebase UID {validated_data['user_id']}")
 
                 goodwill_action = GoodwillAction(
                     performer_user_id=user_account.id,
@@ -70,7 +62,7 @@ class GoodwillService:
                     description=validated_data['description'],
                     contextual_data=validated_data.get('contextual_data', {}),
                     loves_value=validated_data['loves_value'],
-                    correlation_id=validated_data.get('correlation_id'), # Assuming GoodwillAction model supports this
+                    correlation_id=validated_data.get('correlation_id'),  # Optional
                     status='PENDING_VERIFICATION',
                 )
                 session.add(goodwill_action)
@@ -89,18 +81,15 @@ class GoodwillService:
                 else:
                     logger.warning("Message queue client not initialized; skipping queuing.")
 
-                return True, {"action_id": str(goodwill_action.id), "status": "accepted"}
+                return {"action_id": str(goodwill_action.id), "status": "accepted"}
 
             except IntegrityError as e:
                 logger.error("Database integrity error during goodwill action processing.", exc_info=True)
-                # It's good to raise a specific error here if this is a known type of failure
-                # For example: raise GoodwillError("Duplicate entry or constraint violation.") from e
-                return False, {"error": "Database error", "details": "Possible duplicate or constraint violation."}
+                raise GoodwillError("Database error: possible duplicate or constraint violation.") from e
             except Exception as e:
                 logger.exception("Unexpected error processing goodwill action.")
-                # It's good to raise a specific error here if this is a known type of failure
-                # For example: raise GoodwillError(f"Unexpected error: {str(e)}") from e
-                return False, {"error": "Internal server error", "details": str(e)}
+                raise GoodwillError(f"Internal server error: {str(e)}") from e
+
 
 goodwill_service = GoodwillService()
 
