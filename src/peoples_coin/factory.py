@@ -9,49 +9,128 @@ import click
 from flask import Flask, jsonify
 import firebase_admin
 from firebase_admin import credentials
-from celery import Celery # Added import for Celery type hinting
+from celery import Celery
 
 from peoples_coin.config import Config
 from peoples_coin.extensions import db, migrate, cors, limiter, swagger, celery
 from peoples_coin.routes.api import api_bp
+
+# Set up a logger for the factory
+logger = logging.getLogger(__name__)
 
 def create_app(config_object=Config) -> Flask:
     """Creates and configures a new Flask application instance."""
     app = Flask(__name__)
     app.config.from_object(config_object)
 
+    logger.info("Starting Flask application creation...")
+
     # Setup logging, db, celery, extensions, and firebase
-    setup_logging(app)
-    init_extensions(app)
-    init_firebase_admin(app)
+    try:
+        setup_logging(app)
+        logger.info("Logging setup complete.")
+    except Exception as e:
+        logger.error(f"Error during logging setup: {e}", exc_info=True)
+        raise # Re-raise to crash if logging itself fails
+
+    try:
+        init_extensions(app)
+        logger.info("Flask extensions initialized.")
+    except Exception as e:
+        logger.error(f"Error during extension initialization: {e}", exc_info=True)
+        raise # Re-raise to see the crash
+
+    try:
+        init_firebase_admin(app)
+        logger.info("Firebase Admin SDK initialization attempted.")
+    except Exception as e:
+        logger.error(f"Error during Firebase Admin SDK initialization: {e}", exc_info=True)
+        raise # Re-raise to see the crash
 
     # Register components
-    app.register_blueprint(api_bp)
-    register_cli_commands(app)
-    register_shutdown_handlers(app)
+    try:
+        app.register_blueprint(api_bp)
+        logger.info("API blueprint registered.")
+    except Exception as e:
+        logger.error(f"Error registering API blueprint: {e}", exc_info=True)
+        raise
 
-    logger = logging.getLogger(__name__)
-    logger.info("✅ Application factory setup complete.")
+    try:
+        register_cli_commands(app)
+        logger.info("CLI commands registered.")
+    except Exception as e:
+        logger.error(f"Error registering CLI commands: {e}", exc_info=True)
+        raise
+
+    try:
+        register_shutdown_handlers(app)
+        logger.info("Shutdown handlers registered.")
+    except Exception as e:
+        logger.error(f"Error registering shutdown handlers: {e}", exc_info=True)
+        raise
+
+    logger.info("✅ Application factory setup complete. Returning app instance.")
     return app
 
 def init_extensions(app: Flask):
     """Initialize all Flask extensions."""
-    db.init_app(app)
-    migrate.init_app(app, db)
-    # --- RESTORED CORS CONFIGURATION ---
-    # Allowing only your frontend's origin for /api/* paths.
-    # For local development, you might also need to add 'http://localhost:XXXX'
-    # e.g., origins=["https://brightacts.com", "http://localhost:3000"]
-    cors.init_app(app, resources={r"/api/*": {"origins": "https://brightacts.com"}}) # <<< RESTORED LINE
-    limiter.init_app(app)
-    swagger.init_app(app)
-    configure_celery(app, celery)
+    logger.info("Initializing extensions...")
+    try:
+        db.init_app(app)
+        logger.info("SQLAlchemy DB extension initialized.")
+    except Exception as e:
+        logger.error(f"Error initializing DB extension: {e}", exc_info=True)
+        raise
+
+    try:
+        migrate.init_app(app, db)
+        logger.info("Flask-Migrate extension initialized.")
+    except Exception as e:
+        logger.error(f"Error initializing Flask-Migrate extension: {e}", exc_info=True)
+        raise
+
+    try:
+        # Restore original CORS config as Secret Manager is now used
+        cors.init_app(app, resources={r"/api/*": {"origins": "https://brightacts.com"}})
+        logger.info("Flask-CORS extension initialized for origin: https://brightacts.com")
+    except Exception as e:
+        logger.error(f"Error initializing Flask-CORS extension: {e}", exc_info=True)
+        raise
+
+    try:
+        limiter.init_app(app)
+        logger.info("Flask-Limiter extension initialized.")
+    except Exception as e:
+        logger.error(f"Error initializing Flask-Limiter extension: {e}", exc_info=True)
+        raise
+
+    try:
+        swagger.init_app(app)
+        logger.info("Flasgger (Swagger) extension initialized.")
+    except Exception as e:
+        logger.error(f"Error initializing Flasgger (Swagger) extension: {e}", exc_info=True)
+        raise
+
+    try:
+        configure_celery(app, celery)
+        logger.info("Celery configured.")
+    except Exception as e:
+        logger.error(f"Error configuring Celery: {e}", exc_info=True)
+        raise
+    logger.info("All extensions initialization attempted.")
 
 def configure_celery(app: Flask, celery_instance: Celery):
     """Configures Celery to run within the Flask application context."""
-    celery_instance.conf.broker_url = app.config["CELERY_BROKER_URL"]
-    celery_instance.conf.result_backend = app.config["CELERY_RESULT_BACKEND"]
-    celery_instance.conf.update(app.config)
+    logger.info("Configuring Celery instance...")
+    try:
+        celery_instance.conf.broker_url = app.config.get("CELERY_BROKER_URL")
+        celery_instance.conf.result_backend = app.config.get("CELERY_RESULT_BACKEND")
+        celery_instance.conf.update(app.config)
+        logger.info(f"Celery broker URL: {celery_instance.conf.broker_url}")
+        logger.info(f"Celery result backend: {celery_instance.conf.result_backend}")
+    except Exception as e:
+        logger.error(f"Error setting Celery config: {e}", exc_info=True)
+        raise
 
     class ContextTask(celery_instance.Task):
         def __call__(self, *args, **kwargs):
@@ -60,10 +139,12 @@ def configure_celery(app: Flask, celery_instance: Celery):
 
     celery_instance.Task = ContextTask
     app.extensions['celery'] = celery_instance
+    logger.info("Celery ContextTask set.")
 
 def setup_logging(app: Flask):
     """Configures logging for the application."""
-    log_level = app.config["LOG_LEVEL"]
+    logger.info("Setting up logging...")
+    log_level = app.config.get("LOG_LEVEL", "INFO") # Default to INFO if not set
     logging.root.handlers.clear()
     formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
     
@@ -82,36 +163,44 @@ def setup_logging(app: Flask):
 
 def init_firebase_admin(app: Flask):
     """Initializes the Firebase Admin SDK."""
-    path = app.config["FIREBASE_CREDENTIALS_PATH"]
+    logger.info("Attempting Firebase Admin SDK initialization...")
+    path = app.config.get("FIREBASE_CREDENTIALS_PATH")
+    if not path:
+        logger.error("FIREBASE_CREDENTIALS_PATH is not set in app config. Firebase Admin SDK will not initialize.")
+        return # Do not attempt to initialize if path is missing
+
     if not firebase_admin._apps:
         if os.path.exists(path):
-            cred = credentials.Certificate(path)
-            firebase_admin.initialize_app(cred)
-            logging.getLogger(__name__).info("✅ Firebase Admin SDK initialized.")
+            try:
+                cred = credentials.Certificate(path)
+                firebase_admin.initialize_app(cred)
+                logger.info("✅ Firebase Admin SDK initialized successfully.")
+            except Exception as e:
+                logger.error(f"❌ Error initializing Firebase Admin SDK with credentials at {path}: {e}", exc_info=True)
+                raise # Re-raise to ensure crash is visible
         else:
-            logging.getLogger(__name__).warning(f"⚠️ Firebase credentials not found at {path}. Auth may fail.")
+            logger.error(f"❌ Firebase credentials file NOT FOUND at {path}. Firebase Admin SDK will not initialize.")
+            raise FileNotFoundError(f"Firebase credentials file not found: {path}") # Re-raise to see the crash
 
 def register_cli_commands(app: Flask):
     """Registers CLI commands for the application."""
+    logger.info("Registering CLI commands...")
     @app.cli.command("start-systems")
     def start_systems_command():
         """Starts the background systems (placeholder)."""
         click.echo("Starting background systems...")
-        # from .extensions import immune_system, cognitive_system
-        # immune_system.start()
-        # cognitive_system.start()
         click.secho("✅ Systems would be running now.", fg="green")
+    logger.info("CLI commands registration attempted.")
 
 def register_shutdown_handlers(app: Flask):
     """Registers graceful shutdown handlers."""
+    logger.info("Registering shutdown handlers...")
     def shutdown_systems(*args):
-        logging.getLogger(__name__).warning("⚠️ Initiating graceful shutdown...")
-        # from .extensions import immune_system, cognitive_system
-        # immune_system.stop()
-        # cognitive_system.stop()
-        logging.getLogger(__name__).info("✅ Background systems shut down.")
+        logger.warning("⚠️ Initiating graceful shutdown...")
+        logger.info("✅ Background systems shut down.")
 
     atexit.register(shutdown_systems)
     signal.signal(signal.SIGTERM, shutdown_systems)
     signal.signal(signal.SIGINT, shutdown_systems)
+    logger.info("Shutdown handlers registration attempted.")
 
