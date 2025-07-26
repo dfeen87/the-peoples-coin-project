@@ -1,19 +1,20 @@
 # Use a modern Python base image
 FROM python:3.11-slim
 
-# Metadata label
-LABEL build_version="20250726.13-ultra-copy-fix"
+# Unique identifier for build version
+LABEL build_version="20250726.15-google-final"
 
+# Environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_ENV=production \
-    PYTHONPATH=/src
+    PYTHONPATH=/app/src
 
 # Create non-root user and group
-RUN groupadd --system appgroup && useradd --system -g appgroup -d /src -s /bin/bash appuser
+RUN groupadd --system appgroup && useradd --system --create-home --home-dir /app --shell /bin/bash --gid appgroup appuser
 
 # Set working directory
-WORKDIR /src
+WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -22,28 +23,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     libpq-dev \
     bash && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Copy dependencies file and install Python packages
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Copy app source code
-COPY src/peoples_coin/ ./peoples_coin/
-COPY src/peoples_coin/wsgi.py ./peoples_coin/wsgi.py
+# Copy entire project into the image
+COPY . .
 
-# Optional: Copy entrypoint if you use it
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Change ownership to non-root user
+RUN chown -R appuser:appgroup /app
 
-# Change ownership
-RUN chown -R appuser:appgroup /src
-
-# Run as non-root user
+# Use non-root user
 USER appuser
 
+# Expose port for Cloud Run
 EXPOSE 8080
 
-# Gunicorn command
-CMD ["gunicorn", "--chdir", "peoples_coin", "wsgi:app", "--bind", "0.0.0.0:8080", "--workers=1", "--timeout=300"]
+# Start Gunicorn with the correct module path
+CMD ["gunicorn", "peoples_coin.wsgi:app", "--bind", "0.0.0.0:8080", "--workers=1", "--timeout=300"]
 

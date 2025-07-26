@@ -2,12 +2,12 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: peoples-coin-service
-  namespace: '105378934751'  # Your project number (optional)
+  namespace: '105378934751'  # Your project number
   annotations:
     run.googleapis.com/ingress: all
     run.googleapis.com/ingress-status: all
     run.googleapis.com/client-name: gcloud
-    run.googleapis.com/client-version: "531.0.0"  # Or your current gcloud version
+    run.googleapis.com/client-version: 531.0.0  # Or your current gcloud version
   labels:
     cloud.googleapis.com/location: us-east4
     run.googleapis.com/satisfiesPzs: 'true'
@@ -15,8 +15,8 @@ spec:
   template:
     metadata:
       annotations:
-        autoscaling.knative.dev/maxScale: "20"
-        run.googleapis.com/startup-cpu-boost: "true"
+        autoscaling.knative.dev/maxScale: '20'
+        run.googleapis.com/startup-cpu-boost: 'true'
         run.googleapis.com/vpc-access-connector: pc-backend-connector
         run.googleapis.com/vpc-access-egress: private-ranges-only
     spec:
@@ -24,37 +24,38 @@ spec:
       timeoutSeconds: 600  # Overall request timeout for a single request
       serviceAccountName: peoples-coin-sa@heroic-tide-428421-q7.iam.gserviceaccount.com
       containers:
-        - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest  # Your latest image
+        - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest  # Make sure this is your latest image
           ports:
             - containerPort: 8080
               name: http1
           env:
             - name: FIREBASE_CREDENTIALS_PATH
-              value: /app/firebase-admin-sdk-key.json
+              value: /app/brightacts-frontend-firebase-adminsdk-fbsvc-42f13be0b5.json
             - name: REDIS_URL
-              value: redis://10.150.0.37:6379/0  # Your Redis IP
+              value: redis://10.150.0.37:6379/0  # Use your Redis URL/IP
           resources:
             limits:
-              cpu: "1"
+              cpu: '1'
               memory: 4Gi
           startupProbe:
             httpGet:
-              path: /api/v1/healthz
+              path: /healthz_root
               port: 8080
-            timeoutSeconds: 30     # Must be less than periodSeconds
-            periodSeconds: 60      # Probe every 60 seconds
-            failureThreshold: 10   # 10 consecutive failures allowed (10*60=600s)
-            initialDelaySeconds: 0 # Start probing immediately
+            timeoutSeconds: 30
+            periodSeconds: 60
+            failureThreshold: 10
+            initialDelaySeconds: 0
           volumeMounts:
-            - mountPath: /app
-              name: firebase-backend-service-account-bap-lis-woc
+            - mountPath: /app/brightacts-frontend-firebase-adminsdk-fbsvc-42f13be0b5.json
+              subPath: brightacts-frontend-firebase-adminsdk-fbsvc-42f13be0b5.json
+              name: firebase-backend-service-account
       volumes:
-        - name: firebase-backend-service-account-bap-lis-woc
+        - name: firebase-backend-service-account
           secret:
             secretName: firebase-backend-service-account
             items:
-              - key: latest
-                path: firebase-admin-sdk-key.json
+              - key: "1"   # Secret version number (always a string)
+                path: brightacts-frontend-firebase-adminsdk-fbsvc-42f13be0b5.json
   traffic:
     - latestRevision: true
       percent: 100

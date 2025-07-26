@@ -1,20 +1,21 @@
+# src/peoples_coin/factory.py
 import os
 import sys
-print("!!! FACTORY.PY IS BEING EXECUTED (UNBUFFERED) !!!", file=sys.stderr, flush=True)
 import logging
 from logging.handlers import RotatingFileHandler
 import atexit
 import signal
+import http # Import http for HTTPStatus
 
 import click
 from flask import Flask, jsonify
 import firebase_admin
 from firebase_admin import credentials
-from celery import Celery
+from celery import Celery # Ensure Celery is imported for type hinting
 
 from peoples_coin.config import Config
 from peoples_coin.extensions import db, migrate, cors, limiter, swagger, celery
-from peoples_coin.routes.api import api_bp
+from peoples_coin.routes.api import api_bp # Ensure api_bp is imported
 
 # Set up a logger for the factory
 logger = logging.getLogger(__name__)
@@ -26,27 +27,26 @@ def create_app(config_object=Config) -> Flask:
 
     logger.info("Starting Flask application creation...")
 
-    # Setup logging, db, celery, extensions, and firebase
     try:
         setup_logging(app)
         logger.info("Logging setup complete.")
     except Exception as e:
         logger.error(f"Error during logging setup: {e}", exc_info=True)
-        raise # Re-raise to crash if logging itself fails
+        raise
 
     try:
         init_extensions(app)
         logger.info("Flask extensions initialized.")
     except Exception as e:
         logger.error(f"Error during extension initialization: {e}", exc_info=True)
-        raise # Re-raise to see the crash
+        raise
 
     try:
         init_firebase_admin(app)
         logger.info("Firebase Admin SDK initialization attempted.")
     except Exception as e:
         logger.error(f"Error during Firebase Admin SDK initialization: {e}", exc_info=True)
-        raise # Re-raise to see the crash
+        raise
 
     # Register components
     try:
@@ -69,6 +69,14 @@ def create_app(config_object=Config) -> Flask:
     except Exception as e:
         logger.error(f"Error registering shutdown handlers: {e}", exc_info=True)
         raise
+
+    # --- NEW: Root Health Check endpoint for early startup probe ---
+    @app.route('/healthz_root', methods=['GET'])
+    def healthz_root():
+        """Basic health check at root for early startup probe."""
+        logger.info("Received /healthz_root probe.")
+        return "OK", http.HTTPStatus.OK
+    # --- END NEW ---
 
     logger.info("✅ Application factory setup complete. Returning app instance.")
     return app
@@ -204,4 +212,7 @@ def register_shutdown_handlers(app: Flask):
     signal.signal(signal.SIGTERM, shutdown_systems)
     signal.signal(signal.SIGINT, shutdown_systems)
     logger.info("Shutdown handlers registration attempted.")
+
+# The __main__ block for SystemController is commented out in its own file.
+# This factory.py does not have a __main__ block that runs the Flask app directly.
 
