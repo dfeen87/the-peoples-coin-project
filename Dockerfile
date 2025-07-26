@@ -43,5 +43,4 @@ EXPOSE 8080
 # Use the entrypoint script if needed
 # ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["gunicorn", "--chdir", "peoples_coin", "wsgi:app", "--bind", "0.0.0.0:8080"]
-
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "peoples_coin:create_app()"]
