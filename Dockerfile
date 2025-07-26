@@ -44,4 +44,3 @@ EXPOSE 8080
 # ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "peoples_coin:create_app()"]
-
