@@ -12,6 +12,7 @@ RUN groupadd --system appgroup && useradd --system -g appgroup -d /src -s /bin/b
 
 WORKDIR /src
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libffi-dev \
@@ -21,25 +22,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies
 COPY requirements.txt /requirements.txt
 RUN pip install --upgrade pip && pip install --no-cache-dir -r /requirements.txt
 
+# Copy application code
 COPY src/ .
 
-# Copy Firebase credentials file (make sure this file is next to your Dockerfile or adjust path)
-COPY firebase-admin-sdk-key.json /app/firebase-admin-sdk-key.json
-
+# Optional entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Fix ownership of the source and the credentials file to the non-root user
-RUN chown -R appuser:appgroup /src /app/firebase-admin-sdk-key.json
+# Fix permissions for non-root user
+RUN chown -R appuser:appgroup /src
 
 USER appuser
 
 EXPOSE 8080
 
-# Uncomment and use this if you have an entrypoint script that needs to run
+# Use the entrypoint script if needed
 # ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["gunicorn", "--chdir", "peoples_coin", "wsgi:app", "--bind", "0.0.0.0:8080"]

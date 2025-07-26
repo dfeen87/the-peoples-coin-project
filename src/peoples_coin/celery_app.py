@@ -21,8 +21,8 @@ celery.conf.update(
     enable_utc=True,
 )
 
-# Optional: if your tasks need Flask app context, create a helper function like this
-def init_celery(app):
+# Helper function to integrate Celery with Flask app context
+def make_celery(app):
     celery.conf.update(app.config)
     TaskBase = celery.Task
 
