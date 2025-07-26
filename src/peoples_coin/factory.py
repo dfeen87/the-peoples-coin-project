@@ -1,5 +1,6 @@
 import os
 import sys
+print("!!! FACTORY.PY IS BEING EXECUTED (UNBUFFERED) !!!", file=sys.stderr, flush=True)
 import logging
 from logging.handlers import RotatingFileHandler
 import atexit
