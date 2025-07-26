@@ -2,12 +2,12 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: peoples-coin-service
-  namespace: '105378934751'  # Your project number
+  namespace: '105378934751' # Your project number
   annotations:
     run.googleapis.com/ingress: all
     run.googleapis.com/ingress-status: all
     run.googleapis.com/client-name: gcloud
-    run.googleapis.com/client-version: 531.0.0  # Or your current gcloud version
+    run.googleapis.com/client-version: 531.0.0 # Or your current gcloud version
   labels:
     cloud.googleapis.com/location: us-east4
     run.googleapis.com/satisfiesPzs: 'true'
@@ -21,42 +21,41 @@ spec:
         run.googleapis.com/vpc-access-egress: private-ranges-only
     spec:
       containerConcurrency: 80
-      timeoutSeconds: 600  # Overall request timeout for a single request
+      timeoutSeconds: 600 # Overall request timeout for a single request
       serviceAccountName: peoples-coin-sa@heroic-tide-428421-q7.iam.gserviceaccount.com
       containers:
-        - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest  # Make sure this is your latest image
-          ports:
-            - containerPort: 8080
-              name: http1
-          env:
-            - name: FIREBASE_CREDENTIALS_PATH
-              value: /app/brightacts-frontend-firebase-adminsdk-fbsvc-42f13be0b5.json
-            - name: REDIS_URL
-              value: redis://10.150.0.37:6379/0  # Use your Redis URL/IP
-          resources:
-            limits:
-              cpu: '1'
-              memory: 4Gi
-          startupProbe:
-            httpGet:
-              path: /
-              port: 8080
-            timeoutSeconds: 30
-            periodSeconds: 60
-            failureThreshold: 10
-            initialDelaySeconds: 0
-          volumeMounts:
-            - mountPath: /app/brightacts-frontend-firebase-adminsdk-fbsvc-42f13be0b5.json
-              subPath: brightacts-frontend-firebase-adminsdk-fbsvc-42f13be0b5.json
-              name: firebase-backend-service-account
+      - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest # Ensure this is your latest image
+        ports:
+        - containerPort: 8080
+          name: http1
+        env:
+        - name: FIREBASE_CREDENTIALS_PATH
+          value: /app/firebase-admin-sdk-key.json
+        - name: REDIS_URL
+          value: redis://10.150.0.37:6379/0 # <<< Ensure this is your correct Redis IP
+        resources:
+          limits:
+            cpu: '1'
+            memory: 4Gi
+        startupProbe:
+          httpGet:
+            path: / # <<< CRITICAL CHANGE: Probe path is now '/'
+            port: 8080
+          timeoutSeconds: 30     # Must be less than periodSeconds
+          periodSeconds: 60      # How often to probe
+          failureThreshold: 10   # Number of consecutive failures (10 * 60s = 600s total startup time)
+          initialDelaySeconds: 0 # Start probing immediately
+        volumeMounts:
+        - mountPath: /app
+          name: firebase-backend-service-account-bap-lis-woc
       volumes:
-        - name: firebase-backend-service-account
-          secret:
-            secretName: firebase-backend-service-account
-            items:
-              - key: "1"   # Secret version number (always a string)
-                path: brightacts-frontend-firebase-adminsdk-fbsvc-42f13be0b5.json
+      - name: firebase-backend-service-account-bap-lis-woc
+        secret:
+          secretName: firebase-backend-service-account
+          items:
+          - key: latest
+            path: firebase-admin-sdk-key.json
   traffic:
-    - latestRevision: true
-      percent: 100
+  - latestRevision: true
+    percent: 100
 
