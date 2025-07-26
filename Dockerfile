@@ -8,6 +8,9 @@ FROM python:3.11-slim
 # PYTHONPATH: Crucial for Python to find your application package.
 #             It includes /app/src (where your 'peoples_coin' package is)
 #             and /usr/local/lib/python3.11/site-packages (where pip installs packages).
+
+LABEL build_version="20250726.2"
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_ENV=production \
