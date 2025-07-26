@@ -47,12 +47,6 @@ def create_app():
     celery = make_celery(app)
     app.celery = celery
     
-    # 4. Initialize CORS
-    # This is the main fix for your front-end error.
-    # It allows your API to accept requests from your website.
-    CORS(app, resources={r"/api/*": {"origins": "https://brightacts.com"}})
-    app.logger.info("✅ CORS configured for origin: https://brightacts.com")
-
     # 5. Initialize Firebase (if available)
     if firebase_admin and not firebase_admin._apps:
         cred_path = os.getenv("FIREBASE_CREDENTIAL_PATH")
