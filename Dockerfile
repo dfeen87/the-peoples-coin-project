@@ -1,54 +1,50 @@
-# Use a modern Debian-based Python 3.11 slim image
-FROM python:3.11-slim
+# Use a modern Python base image
+FROM python:3.11-alpine
 
-LABEL build_version="20250726.4-debian"
+# --- Unique Identifier ---
+LABEL build_version="20250726.6-single-worker" # <<< UPDATED LABEL
+# ---
 
-# Environment variables
+# Set environment variables for Python and Flask application
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_ENV=production \
-    PYTHONPATH=/app/src:/usr/local/lib/python3.11/site-packages
+    # Adjust PYTHONPATH to include /app (root of WORKDIR)
+    # Gunicorn will change directory to /app/src/peoples_coin,
+    # so Python needs to find 'peoples_coin' package relative to /app.
+    PYTHONPATH=/app # <<< CRITICAL CHANGE for --chdir
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    build-essential \
-    libffi-dev \
-    libssl-dev \
-    libpq-dev \
-    bash \
-    make \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Create a non-root user and group for enhanced security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup -D -h /app -s /bin/bash appuser
 
-# Create non-root user and group
-RUN groupadd -r appgroup && useradd -m -g appgroup -d /app appuser
-
-# Set working directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
+RUN apk update && apk add --no-cache \
+    build-base \
+    libffi-dev \
+    openssl-dev \
+    postgresql-dev \
+    bash && \
+    rm -rf /var/cache/apk/*
+
 COPY requirements.txt .
+
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Copy application source
 COPY src/ src/
 
-# Set permissions
+# Copy entrypoint.sh (if you still have it, though no longer used with this CMD)
+# If you removed entrypoint.sh, you can remove these lines.
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 RUN chown -R appuser:appgroup /app
 
-# Diagnostic steps to verify code presence and environment
-RUN echo "---- Listing /app/src directory ----" && ls -l /app/src
-RUN echo "---- Listing /app/src/peoples_coin directory ----" && ls -l /app/src/peoples_coin
-RUN echo "---- PYTHONPATH environment variable ----" && echo $PYTHONPATH
-RUN python3 -c "import sys; print('sys.path:', sys.path); import peoples_coin.factory; print('Imported peoples_coin.factory successfully')"
-
-# Switch to non-root user
 USER appuser
 
-# Expose default Cloud Run port
 EXPOSE 8080
 
-# Start the app using Gunicorn and Flask factory pattern
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "peoples_coin.wsgi:app"]
+# --- MODIFIED CMD: Single Worker, Chdir, and Timeout ---
+# This is the most promising fix for startup issues.
+CMD ["gunicorn", "--chdir", "src/peoples_coin", "wsgi:app", "--bind", "0.0.0.0:8080", "--workers=1", "--timeout=300"]
 
