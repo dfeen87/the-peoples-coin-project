@@ -8,8 +8,6 @@ metadata:
     run.googleapis.com/ingress-status: all
     run.googleapis.com/client-name: gcloud
     run.googleapis.com/client-version: 531.0.0 # Or your current gcloud version
-    # Optional: Add your project-specific URLs if you want them to show in console
-    # run.googleapis.com/urls: '["https://peoples-coin-service-105378934751.us-east4.run.app"]'
   labels:
     cloud.googleapis.com/location: us-east4
     run.googleapis.com/satisfiesPzs: 'true'
@@ -26,7 +24,7 @@ spec:
       timeoutSeconds: 300 # Overall request timeout for a single request
       serviceAccountName: peoples-coin-sa@heroic-tide-428421-q7.iam.gserviceaccount.com
       containers:
-      - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest # Ensure this is your latest image
+      - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:20250726-062902
         ports:
         - containerPort: 8080
           name: http1

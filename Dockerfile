@@ -69,4 +69,4 @@ EXPOSE 8080
 # -b 0.0.0.0:8080: Binds Gunicorn to all network interfaces on port 8080, making it accessible.
 # peoples_coin.factory:create_app(): Tells Gunicorn to find the 'create_app()' function
 #                                   within the 'peoples_coin.factory' module to get the Flask application instance.
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "peoples_coin.factory:create_app()"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "peoples_coin.wsgi:app"]
