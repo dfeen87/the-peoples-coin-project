@@ -18,7 +18,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # Create a non-root user and group for enhanced security
 # --system creates a system user/group, -d /app sets home directory, -s /bin/bash sets shell
-RUN groupadd --system appgroup && useradd --system -g appgroup -d /app -s /bin/bash appuser
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup -D -h /app -s /bin/bash appuser
 
 # Set the working directory inside the container
 WORKDIR /app
