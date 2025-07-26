@@ -39,7 +39,7 @@ spec:
               memory: 4Gi
           startupProbe:
             httpGet:
-              path: /healthz_root
+              path: /
               port: 8080
             timeoutSeconds: 30
             periodSeconds: 60
