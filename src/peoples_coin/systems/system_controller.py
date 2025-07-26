@@ -52,7 +52,6 @@ class SystemController:
         except config.ConfigException:
             try:
                 config.load_kube_config() # Fallback for local development
-                logger.info("✅ Kubernetes kube-config loaded.")
             except config.ConfigException as e:
                 logger.error(f"🔥 Could not load any Kubernetes config: {e}")
                 return None
@@ -93,8 +92,8 @@ class SystemController:
                 
                 # Predictive scaling for sharp upward trends
                 elif recent_avg_cpu > 60 and recent_avg_cpu > hourly_avg_cpu * 1.5:
-                     recommendations["adjust_worker_count"] = 1
-                     logger.warning(f"📈 [Analyzer] Recommendation: Sharp CPU trend detected, scaling up proactively.")
+                    recommendations["adjust_worker_count"] = 1
+                    logger.warning(f"📈 [Analyzer] Recommendation: Sharp CPU trend detected, scaling up proactively.")
 
                 # Scale down if load is consistently low and backlog is clear
                 elif hourly_avg_cpu < 30 and pending_actions < 10:
@@ -166,16 +165,21 @@ class SystemController:
         actions_taken = self.manage(recommendations)
         self._log_action_to_db(recommendations, actions_taken)
 
-if __name__ == "__main__":
-    controller = SystemController(db_uri=DB_URI, redis_url=REDIS_URL)
-    scheduler = BlockingScheduler(timezone="UTC")
+# --- TEMPORARILY COMMENT OUT FOR CLOUD RUN DEPLOYMENT ---
+# This block should only run when the script is executed directly,
+# not when imported by Gunicorn for your Flask API.
+# if __name__ == "__main__":
+#     controller = SystemController(db_uri=DB_URI, redis_url=REDIS_URL)
+#     scheduler = BlockingScheduler(timezone="UTC")
 
-    # Run the main analysis and management cycle every 5 minutes
-    scheduler.add_job(controller.run_cycle, 'interval', minutes=5, id='management_cycle_job')
+#     # Run the main analysis and management cycle every 5 minutes
+#     scheduler.add_job(controller.run_cycle, 'interval', minutes=5, id='management_cycle_job')
 
-    logger.info("🚀 Starting Controller scheduler. Press Ctrl+C to exit.")
-    try:
-        scheduler.start()
-    except (KeyboardInterrupt, SystemExit):
-        logger.info("🛑 Shutting down controller.")
-        scheduler.shutdown()
+#     logger.info("🚀 Starting Controller scheduler. Press Ctrl+C to exit.")
+#     try:
+#         scheduler.start()
+#     except (KeyboardInterrupt, SystemExit):
+#         logger.info("🛑 Shutting down controller.")
+#         scheduler.shutdown()
+# --- END TEMPORARY DISABLE ---
+

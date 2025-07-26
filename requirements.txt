@@ -39,6 +39,4 @@ firebase-admin==6.3.0
 # Schedule	
 apscheduler==3.11.0
 
-# Kubernetes client
-kubernetes
 

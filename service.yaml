@@ -1,13 +1,68 @@
-apiVersion: v1
+apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: peoples-coin-service
+  namespace: '105378934751' # Your project number
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/client-name: gcloud
+    run.googleapis.com/client-version: 531.0.0 # Or your current gcloud version
+    # Optional: Add your project-specific URLs if you want them to show in console
+    # run.googleapis.com/urls: '["https://peoples-coin-service-105378934751.us-east4.run.app"]'
+  labels:
+    cloud.googleapis.com/location: us-east4
+    run.googleapis.com/satisfiesPzs: 'true'
 spec:
-  selector:
-    app: peoples-coin
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8000
-  type: LoadBalancer
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '20'
+        run.googleapis.com/startup-cpu-boost: 'true'
+        run.googleapis.com/vpc-access-connector: pc-backend-connector
+        run.googleapis.com/vpc-access-egress: private-ranges-only # Or 'all-traffic' if you need internet access
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300 # Overall request timeout for a single request
+      serviceAccountName: peoples-coin-sa@heroic-tide-428421-q7.iam.gserviceaccount.com
+      containers:
+      - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest # Ensure this is your latest image
+        ports:
+        - containerPort: 8080
+          name: http1
+        env:
+        # --- Environment Variables ---
+        - name: FIREBASE_CREDENTIALS_PATH
+          value: /app/firebase-admin-sdk-key.json
+        - name: REDIS_URL
+          value: redis://10.150.0.37:6379/0 # <<< Ensure this is your correct Redis IP
+        resources:
+          limits:
+            cpu: '1'
+            memory: 4Gi
+        # --- Startup Probe Configuration ---
+        startupProbe:
+          httpGet:
+            path: /api/v1/healthz
+            port: 8080
+          timeoutSeconds: 10     # Must be less than periodSeconds
+          periodSeconds: 30      # How often to probe
+          failureThreshold: 10   # Number of consecutive failures (10 * 30s = 300s total startup time)
+          initialDelaySeconds: 0 # Start probing immediately
+        # --- Volume Mounts for Secrets ---
+        volumeMounts:
+        - mountPath: /app
+          name: firebase-backend-service-account-bap-lis-woc # This name matches the volume below
+      # --- Volumes for Secrets ---
+      volumes:
+      - name: firebase-backend-service-account-bap-lis-woc # This name matches the volumeMount above
+        secret:
+          secretName: firebase-backend-service-account
+          items:
+          - key: latest
+            path: firebase-admin-sdk-key.json # Path of the secret file within the mounted volume
+  # --- Traffic Routing Configuration ---
+  traffic:
+  - latestRevision: true
+    percent: 100
 

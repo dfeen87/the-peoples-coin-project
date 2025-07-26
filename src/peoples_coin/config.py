@@ -5,8 +5,6 @@ class Config:
     """Centralized configuration settings for the application, loaded from environment variables."""
 
     # --- General & Security ---
-    # Generates a secure, random key by default for development.
-    # ALWAYS set this in your production environment.
     SECRET_KEY = os.environ.get('SECRET_KEY', secrets.token_hex(16))
     DEBUG = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
 
@@ -15,13 +13,30 @@ class Config:
     LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 
     # --- Database ---
-    # The factory will use this URI. Fallback to a local SQLite file for convenience.
-    SQLALCHEMY_DATABASE_URI = os.environ.get('POSTGRES_DB_URI', 'sqlite:///../instance/peoples_coin.db')
+    # --- FIX: Construct SQLALCHEMY_DATABASE_URI for Cloud SQL ---
+    # This now correctly uses the environment variables provided by Cloud Run
+    # for Cloud SQL for PostgreSQL.
+    DB_USER = os.environ.get('DB_USER')
+    DB_PASS = os.environ.get('DB_PASS')
+    DB_NAME = os.environ.get('DB_NAME')
+    INSTANCE_CONNECTION_NAME = os.environ.get('INSTANCE_CONNECTION_NAME')
+
+    if all([DB_USER, DB_PASS, DB_NAME, INSTANCE_CONNECTION_NAME]):
+        # Format for Cloud SQL PostgreSQL via Unix socket
+        SQLALCHEMY_DATABASE_URI = (
+            f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@/"
+            f"{DB_NAME}?host=/cloudsql/{INSTANCE_CONNECTION_NAME}"
+        )
+    else:
+        # Fallback to local SQLite for development if Cloud SQL vars are not set
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///../instance/peoples_coin.db'
+        print("WARNING: Cloud SQL database environment variables not fully set. Falling back to SQLite.") # Added print for local debugging
+    # --- END FIX ---
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DB_SUPPORTS_SKIP_LOCKED = os.environ.get("DB_SUPPORTS_SKIP_LOCKED", "true").lower() == "true"
 
     # --- Redis & Rate Limiting ---
-    # A single Redis URL for all services (Celery, Caching, Rate Limiting).
     REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
     RATELIMIT_STORAGE_URI = REDIS_URL
     RATELIMIT_DEFAULT = "100 per hour;20 per minute"
@@ -35,8 +50,8 @@ class Config:
 
     # --- Celery Background Tasks ---
     USE_CELERY_FOR_GOODWILL = os.environ.get("USE_CELERY_FOR_GOODWILL", "false").lower() == "true"
-    CELERY_BROKER_URL = REDIS_URL # Use the consolidated Redis URL
-    CELERY_RESULT_BACKEND = REDIS_URL # Use the consolidated Redis URL
+    CELERY_BROKER_URL = REDIS_URL
+    CELERY_RESULT_BACKEND = REDIS_URL
     CELERY_TASK_ACKS_LATE = True
     CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
@@ -59,3 +74,4 @@ class Config:
     # --- Immune System Config ---
     IMMUNE_QUARANTINE_TIME_SEC = int(os.environ.get("IMMUNE_QUARANTINE_TIME_SEC", 300))
     IMMUNE_MAX_INVALID_ATTEMPTS = int(os.environ.get("IMMUNE_MAX_INVALID_ATTEMPTS", 5))
+
