@@ -2,19 +2,19 @@
 FROM python:3.11-slim
 
 # --- Unique Identifier ---
-LABEL build_version="20250726.11-copy-src-fix" # <<< UPDATE THIS LABEL
+LABEL build_version="20250726.11-copy-src-fix" # <<< THIS LINE MUST BE EXACTLY THIS (no comments after the quote)
 # ---
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_ENV=production \
-    PYTHONPATH=/src # Correct for /src WORKDIR
+    PYTHONPATH=/src
 
 # Create non-root user and group
 RUN groupadd --system appgroup && useradd --system -g appgroup -d /src -s /bin/bash appuser
 
 # Set working directory to /src where your code will live
-WORKDIR /src # This is the target for your app code
+WORKDIR /src
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
