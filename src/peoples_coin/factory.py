@@ -18,25 +18,27 @@ from .routes import register_routes
 def create_app():
     app = Flask(__name__)
 
-    # Load configuration based on environment
+    # Load configuration from your config.py file
+    # This part remains the same
     env = os.getenv("FLASK_ENV", "development")
-    app.debug = (env != "production")
-
     if env == "production":
-        app.config.from_object('peoples_coin.config.ProductionConfig')
+        app.config.from_object('peoples_coin.config.Config') # Using the unified config
     else:
-        app.config.from_object('peoples_coin.config.DevelopmentConfig')
+        app.config.from_object('peoples_coin.config.Config') # Using the unified config
 
-    # Setup CORS - read allowed origins from config, fallback to empty list
-    cors_origins = app.config.get("CORS_ORIGINS", [])
-    if not isinstance(cors_origins, (list, tuple)):
-        cors_origins = [cors_origins]  # ensure list for flask_cors
-    CORS(app, resources={r"/*": {"origins": cors_origins}}, supports_credentials=True)
-
-    # Optional test route for debugging CORS
-    @app.route("/test-cors")
-    def test_cors():
-        return jsonify({"msg": "CORS test successful"}), 200
+    # --- THIS IS THE DIRECT FIX ---
+    # We are bypassing the config files to be 100% sure.
+    # This list explicitly tells the server which websites are allowed to connect.
+    allowed_origins = [
+        "https://brightacts.com",
+        "https://peoples-coin-service-105378934751.us-central1.run.app",
+        "http://localhost:5000",
+        "http://localhost:8080"
+        # Add any other specific local ports you see when running flutter
+    ]
+    # We apply CORS directly with our new, correct list.
+    CORS(app, resources={r"/*": {"origins": allowed_origins}}, supports_credentials=True)
+    # ------------------------------------
 
     # Initialize extensions
     db.init_app(app)
@@ -55,7 +57,7 @@ def create_app():
     # Register all your blueprints/routes
     register_routes(app)
 
-    # Setup logging (file only in production)
+    # Setup logging
     if not app.debug:
         if not os.path.exists('logs'):
             os.mkdir('logs')
@@ -73,8 +75,8 @@ def create_app():
         app.logger.info(f"🛑 Received shutdown signal ({signal.Signals(signum).name}), exiting cleanly...")
         sys.exit(0)
 
-    signal.signal(signal.SIGTERM, shutdown_handler)  # Cloud Run
-    signal.signal(signal.SIGINT, shutdown_handler)   # Ctrl+C
+    signal.signal(signal.SIGTERM, shutdown_handler)
+    signal.signal(signal.SIGINT, shutdown_handler)
     atexit.register(lambda: app.logger.info("🧹 Application exit cleanup done."))
 
     return app
