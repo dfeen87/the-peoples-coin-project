@@ -1,19 +1,29 @@
+# Use an official slim Python base image
 FROM python:3.11-slim
 
-# Set working directory inside the container
+# Set environment variables early for reliability
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PORT=8080 \
+    PYTHONPATH=/app/src
+
+# Set working directory
 WORKDIR /app
 
-# Install dependencies
+# Install OS-level dependencies (if needed, e.g., for psycopg2 or SSL)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the project into the image
+# Copy application code
 COPY . .
 
-# Ensure Python can find the src/ directory for imports like `from peoples_coin import create_app`
-ENV PYTHONPATH=/app/src
-ENV PORT=8080
-
-# Run the app with Gunicorn, binding to the Cloud Run-required port
+# Run the app with Gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "wsgi:app"]
 

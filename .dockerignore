@@ -1,26 +1,58 @@
-# Ignore Python cache files
-__pycache__
-*.pyc
-*.pyo
+# === Python Bytecode and Artifacts ===
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.dll
 
-# Ignore virtual environment folders
+# === Virtual Environments ===
 venv/
-.env
+env/
+ENV/
+.venv/
 
-# Ignore Git files
-.git
+# === Flask-specific ===
+instance/
+*.db
+
+# === Configuration and Secrets ===
+.env
+.env.*
+secrets.*
+*.pem
+*.key
+*.crt
+
+# === Git ===
+.git/
 .gitignore
 
-# Ignore node modules (if your frontend is in the same repo)
-node_modules/
-
-# Ignore Dockerfile, docker-compose files if you want
-Dockerfile
-docker-compose.yml
-
-# Ignore logs and build artifacts
+# === Logs and Output ===
 *.log
+*.out
+*.err
+*.pid
+*.coverage
+coverage.*
+.cache/
+pytest_cache/
+
+# === Node / Frontend Artifacts ===
+node_modules/
+*.map
+*.bundle.js
 build/
 dist/
-*.egg-info/
+
+# === Editor and OS Metadata ===
+.DS_Store
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# === Docker Build Files (Optional) ===
+Dockerfile
+docker-compose.yml
+docker-compose*.yml
 

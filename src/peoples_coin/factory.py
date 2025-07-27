@@ -1,121 +1,86 @@
 import os
 import sys
+print("!!! FACTORY.PY IS BEING EXECUTED (UNBUFFERED) !!!", file=sys.stderr, flush=True)
+
 import logging
 from logging.handlers import RotatingFileHandler
-import signal
 import atexit
+import signal
 
-# Third-party imports
+import click
 from flask import Flask, jsonify
-from flask_cors import CORS  # <-- Import CORS
-from dotenv import load_dotenv
+from flask_cors import CORS
+import firebase_admin
+from firebase_admin import credentials
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Local application imports
-from peoples_coin.models.db import db
-from peoples_coin.routes import api_blueprint
-from peoples_coin.celery_app import make_celery
-
-# Optional Firebase import
-try:
-    import firebase_admin
-    from firebase_admin import credentials
-except ImportError:
-    firebase_admin = None
+from .extensions import db
+from .models import *
+from .routes import register_routes
 
 
 def create_app():
-    """Create and configure an instance of the Flask application."""
     app = Flask(__name__)
 
-    # 1. Load Configuration
-    env = os.getenv("FLASK_ENV", "development")
-    if env == "production":
-        app.config.from_object("peoples_coin.config.ProductionConfig")
-    else:
-        app.config.from_object("peoples_coin.config.DevelopmentConfig")
+    # Load configuration
+    app.config.from_object('config.Config')
 
-    # 2. Setup Logging
-    setup_logging(app, env)
+    # Enable CORS
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
-    # 3. Initialize Extensions
+    # Register test route for debugging CORS
+    @app.route("/test-cors")
+    def test_cors():
+        return jsonify({"msg": "CORS test successful"}), 200, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+        }
+
+    # Register routes/blueprints
+    register_routes(app)
+
+    # Initialize extensions
     db.init_app(app)
 
-    # Initialize Celery and attach to app context
-    celery = make_celery(app)
-    app.celery = celery
+    # Firebase Admin SDK setup
+    firebase_cred_path = app.config.get("FIREBASE_CREDENTIALS")
+    if firebase_cred_path and not firebase_admin._apps:
+        cred = credentials.Certificate(firebase_cred_path)
+        firebase_admin.initialize_app(cred)
 
-    # 4. Enable CORS for your frontend domain ONLY
-    CORS(app, origins=["https://brightacts.com"], supports_credentials=True)
+    # Logging
+    if not app.debug:
+        if not os.path.exists('logs'):
+            os.mkdir('logs')
+        file_handler = RotatingFileHandler('logs/peoples_coin.log', maxBytes=10240, backupCount=10)
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
 
+        app.logger.setLevel(logging.INFO)
+        app.logger.info('People\'s Coin startup')
 
-    # 5. Initialize Firebase (if available)
-    if firebase_admin and not firebase_admin._apps:
-        cred_path = os.getenv("FIREBASE_CREDENTIAL_PATH")
-        if cred_path and os.path.exists(cred_path):
-            cred = credentials.Certificate(cred_path)
-            firebase_admin.initialize_app(cred)
-            app.logger.info("✅ Firebase initialized")
-        else:
-            app.logger.warning(
-                "⚠️ Firebase not initialized: Credential path missing or invalid."
-            )
+    # Graceful shutdown
+    def shutdown_handler(signum, frame):
+        print("Shutting down gracefully...")
+        sys.exit(0)
 
-    # 6. Register Blueprints
-    app.register_blueprint(api_blueprint)
-
-    # 7. Add Health Check Route
-    @app.route('/healthz')
-    def healthz():
-        """Health check endpoint for Cloud Run/Kubernetes probes."""
-        return jsonify(status="healthy"), 200
-
-    # 8. Register Shutdown Handlers
-    setup_shutdown_handlers(app)
+    signal.signal(signal.SIGTERM, shutdown_handler)
+    signal.signal(signal.SIGINT, shutdown_handler)
+    atexit.register(lambda: print("Exited cleanly."))
 
     return app
 
 
-def setup_logging(app, env):
-    """Configures logging for the application."""
-    # Clear existing handlers to prevent duplicate logs
-    if app.logger.hasHandlers():
-        app.logger.handlers.clear()
-
-    # Use stdout for logs in all environments, which is standard for containers
-    stream_handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter(
-        '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
-    )
-    stream_handler.setFormatter(formatter)
-    app.logger.addHandler(stream_handler)
-
-    # Add file logging only for local development
-    if env == 'development':
-        log_dir = os.path.join(os.getcwd(), 'logs')
-        os.makedirs(log_dir, exist_ok=True)
-        file_handler = RotatingFileHandler(
-            os.path.join(log_dir, 'peoples_coin_dev.log'),
-            maxBytes=10240,
-            backupCount=10
-        )
-        file_handler.setFormatter(formatter)
-        app.logger.addHandler(file_handler)
-
-    app.logger.setLevel(logging.INFO)
-    app.logger.info("📋 Logging is set up.")
+@click.command()
+@click.option('--host', default='0.0.0.0')
+@click.option('--port', default=5000)
+def run(host, port):
+    app = create_app()
+    app.run(host=host, port=port)
 
 
-def setup_shutdown_handlers(app):
-    """Sets up graceful shutdown signal handlers."""
-    def shutdown_handler(signum, frame):
-        app.logger.info(f"🛑 Received shutdown signal ({signal.Signals(signum).name}), cleaning up...")
-        # Add any specific cleanup logic here (e.g., closing connections)
-        sys.exit(0)
-
-    signal.signal(signal.SIGTERM, shutdown_handler)  # Sent by Cloud Run
-    signal.signal(signal.SIGINT, shutdown_handler)   # Sent by Ctrl+C
-    atexit.register(lambda: app.logger.info("🧹 Application exiting."))
+if __name__ == "__main__":
+    run()
 

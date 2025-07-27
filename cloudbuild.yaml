@@ -1,13 +1,13 @@
 steps:
-  # Step 1: Build the Docker image (amd64)
+  # Step 1: Build Docker image for linux/amd64
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '--platform=linux/amd64', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest', '.']
 
-  # Step 2: Push the Docker image to GCR
+  # Step 2: Push image to GCR
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest']
 
-  # Step 3: Deploy to Cloud Run in us-central1
+  # Step 3: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -16,6 +16,8 @@ steps:
         '--image', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest',
         '--region', 'us-central1',
         '--platform', 'managed',
+        '--memory', '1Gi',
+        '--cpu', '1',
         '--allow-unauthenticated'
       ]
 
