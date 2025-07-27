@@ -3,7 +3,7 @@ import logging
 from functools import wraps
 
 from flask import Blueprint, request, jsonify, g
-from flask_cors import CORS  # 1. IMPORT CORS
+# from flask_cors import CORS  <-- 1. This is no longer needed here.
 from pydantic import BaseModel, ValidationError
 
 from peoples_coin.extensions import db
@@ -12,9 +12,9 @@ from peoples_coin.utils.auth import require_api_key, require_firebase_token
 logger = logging.getLogger(__name__)
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
-# 2. APPLY CORS TO THE BLUEPRINT
-# This ensures all routes defined in this file have the correct CORS headers.
-CORS(api_bp, origins="https://brightacts.com", supports_credentials=True)
+# 2. The CORS(api_bp, ...) line has been REMOVED.
+# Your main create_app() function now handles CORS for the whole app,
+# which is the correct way to do it.
 
 
 def validate_with(model: BaseModel):
@@ -23,7 +23,6 @@ def validate_with(model: BaseModel):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             try:
-                # Ensure the request has a JSON body
                 if not request.is_json:
                     return jsonify(error="Invalid request: Missing JSON body"), http.HTTPStatus.BAD_REQUEST
                 g.validated_data = model(**request.get_json())
