@@ -1,16 +1,20 @@
 steps:
-  # Step 1: Build the Docker image
+  # Step 1: Build the Docker image (amd64)
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '--platform=linux/amd64', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest', '.']
 
-  # Step 2: Deploy to Cloud Run in us-central1
+  # Step 2: Push the Docker image to GCR
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest']
+
+  # Step 3: Deploy to Cloud Run in us-central1
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       [
         'run', 'deploy', 'peoples-coin-service',
         '--image', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest',
-        '--region', 'us-central1',  # <-- THE FIX IS HERE
+        '--region', 'us-central1',
         '--platform', 'managed',
         '--allow-unauthenticated'
       ]
@@ -20,6 +24,4 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-
-serviceAccount: 'projects/105378934751/serviceAccounts/105378934751-compute@developer.gserviceaccount.com'
 
