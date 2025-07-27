@@ -3,19 +3,17 @@ import logging
 from functools import wraps
 
 from flask import Blueprint, request, jsonify, g
-# from flask_cors import CORS  <-- 1. This is no longer needed here.
 from pydantic import BaseModel, ValidationError
 
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_api_key, require_firebase_token
+from peoples_coin.models import UserAccount # Ensure this import is present
 
 logger = logging.getLogger(__name__)
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
-# 2. The CORS(api_bp, ...) line has been REMOVED.
-# Your main create_app() function now handles CORS for the whole app,
-# which is the correct way to do it.
-
+# The conflicting CORS line has been removed from here.
+# Your main create_app() function now handles CORS correctly.
 
 def validate_with(model: BaseModel):
     """Pydantic validation decorator for request bodies."""
@@ -64,11 +62,22 @@ def readiness():
 
 @api_bp.route("/users/username-check/<username>", methods=["GET"])
 def check_username_availability(username):
-    """Checks if a username is available."""
-    logger.info(f"Checking username availability for: {username}")
-    # This is a placeholder for your database logic
-    is_available = (username.lower() != "brightacts")
-    return jsonify({"available": is_available}), http.HTTPStatus.OK
+    """Checks if a username is available in the database."""
+    logger.info(f"Checking database for username availability for: {username}")
+    try:
+        # Query the database for a user with the given username (case-insensitive)
+        user_exists = db.session.query(UserAccount).filter(UserAccount.username.ilike(username)).first()
+        
+        # If user_exists is None, the username is available.
+        is_available = (user_exists is None)
+        
+        logger.info(f"Username '{username}' is available: {is_available}")
+        return jsonify({"available": is_available}), http.HTTPStatus.OK
+
+    except Exception as e:
+        logger.error(f"Database error while checking username '{username}': {e}", exc_info=True)
+        # Return false by default on error to be safe
+        return jsonify({"available": False, "error": "Database query failed"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @api_bp.route("/users/register-wallet", methods=["POST"])
@@ -77,7 +86,7 @@ def check_username_availability(username):
 def register_user_wallet():
     """Placeholder for user registration/wallet creation."""
     logger.info("Attempting to register new user wallet.")
-    # In a real app, you would save data to your database here.
+    # In a real app, you would save data from request.get_json() to your database here.
     return jsonify({"message": "User wallet registration simulated successfully"}), http.HTTPStatus.CREATED
 
 
