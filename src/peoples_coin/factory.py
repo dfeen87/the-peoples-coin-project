@@ -48,7 +48,8 @@ def create_app():
     app.celery = celery
 
     # 4. Enable CORS for your frontend domain ONLY
-    CORS(app, origins=["https://brightacts.com"])
+    CORS(app, origins=["https://brightacts.com"], supports_credentials=True)
+
 
     # 5. Initialize Firebase (if available)
     if firebase_admin and not firebase_admin._apps:
