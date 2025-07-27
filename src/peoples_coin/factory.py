@@ -1,19 +1,16 @@
 import os
 import sys
-print("!!! FACTORY.PY IS BEING EXECUTED (UNBUFFERED) !!!", file=sys.stderr, flush=True)
-
 import logging
 from logging.handlers import RotatingFileHandler
 import atexit
 import signal
 
-import click
 from flask import Flask, jsonify
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials
 
-from .extensions import db
+from .extensions import db, migrate, limiter
 from .models import *
 from .routes import register_routes
 
@@ -21,34 +18,44 @@ from .routes import register_routes
 def create_app():
     app = Flask(__name__)
 
-    # Load configuration
-    app.config.from_object('config.Config')
+    # Load configuration based on environment
+    env = os.getenv("FLASK_ENV", "development")
+    app.debug = (env != "production")
 
-    # Enable CORS
-    CORS(app, resources={r"/*": {"origins": "*"}})
+    if env == "production":
+        app.config.from_object('peoples_coin.config.ProductionConfig')
+    else:
+        app.config.from_object('peoples_coin.config.DevelopmentConfig')
 
-    # Register test route for debugging CORS
+    # Setup CORS - read allowed origins from config, fallback to empty list
+    cors_origins = app.config.get("CORS_ORIGINS", [])
+    if not isinstance(cors_origins, (list, tuple)):
+        cors_origins = [cors_origins]  # ensure list for flask_cors
+    CORS(app, resources={r"/*": {"origins": cors_origins}}, supports_credentials=True)
+
+    # Optional test route for debugging CORS
     @app.route("/test-cors")
     def test_cors():
-        return jsonify({"msg": "CORS test successful"}), 200, {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-        }
-
-    # Register routes/blueprints
-    register_routes(app)
+        return jsonify({"msg": "CORS test successful"}), 200
 
     # Initialize extensions
     db.init_app(app)
+    migrate.init_app(app, db)
+    limiter.init_app(app)
 
-    # Firebase Admin SDK setup
-    firebase_cred_path = app.config.get("FIREBASE_CREDENTIALS")
-    if firebase_cred_path and not firebase_admin._apps:
+    # Initialize Firebase Admin SDK if credentials provided
+    firebase_cred_path = app.config.get("FIREBASE_CREDENTIAL_PATH")
+    if firebase_cred_path and os.path.exists(firebase_cred_path) and not firebase_admin._apps:
         cred = credentials.Certificate(firebase_cred_path)
         firebase_admin.initialize_app(cred)
+        app.logger.info("✅ Firebase initialized")
+    else:
+        app.logger.warning("⚠️ Firebase not initialized: Missing or invalid credential path")
 
-    # Logging
+    # Register all your blueprints/routes
+    register_routes(app)
+
+    # Setup logging (file only in production)
     if not app.debug:
         if not os.path.exists('logs'):
             os.mkdir('logs')
@@ -58,29 +65,17 @@ def create_app():
         file_handler.setLevel(logging.INFO)
         app.logger.addHandler(file_handler)
 
-        app.logger.setLevel(logging.INFO)
-        app.logger.info('People\'s Coin startup')
+    app.logger.setLevel(logging.INFO)
+    app.logger.info("🚀 People's Coin app startup complete")
 
-    # Graceful shutdown
+    # Graceful shutdown handlers
     def shutdown_handler(signum, frame):
-        print("Shutting down gracefully...")
+        app.logger.info(f"🛑 Received shutdown signal ({signal.Signals(signum).name}), exiting cleanly...")
         sys.exit(0)
 
-    signal.signal(signal.SIGTERM, shutdown_handler)
-    signal.signal(signal.SIGINT, shutdown_handler)
-    atexit.register(lambda: print("Exited cleanly."))
+    signal.signal(signal.SIGTERM, shutdown_handler)  # Cloud Run
+    signal.signal(signal.SIGINT, shutdown_handler)   # Ctrl+C
+    atexit.register(lambda: app.logger.info("🧹 Application exit cleanup done."))
 
     return app
-
-
-@click.command()
-@click.option('--host', default='0.0.0.0')
-@click.option('--port', default=5000)
-def run(host, port):
-    app = create_app()
-    app.run(host=host, port=port)
-
-
-if __name__ == "__main__":
-    run()
 

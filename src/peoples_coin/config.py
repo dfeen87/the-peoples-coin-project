@@ -2,36 +2,34 @@ import os
 import secrets
 
 class Config:
-    """Centralized configuration settings for the application, loaded from environment variables."""
+    """
+    Base configuration class with defaults and environment variable integration.
+    """
 
     # --- General & Security ---
     SECRET_KEY = os.environ.get('SECRET_KEY', secrets.token_hex(16))
-    DEBUG = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    DEBUG = False
 
     # --- Logging ---
     LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
     LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 
-    # --- Database ---
-    # --- FIX: Construct SQLALCHEMY_DATABASE_URI for Cloud SQL ---
-    # This now correctly uses the environment variables provided by Cloud Run
-    # for Cloud SQL for PostgreSQL.
+    # --- Database Configuration ---
     DB_USER = os.environ.get('DB_USER')
     DB_PASS = os.environ.get('DB_PASS')
     DB_NAME = os.environ.get('DB_NAME')
     INSTANCE_CONNECTION_NAME = os.environ.get('INSTANCE_CONNECTION_NAME')
 
     if all([DB_USER, DB_PASS, DB_NAME, INSTANCE_CONNECTION_NAME]):
-        # Format for Cloud SQL PostgreSQL via Unix socket
+        # Cloud SQL PostgreSQL connection via Unix socket
         SQLALCHEMY_DATABASE_URI = (
             f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@/"
             f"{DB_NAME}?host=/cloudsql/{INSTANCE_CONNECTION_NAME}"
         )
     else:
-        # Fallback to local SQLite for development if Cloud SQL vars are not set
+        # Fallback for local development (SQLite)
         SQLALCHEMY_DATABASE_URI = 'sqlite:///../instance/peoples_coin.db'
-        print("WARNING: Cloud SQL database environment variables not fully set. Falling back to SQLite.") # Added print for local debugging
-    # --- END FIX ---
+        print("WARNING: Cloud SQL environment variables not set. Using local SQLite database.")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DB_SUPPORTS_SKIP_LOCKED = os.environ.get("DB_SUPPORTS_SKIP_LOCKED", "true").lower() == "true"
@@ -41,7 +39,7 @@ class Config:
     RATELIMIT_STORAGE_URI = REDIS_URL
     RATELIMIT_DEFAULT = "100 per hour;20 per minute"
 
-    # --- API Documentation ---
+    # --- Swagger API Documentation ---
     SWAGGER = {
         'title': "People's Coin API",
         'uiversion': 3,
@@ -74,4 +72,21 @@ class Config:
     # --- Immune System Config ---
     IMMUNE_QUARANTINE_TIME_SEC = int(os.environ.get("IMMUNE_QUARANTINE_TIME_SEC", 300))
     IMMUNE_MAX_INVALID_ATTEMPTS = int(os.environ.get("IMMUNE_MAX_INVALID_ATTEMPTS", 5))
+
+    # --- CORS Origins (comma-separated string) ---
+    # Split by comma, strip whitespace, filter out empty strings
+    raw_origins = os.environ.get('CORS_ORIGINS', 'https://brightacts.com')
+    CORS_ORIGINS = [origin.strip() for origin in raw_origins.split(',') if origin.strip()]
+
+
+class ProductionConfig(Config):
+    DEBUG = False
+    # Add any production-specific overrides here, e.g., stricter security settings
+
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///../instance/peoples_coin_dev.db'
+    # Allow localhost for dev and your frontend domain
+    CORS_ORIGINS = ['http://localhost:3000', 'https://brightacts.com']
 
