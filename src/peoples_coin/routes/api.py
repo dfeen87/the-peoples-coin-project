@@ -32,7 +32,7 @@ def validate_with(model: BaseModel):
                 return jsonify(error="Validation error", details=e.errors()), http.HTTPStatus.BAD_REQUEST
             except Exception as e:
                 logger.error(f"Malformed JSON request: {e}", exc_info=True)
-                return jsonify(error="Malformed JSON request"), http.HTTPTPStatus.BAD_REQUEST
+                return jsonify(error="Malformed JSON request"), http.HTTPStatus.BAD_REQUEST
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -46,6 +46,7 @@ def health():
     logger.info("Health check requested.")
     return jsonify(status="healthy"), http.HTTPStatus.OK
 
+
 @api_bp.route("/readiness", methods=["GET"])
 def readiness():
     """Readiness probe to check dependencies like the database."""
@@ -58,6 +59,7 @@ def readiness():
     except Exception as e:
         logger.error(f"Readiness check failed: {e}", exc_info=True)
         return jsonify(status="error", message="Database connection failed"), http.HTTPStatus.SERVICE_UNAVAILABLE
+
 
 # --- User-related Routes ---
 
@@ -84,9 +86,9 @@ def register_user_wallet():
 @require_firebase_token
 def get_user_profile():
     """Returns the authenticated user's profile information."""
-    logger.info(f"Fetching profile for user: {g.user.id}")
     user = g.user
-    
+    logger.info(f"Fetching profile for user: {user.id if user else 'unknown'}")
+
     if not user:
         return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
 
@@ -101,3 +103,4 @@ def get_user_profile():
         "created_at": user.created_at.isoformat(),
         "updated_at": user.updated_at.isoformat() if user.updated_at else None
     }), http.HTTPStatus.OK
+

@@ -7,7 +7,7 @@ import atexit
 
 # Third-party imports
 from flask import Flask, jsonify
-from flask_cors import CORS  # <-- Import CORS
+from flask_cors import CORS # <-- Import CORS
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -39,17 +39,14 @@ def create_app():
 
     # 2. Setup Logging
     setup_logging(app, env)
-
+    
     # 3. Initialize Extensions
     db.init_app(app)
-
+    
     # Initialize Celery and attach to app context
     celery = make_celery(app)
     app.celery = celery
-
-    # 4. Enable CORS for your frontend domain ONLY
-    CORS(app, origins=["https://brightacts.com"])
-
+    
     # 5. Initialize Firebase (if available)
     if firebase_admin and not firebase_admin._apps:
         cred_path = os.getenv("FIREBASE_CREDENTIAL_PATH")
@@ -61,7 +58,7 @@ def create_app():
             app.logger.warning(
                 "⚠️ Firebase not initialized: Credential path missing or invalid."
             )
-
+            
     # 6. Register Blueprints
     app.register_blueprint(api_blueprint)
 
@@ -114,7 +111,6 @@ def setup_shutdown_handlers(app):
         # Add any specific cleanup logic here (e.g., closing connections)
         sys.exit(0)
 
-    signal.signal(signal.SIGTERM, shutdown_handler)  # Sent by Cloud Run
-    signal.signal(signal.SIGINT, shutdown_handler)   # Sent by Ctrl+C
+    signal.signal(signal.SIGTERM, shutdown_handler) # Sent by Cloud Run
+    signal.signal(signal.SIGINT, shutdown_handler)  # Sent by Ctrl+C
     atexit.register(lambda: app.logger.info("🧹 Application exiting."))
-
