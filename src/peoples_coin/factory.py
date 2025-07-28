@@ -10,9 +10,9 @@ from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials
 
-# Absolute imports (adjust model imports based on your actual model files)
+# Absolute imports
 from peoples_coin.extensions import db, migrate, limiter
-from peoples_coin.models import UserAccount, UserWallet
+# --- STEP 1: The model import is REMOVED from the top ---
 from peoples_coin.routes import register_routes
 
 
@@ -33,9 +33,11 @@ def create_app():
         "http://localhost:5000",
         "http://localhost:8080"
     ]
-
-    # Apply CORS to allow frontend to call backend
     CORS(app, origins=allowed_origins, supports_credentials=True)
+
+    # --- STEP 2: Import models LOCALLY, right before they are needed ---
+    # This is the standard way to prevent circular import errors in Flask.
+    from peoples_coin import models
 
     # Initialize extensions
     db.init_app(app)
@@ -54,10 +56,10 @@ def create_app():
     else:
         app.logger.warning("⚠️ Firebase not initialized: Missing or invalid credential path")
 
-    # Register all routes with your register_routes function
+    # Register all routes
     register_routes(app)
 
-    # Add simple health check route directly to app
+    # Add simple health check route
     @app.route("/api/v1/health")
     def health_check():
         return jsonify({"status": "ok"}), 200
