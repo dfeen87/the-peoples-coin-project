@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 try:
     # Import the app factory AFTER setting env vars, if needed
-    from peoples_coin import create_app
+    from peoples_coin.factory import create_app
 
     # Create the Flask app instance
     app = create_app()
@@ -22,7 +22,7 @@ except Exception as e:
     logger.exception("🚨 Failed to create WSGI application: %s", str(e))
     raise e
 
-# Optional: Only used if running directly via python wsgi.py (not typical in prod)
+# Optional: Only used if running directly via python wsgi.py (not typical in production)
 if __name__ == "__main__":
     logger.warning("⚠️  Running Flask development server directly. Use Gunicorn in production.")
     port = int(os.environ.get("PORT", 8080))
