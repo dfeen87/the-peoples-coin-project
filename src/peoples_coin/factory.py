@@ -29,7 +29,7 @@ def create_app():
         "http://localhost:5000",
         "http://localhost:8080"
     ]
-    CORS(app, resources={r"/*": {"origins": allowed_origins}}, supports_credentials=True)
+    CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
     # ------------------------------------
 
     # Initialize extensions
