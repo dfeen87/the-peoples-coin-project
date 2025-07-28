@@ -29,15 +29,15 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
 
-    # Register blueprints (example only — replace with yours)
+    # Register all blueprints using your register_routes function
     try:
-        from peoples_coin.routes import api_blueprint
-        app.register_blueprint(api_blueprint, url_prefix="/api")
-        logger.info("✅ Blueprint registered.")
+        from peoples_coin.routes import register_routes
+        register_routes(app)
+        logger.info("✅ Blueprints registered.")
     except ImportError as e:
-        logger.warning("⚠️ No blueprint registered. Reason: %s", str(e))
+        logger.warning("⚠️ Failed to register blueprints. Reason: %s", str(e))
 
-    # Basic health check
+    # Basic health check endpoint
     @app.route("/health")
     def health():
         return {"status": "ok"}, 200
