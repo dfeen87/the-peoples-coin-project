@@ -5,14 +5,18 @@ from logging.handlers import RotatingFileHandler
 import atexit
 import signal
 
-from flask import Flask, jsonify
+from flask import Flask
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials
 
-from .extensions import db, migrate, limiter
-from .models import *
-from .routes import register_routes
+# Absolute imports (adjust model imports based on your actual model files)
+from peoples_coin.extensions import db, migrate, limiter
+from peoples_coin.models.user_account import UserAccount
+from peoples_coin.models.user_wallet import UserWallet
+# import other models here explicitly if needed
+
+from peoples_coin.routes import register_routes
 
 
 def create_app():

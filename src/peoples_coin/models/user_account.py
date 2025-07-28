@@ -1,8 +1,7 @@
-# src/peoples_coin/models/user_account.py
-
 import uuid
 from peoples_coin.extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import relationship  # make sure this is imported
 
 class UserAccount(db.Model):
     __tablename__ = 'user_accounts'
@@ -20,6 +19,9 @@ class UserAccount(db.Model):
 
     # Password hash column
     password_hash = db.Column(db.Text, nullable=False, default='')
+
+    # Relationships
+    user_wallets = relationship("UserWallet", back_populates="user", cascade="all, delete-orphan")
 
     def set_password(self, password: str):
         self.password_hash = generate_password_hash(password)

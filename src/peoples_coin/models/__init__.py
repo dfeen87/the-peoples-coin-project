@@ -1,9 +1,2 @@
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
-
-# Expose your models here:
-from .user import UserAccount, UserWallet
-from .chain import ChainBlock, ConsensusNode
-from .entry import DataEntry, EventLog, GoodwillAction
-
+from .user_wallet import UserWallet
+from .user_account import UserAccount

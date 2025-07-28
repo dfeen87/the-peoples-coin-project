@@ -1,11 +1,19 @@
 steps:
-  # Step 1: Build Docker image for linux/amd64
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '--platform=linux/amd64', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest', '.']
+  # Step 1: Print working directory
+  - name: 'ubuntu'
+    entrypoint: 'bash'
+    args: ['-c', 'echo "Current Dir:" && pwd && ls -la']
 
-  # Step 2: Push image to GCR
+  # Step 2: Set up Docker Buildx and build for linux/amd64
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        docker buildx create --use
+        docker buildx build --platform=linux/amd64 \
+          -t gcr.io/heroic-tide-428421/peoples-coin-service:latest \
+          --push .
 
   # Step 3: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -13,7 +21,7 @@ steps:
     args:
       [
         'run', 'deploy', 'peoples-coin-service',
-        '--image', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest',
+        '--image', 'gcr.io/heroic-tide-428421/peoples-coin-service:latest',
         '--region', 'us-central1',
         '--platform', 'managed',
         '--memory', '1Gi',
@@ -22,7 +30,7 @@ steps:
       ]
 
 images:
-  - 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest'
+  - 'gcr.io/heroic-tide-428421/peoples-coin-service:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
