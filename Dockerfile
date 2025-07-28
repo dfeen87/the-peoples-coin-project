@@ -1,22 +1,20 @@
 FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PORT=8080 \
-    PYTHONPATH=/app
-
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
-
+# Copy requirements and install first
 COPY requirements.txt .
+
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copy src folder (with your peoples_coin package inside it)
+COPY src/ ./src/
 
-CMD ["gunicorn", "peoples_coin.wsgi:app", "--bind", "0.0.0.0:8080"]
+# Set PYTHONPATH so Python can find your package under src
+ENV PYTHONPATH=/app/src
+
+EXPOSE 8080
+
+# Launch with gunicorn pointing to your app module in src.peoples_coin
+CMD ["gunicorn", "src.peoples_coin.app:app", "--bind", "0.0.0.0:8080"]
 
