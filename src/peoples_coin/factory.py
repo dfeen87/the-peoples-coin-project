@@ -1,93 +1,46 @@
 import os
-import sys
 import logging
-from logging.handlers import RotatingFileHandler
-import atexit
-import signal
-
-from flask import Flask, jsonify
+from flask import Flask
 from flask_cors import CORS
-import firebase_admin
-from firebase_admin import credentials
+from flask_sqlalchemy import SQLAlchemy
 
-# Absolute imports
-from peoples_coin.extensions import db, migrate, limiter
-from peoples_coin.routes import register_routes
-
+# Initialize extensions
+db = SQLAlchemy()
 
 def create_app():
-    # Set Flask instance_path to a writable directory in Cloud Run
-    instance_path = '/tmp/instance'
-    os.makedirs(instance_path, exist_ok=True)
+    # Create Flask app instance
+    app = Flask(__name__)
 
-    app = Flask(__name__, instance_path=instance_path)
-
-    # Load configuration
-    app.config.from_object('peoples_coin.config.Config')
-
-    # --- CORS Setup ---
-    allowed_origins = [
-        "https://brightacts.com",
-        "https://peoples-coin-service-105378934751.us-central1.run.app",
-        "http://localhost:5000",
-        "http://localhost:8080"
-    ]
-
-    CORS(
-        app,
-        origins=allowed_origins,
-        supports_credentials=True,
-        send_wildcard=False,
-        vary_header=True,
-        automatic_options=True,
-        expose_headers="Content-Type",
-        allow_headers=["Content-Type", "Authorization"],
-        methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"]
+    # Load config from environment or fallback
+    app.config.from_mapping(
+        SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL", "sqlite:///local.db"),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret"),
     )
 
-    # --- Import models locally to prevent circular imports ---
-    from peoples_coin import models
+    # Setup CORS
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+    
+    # Setup logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info("✅ Flask app instance created and configured.")
 
     # Initialize extensions
     db.init_app(app)
-    migrate.init_app(app, db)
-    limiter.init_app(app)
 
-    # Initialize Firebase Admin SDK
-    firebase_cred_path = app.config.get("FIREBASE_CREDENTIAL_PATH") or "serviceAccountKey.json"
-    if os.path.exists(firebase_cred_path) and not firebase_admin._apps:
-        try:
-            cred = credentials.Certificate(firebase_cred_path)
-            firebase_admin.initialize_app(cred)
-            app.logger.info("✅ Firebase initialized successfully")
-        except Exception as e:
-            app.logger.error(f"❌ Firebase initialization failed: {str(e)}")
-    else:
-        app.logger.warning("⚠️ Firebase not initialized: Missing or invalid credential path")
+    # Register blueprints (example only — replace with yours)
+    try:
+        from peoples_coin.routes import api_blueprint
+        app.register_blueprint(api_blueprint, url_prefix="/api")
+        logger.info("✅ Blueprint registered.")
+    except ImportError as e:
+        logger.warning("⚠️ No blueprint registered. Reason: %s", str(e))
 
-    # Register all routes
-    register_routes(app)
-
-    # Register user_api_bp blueprint
-    from peoples_coin.routes.api import user_api_bp
-    app.register_blueprint(user_api_bp, url_prefix="/api/v1")
-
-    # --- Global health check route ---
-    @app.route("/api/v1/health", methods=["GET", "OPTIONS"])
-    def health_check():
-        return jsonify({"status": "ok"}), 200
-
-    # Setup logging
-    app.logger.setLevel(logging.INFO)
-    app.logger.info("🚀 People's Coin app startup complete")
-
-    def shutdown_handler(signum, frame):
-        app.logger.info(f"🛑 Received shutdown signal ({signal.Signals(signum).name}), exiting cleanly...")
-        sys.exit(0)
-
-    signal.signal(signal.SIGTERM, shutdown_handler)
-    signal.signal(signal.SIGINT, shutdown_handler)
-    atexit.register(lambda: app.logger.info("🧹 Application exit cleanup done."))
+    # Basic health check
+    @app.route("/health")
+    def health():
+        return {"status": "ok"}, 200
 
     return app
 
