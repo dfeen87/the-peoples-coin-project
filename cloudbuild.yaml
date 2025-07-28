@@ -5,6 +5,7 @@ steps:
     args: ['-c', 'echo "Current Dir:" && pwd && ls -la']
 
   # Step 2: Set up Docker Buildx and build for linux/amd64
+  #         Image will be pushed to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args:
@@ -12,16 +13,16 @@ steps:
       - |
         docker buildx create --use
         docker buildx build --platform=linux/amd64 \
-          -t gcr.io/heroic-tide-428421/peoples-coin-service:latest \
+          -t us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest \
           --push .
 
-  # Step 3: Deploy to Cloud Run
+  # Step 3: Deploy to Cloud Run using the image from Artifact Registry
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       [
-        'run', 'deploy', 'peoples-coin-service',
-        '--image', 'gcr.io/heroic-tide-428421/peoples-coin-service:latest',
+        'run', 'deploy', 'peoples-coin-service', # Your Cloud Run service name
+        '--image', 'us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest',
         '--region', 'us-central1',
         '--platform', 'managed',
         '--memory', '1Gi',
@@ -30,8 +31,9 @@ steps:
       ]
 
 images:
-  - 'gcr.io/heroic-tide-428421/peoples-coin-service:latest'
+  # This section ensures that the image built in Step 2 is correctly tracked
+  # and made available for other steps or services that might depend on it.
+  - 'us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
-
