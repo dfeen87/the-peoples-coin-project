@@ -1,11 +1,12 @@
 import http
 import logging
-from functools import wraps
+from functools import wraps # Keeping this import as it was in your original,
+                            # even if not explicitly used in the shown functions.
 
 from flask import Blueprint, request, jsonify, g
 from pydantic import BaseModel, ValidationError, constr
 from sqlalchemy.exc import IntegrityError
-from flask_cors import CORS # <--- IMPORT FLASK_CORS
+from flask_cors import CORS # IMPORT FLASK_CORS
 
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token
@@ -40,10 +41,13 @@ def check_username_availability(username):
     """Check if a username is available in the database."""
     logger.info(f"Checking availability for username: {username}")
     try:
-        exists = db.session.query(UserAccount).filter(
-            UserAccount.username.ilike(username)
-        ).first()
-        # The response here is good, but the CORS headers need to be added by the Flask-CORS extension
+        # --- FIX APPLIED TO LINE 43 ---
+        # Moved the filter expression directly inside the filter() call on one line.
+        # This addresses potential subtle syntax/parsing issues that could lead to
+        # an error like "filter:".
+        exists = db.session.query(UserAccount).filter(UserAccount.username.ilike(username)).first()
+        # --- END FIX ---
+
         return jsonify({"available": exists is None}), http.HTTPStatus.OK
     except Exception as e:
         logger.error(f"Error during username availability check: {e}", exc_info=True)
@@ -86,7 +90,11 @@ def register_user_wallet():
             username=validated_data.username
         )
         db.session.add(new_user)
-        db.session.flush()  # Obtain UUID from DB
+    
+        # Use flush() for cases where you need the ID *before* commit (e.g., for related objects)
+        # If your database is configured for UUID defaults, this will retrieve the ID from the DB
+        # after the insert, before the commit
+        db.session.flush()
 
         new_wallet = UserWallet(
             user_id=new_user.id,
@@ -97,10 +105,10 @@ def register_user_wallet():
         db.session.add(new_wallet)
         db.session.commit()
 
-        logger.info(f"User '{validated_data.username}' registered successfully.")
+        logger.info(f"User '{validated_data.username}' registered successfully with ID: {new_user.id}")
         return jsonify({
             "message": "User and wallet created successfully",
-            "userId": str(new_user.id)
+            "userId": str(new_user.id) # Ensure UUID is converted to string for JSON
         }), http.HTTPStatus.CREATED
 
     except ValidationError as ve:
@@ -128,4 +136,5 @@ def get_user_profile():
     user = g.user
     if not user:
         return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
+    # Assuming user.to_dict() correctly serializes the UserAccount object
     return jsonify(user.to_dict()), http.HTTPStatus.OK
