@@ -12,8 +12,7 @@ from firebase_admin import credentials
 
 # Absolute imports (adjust model imports based on your actual model files)
 from peoples_coin.extensions import db, migrate, limiter
-from peoples_coin.models.user_account import UserAccount
-from peoples_coin.models.user_wallet import UserWallet
+from peoples_coin.models import UserAccount, UserWallet
 # import other models here explicitly if needed
 
 from peoples_coin.routes import register_routes

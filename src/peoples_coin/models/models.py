@@ -14,7 +14,6 @@ from peoples_coin.extensions import db
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
-# Custom Query class for automatic soft delete filtering
 class SoftDeleteQuery(Query):
     _with_deleted = False
 
@@ -27,7 +26,6 @@ class SoftDeleteQuery(Query):
             return super().__iter__()
         return super().filter(self._entity_from_pre_ent_zero().class_.deleted_at.is_(None)).__iter__()
 
-# Base model with soft delete, UUID PK, and custom query
 class BaseModel(db.Model):
     __abstract__ = True
     query_class = SoftDeleteQuery
@@ -48,16 +46,17 @@ class UserAccount(BaseModel, SoftDeleteMixin):
 
     firebase_uid = Column(String(128), unique=True, nullable=False, index=True)
     email = Column(String(256), unique=True, nullable=True, index=True)
-    username = Column(String(64), nullable=True, index=True)  # Added username
+    username = Column(String(64), nullable=True, index=True)
     balance = Column(Numeric(20, 8), default=0, nullable=False)
-    goodwill_coins = Column(Integer, nullable=False, default=0)  # Added goodwill_coins
-    bio = Column(Text, nullable=True)  # Add a length constraint in your app layer (<=120 chars)
+    goodwill_coins = Column(Integer, nullable=False, default=0)
+    bio = Column(Text, nullable=True)
     profile_image_url = Column(Text, nullable=True)
-    is_premium = Column(Boolean, default=False, nullable=False)  # Added is_premium
+    is_premium = Column(Boolean, default=False, nullable=False)
 
     # Relationships
     api_keys = relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
     goodwill_actions = relationship("GoodwillAction", back_populates="performer", lazy='dynamic')
+    # user_wallets relationship remains here, but make sure to import UserWallet from models/user_wallet.py in your package
     user_wallets = relationship("UserWallet", back_populates="user", cascade="all, delete-orphan")
     proposals = relationship("Proposal", back_populates="proposer", lazy='dynamic')
     votes = relationship("Vote", back_populates="voter", lazy='dynamic')
@@ -83,14 +82,6 @@ class GoodwillAction(BaseModel, SoftDeleteMixin):
     processed_at = Column(DateTime(timezone=True), nullable=True)
     blockchain_tx_hash = Column(String(66), nullable=True, unique=True)
     performer = relationship("UserAccount", back_populates="goodwill_actions")
-
-class UserWallet(BaseModel):
-    __tablename__ = 'user_wallets'
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
-    public_address = Column(String(42), unique=True, nullable=False)
-    encrypted_private_key = Column(Text, nullable=True)  # Added encrypted_private_key
-    is_primary = Column(Boolean, default=False, nullable=False)
-    user = relationship("UserAccount", back_populates="user_wallets")
 
 class LedgerEntry(BaseModel):
     __tablename__ = 'ledger_entries'
