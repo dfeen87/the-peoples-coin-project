@@ -15,6 +15,6 @@ ENV PYTHONPATH=/app/src
 
 EXPOSE 8080
 
-# Launch with gunicorn pointing to your app module in src.peoples_coin
-CMD ["gunicorn", "src.peoples_coin.app:app", "--bind", "0.0.0.0:8080"]
+# Use the PORT env var injected by Cloud Run to bind gunicorn
+CMD ["sh", "-c", "gunicorn src.peoples_coin.app:app --bind 0.0.0.0:${PORT:-8080}"]
 
