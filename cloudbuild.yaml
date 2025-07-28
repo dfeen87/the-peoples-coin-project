@@ -1,39 +1,35 @@
 steps:
-  # Step 1: Print working directory
-  - name: 'ubuntu'
-    entrypoint: 'bash'
-    args: ['-c', 'echo "Current Dir:" && pwd && ls -la']
+# Step 1: Build the container image
+# This step builds the Docker image from the Dockerfile in the current directory.
+# The '-t' flag tags the image with the full Artifact Registry path.
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'build',
+    '-t',
+    'us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest',
+    '.'
+  ]
 
-  # Step 2: Set up Docker Buildx and build for linux/amd64
-  #         Image will be pushed to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        docker buildx create --use
-        docker buildx build --platform=linux/amd64 \
-          -t us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest \
-          --push .
+# Step 2: Deploy to Cloud Run
+# This step uses the gcloud command to deploy the image we just built.
+# It pulls the image directly from the Artifact Registry path specified.
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: [
+    'run', 'deploy', 'peoples-coin-service',
+    '--image', 'us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest',
+    '--region', 'us-central1',
+    '--platform', 'managed',
+    '--memory', '1Gi',
+    '--cpu', '1',
+    '--allow-unauthenticated'
+  ]
 
-  # Step 3: Deploy to Cloud Run using the image from Artifact Registry
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      [
-        'run', 'deploy', 'peoples-coin-service', # Your Cloud Run service name
-        '--image', 'us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest',
-        '--region', 'us-central1',
-        '--platform', 'managed',
-        '--memory', '1Gi',
-        '--cpu', '1',
-        '--allow-unauthenticated'
-      ]
-
+# The 'images' key is the magic part. It tells Cloud Build to automatically
+# push the image we built in Step 1 to the Artifact Registry before Step 2 runs.
 images:
-  # This section ensures that the image built in Step 2 is correctly tracked
-  # and made available for other steps or services that might depend on it.
-  - 'us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest'
+- 'us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
+
