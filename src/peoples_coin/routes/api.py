@@ -5,6 +5,7 @@ from functools import wraps
 from flask import Blueprint, request, jsonify, g
 from pydantic import BaseModel, ValidationError, constr
 from sqlalchemy.exc import IntegrityError
+from flask_cors import CORS # <--- IMPORT FLASK_CORS
 
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token
@@ -12,6 +13,18 @@ from peoples_coin.models import UserAccount, UserWallet
 
 logger = logging.getLogger(__name__)
 user_api_bp = Blueprint("user_api", __name__)
+
+# --- Initialize CORS for this Blueprint ---
+# It's crucial to initialize CORS *after* the blueprint is created.
+# This ensures all routes defined within `user_api_bp` get the CORS headers.
+CORS(user_api_bp, resources={r"/*": {"origins": "https://brightacts.com"}})
+
+# If you need to allow multiple origins (e.g., localhost for development), you can do:
+# CORS(user_api_bp, resources={r"/*": {"origins": ["https://brightacts.com", "http://localhost:3000"]}})
+
+# If you want to allow all origins (less secure for production, but good for testing all origins):
+# CORS(user_api_bp, resources={r"/*": {"origins": "*"}})
+
 
 # --- Pydantic Models ---
 class WalletRegistrationSchema(BaseModel):
@@ -30,6 +43,7 @@ def check_username_availability(username):
         exists = db.session.query(UserAccount).filter(
             UserAccount.username.ilike(username)
         ).first()
+        # The response here is good, but the CORS headers need to be added by the Flask-CORS extension
         return jsonify({"available": exists is None}), http.HTTPStatus.OK
     except Exception as e:
         logger.error(f"Error during username availability check: {e}", exc_info=True)
@@ -52,6 +66,19 @@ def register_user_wallet():
             return jsonify(error="Missing JSON body"), http.HTTPStatus.BAD_REQUEST
 
         validated_data = WalletRegistrationSchema(**payload)
+
+        # Before creating a new user, it's good practice to also check if
+        # email or firebase_uid are already in use, although your IntegrityError
+        # handler will catch this at the DB level.
+        # This check might be redundant if Firebase Auth ensures UID uniqueness already.
+        existing_user_by_email = db.session.query(UserAccount).filter_by(email=firebase_user['email']).first()
+        if existing_user_by_email:
+            return jsonify(error="User with this email already exists."), http.HTTPStatus.CONFLICT
+
+        existing_user_by_uid = db.session.query(UserAccount).filter_by(firebase_uid=firebase_user['uid']).first()
+        if existing_user_by_uid:
+            return jsonify(error="User with this Firebase UID already exists."), http.HTTPStatus.CONFLICT
+
 
         new_user = UserAccount(
             firebase_uid=firebase_user['uid'],
@@ -82,8 +109,11 @@ def register_user_wallet():
 
     except IntegrityError as e:
         db.session.rollback()
+        # This catch-all for IntegrityError is good. PostgreSQL will indicate
+        # which unique constraint failed. You could parse `e` to give a more
+        # specific error message (e.g., "Email already registered" vs "Wallet address taken").
         logger.warning(f"Integrity error (duplicate): {e}")
-        return jsonify(error="User with this email, UID, or username already exists."), http.HTTPStatus.CONFLICT
+        return jsonify(error="User with this email, UID, or wallet address already exists."), http.HTTPStatus.CONFLICT
 
     except Exception as e:
         db.session.rollback()
@@ -99,4 +129,3 @@ def get_user_profile():
     if not user:
         return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
     return jsonify(user.to_dict()), http.HTTPStatus.OK
-
