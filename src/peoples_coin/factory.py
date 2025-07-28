@@ -12,7 +12,6 @@ from firebase_admin import credentials
 
 # Absolute imports
 from peoples_coin.extensions import db, migrate, limiter
-# --- The model import is REMOVED from the top of the file ---
 from peoples_coin.routes import register_routes
 
 
@@ -33,10 +32,20 @@ def create_app():
         "http://localhost:5000",
         "http://localhost:8080"
     ]
-    CORS(app, origins=allowed_origins, supports_credentials=True)
 
-    # --- Import models LOCALLY, right before they are needed ---
-    # This is the standard way to prevent circular import errors in Flask.
+    CORS(
+        app,
+        origins=allowed_origins,
+        supports_credentials=True,
+        send_wildcard=False,
+        vary_header=True,
+        automatic_options=True,
+        expose_headers="Content-Type",
+        allow_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"]
+    )
+
+    # --- Import models locally to prevent circular imports ---
     from peoples_coin import models
 
     # Initialize extensions
@@ -59,8 +68,12 @@ def create_app():
     # Register all routes
     register_routes(app)
 
-    # Add simple health check route
-    @app.route("/api/v1/health")
+    # Register user_api_bp blueprint
+    from peoples_coin.routes.api import user_api_bp
+    app.register_blueprint(user_api_bp, url_prefix="/api/v1")
+
+    # --- Global health check route ---
+    @app.route("/api/v1/health", methods=["GET", "OPTIONS"])
     def health_check():
         return jsonify({"status": "ok"}), 200
 
