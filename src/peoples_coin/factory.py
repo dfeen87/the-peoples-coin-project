@@ -12,7 +12,7 @@ from firebase_admin import credentials
 
 # Absolute imports
 from peoples_coin.extensions import db, migrate, limiter
-# --- STEP 1: The model import is REMOVED from the top ---
+# --- STEP 1: The model import is REMOVED from the top of the file ---
 from peoples_coin.routes import register_routes
 
 
