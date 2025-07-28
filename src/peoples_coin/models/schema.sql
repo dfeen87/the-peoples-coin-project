@@ -82,13 +82,16 @@ CREATE TABLE user_wallets (
     public_address VARCHAR(42) NOT NULL UNIQUE,
     blockchain_network VARCHAR(50) NOT NULL DEFAULT 'Ethereum Mainnet',
     is_primary BOOLEAN NOT NULL DEFAULT FALSE,
-    encrypted_data BYTEA NULL,
+    -- --- THIS IS THE FIX ---
+    -- Renamed from 'encrypted_data' to match the Python model.
+    -- Changed type from BYTEA to TEXT to match what the app is sending.
+    encrypted_private_key TEXT NULL, 
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX idx_user_wallets_unique_primary_wallet ON user_wallets (user_id, is_primary) WHERE is_primary = TRUE;
 CREATE TRIGGER update_user_wallets_updated_at BEFORE UPDATE ON user_wallets FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
-COMMENT ON COLUMN user_wallets.encrypted_data IS 'Stores application-level encrypted data (e.g., private key). MUST be encrypted BEFORE storing. Null if non-custodial.';
+COMMENT ON COLUMN user_wallets.encrypted_private_key IS 'Stores application-level encrypted private key. MUST be encrypted BEFORE storing.';
 
 -- User Token Assets: Tracks ownership of specific NFTs.
 CREATE TABLE user_token_assets (

@@ -8,7 +8,7 @@ class UserWallet(db.Model):
     __tablename__ = 'user_wallets'
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey('user_accounts.id', ondelete='CASCADE'), nullable=False, index=True) # FIX WAS HERE
     public_address = Column(String(42), unique=True, nullable=False)
     blockchain_network = Column(String(50), nullable=False, default='Ethereum Mainnet')
     is_primary = Column(Boolean, nullable=False, default=False)
@@ -17,4 +17,3 @@ class UserWallet(db.Model):
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
     user = relationship("UserAccount", back_populates="user_wallets")
-
