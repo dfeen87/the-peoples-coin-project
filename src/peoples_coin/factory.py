@@ -12,7 +12,7 @@ from firebase_admin import credentials
 
 # Absolute imports
 from peoples_coin.extensions import db, migrate, limiter
-# --- STEP 1: The model import is REMOVED from the top of the file ---
+# --- The model import is REMOVED from the top of the file ---
 from peoples_coin.routes import register_routes
 
 
@@ -35,7 +35,7 @@ def create_app():
     ]
     CORS(app, origins=allowed_origins, supports_credentials=True)
 
-    # --- STEP 2: Import models LOCALLY, right before they are needed ---
+    # --- Import models LOCALLY, right before they are needed ---
     # This is the standard way to prevent circular import errors in Flask.
     from peoples_coin import models
 
