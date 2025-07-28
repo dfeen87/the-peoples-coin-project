@@ -18,7 +18,8 @@ class Config:
     DB_USER = os.environ.get('DB_USER')
     DB_PASS = os.environ.get('DB_PASS')
     DB_NAME = os.environ.get('DB_NAME')
-    INSTANCE_CONNECTION_NAME = os.environ.get('INSTANCE_CONNECTION_NAME')
+    # Set your Cloud SQL instance connection name explicitly here as default
+    INSTANCE_CONNECTION_NAME = os.environ.get('INSTANCE_CONNECTION_NAME', 'peoples-coin-cluster-final')
 
     if all([DB_USER, DB_PASS, DB_NAME, INSTANCE_CONNECTION_NAME]):
         SQLALCHEMY_DATABASE_URI = (
@@ -35,31 +36,26 @@ class Config:
     DB_SUPPORTS_SKIP_LOCKED = os.environ.get("DB_SUPPORTS_SKIP_LOCKED", "true").lower() == "true"
 
     # --- Redis & Rate Limiting ---
-    REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+
+    # Use explicit host and port for Redis so you can override with your VPC Redis IP easily
+    REDIS_HOST = os.environ.get("REDIS_HOST", "10.128.0.4")
+    REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+    REDIS_DB = int(os.environ.get("REDIS_DB", 0))
+
+    # Construct Redis URL dynamically from host/port/db
+    REDIS_URL = os.environ.get("REDIS_URL") or f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+
+    # Rate limiting config using Redis as backend storage
     RATELIMIT_STORAGE_URI = REDIS_URL
     RATELIMIT_DEFAULT = "100 per hour;20 per minute"
-
-    # --- THIS IS THE MAIN FIX ---
-    # A single, unified list of allowed domains for CORS.
-    # This list will be used for both development and production.
+    
+    # --- CORS Origins ---
     CORS_ORIGINS = [
         "https://brightacts.com",  # Your primary production domain
-        "https://peoples-coin-service-105378934751.us-central1.run.app", # Your Firebase domain
-        # Add common localhost ports for local Flutter development
+        "https://peoples-coin-service-105378934751.us-central1.run.app", # Your deployed backend URL
         "http://localhost:5000",
         "http://localhost:8080",
-        # You can add the specific port your Flutter app runs on if it's consistent
-        # e.g., "http://localhost:54321" 
     ]
-    # If you have a custom domain for your Firebase app, add it here too:
-    # e.g., "https://app.brightacts.com"
 
     # --- Firebase Admin ---
-    # This path is usually configured via environment variables in production
-    FIREBASE_CREDENTIAL_PATH = os.environ.get("FIREBASE_CREDENTIAL_PATH")
-
-# --- REMOVED ProductionConfig and DevelopmentConfig ---
-# We now use the single, unified Config class to reduce complexity.
-# Your create_app function should be updated to just use:
-# app.config.from_object('peoples_coin.config.Config')
-
+    FIREBASE_CREDENTIAL_PATH = os.environ.get("FIREBASE_CREDENTIAL_PATH", "serviceAccountKey.json")

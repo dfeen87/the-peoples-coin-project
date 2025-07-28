@@ -1,22 +1,16 @@
 import os
-import time
 import json
 import logging
 from datetime import datetime, timedelta, timezone
-import psutil
 from sqlalchemy import create_engine, text
-from apscheduler.schedulers.blocking import BlockingScheduler
-from kubernetes import client, config
 
 # --- Configuration ---
-DB_URI = os.environ.get("DB_URI", "sqlite:///instance/peoples_coin.db")
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/1")
-KUBE_DEPLOYMENT_NAME = os.environ.get("KUBE_DEPLOYMENT_NAME", "your-app-deployment")
-KUBE_NAMESPACE = os.environ.get("KUBE_NAMESPACE", "default")
-KUBE_MAX_REPLICAS = int(os.environ.get("KUBE_MAX_REPLICAS", 10))
-KUBE_MIN_REPLICAS = int(os.environ.get("KUBE_MIN_REPLICAS", 1))
+DB_URI = os.environ.get(
+    "DB_URI",
+    "postgresql+psycopg2://user:password@/peoples-coin-cluster-final"  # Replace with actual connection string if needed
+)
+REDIS_URL = os.environ.get("REDIS_URL", "redis://10.128.0.4:6379/0")
 CONTROLLER_COOLDOWN_MINUTES = int(os.environ.get("CONTROLLER_COOLDOWN_MINUTES", 10))
-
 
 # --- Setup ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -28,158 +22,116 @@ except ImportError:
     Redis = None
 
 class SystemController:
-    """
-    An intelligent controller that monitors system health, analyzes trends,
-    and applies adjustments to Kubernetes deployments.
-    """
-
     def __init__(self, db_uri: str, redis_url: str = None):
         self.db_engine = create_engine(db_uri)
         self.redis = Redis.from_url(redis_url) if Redis and redis_url else None
-        self.k8s_apps_v1 = self._init_kube_client()
-        
-        # State for cooldown logic
-        self.last_action_time: datetime = None
+        self.last_action_time = None
         self.cooldown_period = timedelta(minutes=CONTROLLER_COOLDOWN_MINUTES)
-        
-        logger.info("🎮 Controller initialized.")
-
-    def _init_kube_client(self):
-        """Initializes the Kubernetes AppsV1Api client."""
-        try:
-            config.load_incluster_config() # For running inside a K8s cluster
-            logger.info("✅ Kubernetes in-cluster config loaded.")
-        except config.ConfigException:
-            try:
-                config.load_kube_config() # Fallback for local development
-            except config.ConfigException as e:
-                logger.error(f"🔥 Could not load any Kubernetes config: {e}")
-                return None
-        return client.AppsV1Api()
+        logger.info("🎮 Controller initialized without Kubernetes.")
 
     def analyze(self) -> dict:
-        """Analyzes historical and business metrics to produce actionable recommendations."""
-        logger.info("🔍 [Analyzer] Running analysis...")
+        logger.info("🔍 Running analysis...")
         recommendations = {}
-        
+
         try:
             with self.db_engine.connect() as conn:
-                # Business Metric: Check the backlog of pending goodwill actions
-                pending_actions_query = text("SELECT COUNT(*) FROM goodwill_actions WHERE status = 'PENDING_VERIFICATION'")
-                pending_actions = conn.execute(pending_actions_query).scalar_one_or_none() or 0
-                logger.info(f"📊 [Analyzer] Business Metric: {pending_actions} pending goodwill actions.")
+                pending_actions_query = text(
+                    "SELECT COUNT(*) FROM goodwill_actions WHERE status = 'PENDING_VERIFICATION'"
+                )
+                pending_actions = conn.execute(pending_actions_query).scalar() or 0
+                logger.info(f"📊 Pending goodwill actions: {pending_actions}")
 
                 if pending_actions > 100:
-                    recommendations["adjust_worker_count"] = 1
-                    logger.warning(f"📈 [Analyzer] Recommendation: High action backlog ({pending_actions}), scaling up.")
-                
-                # System Metrics: Analyze historical CPU usage for trends
+                    recommendations["scale_up"] = True
+                    logger.warning("📈 High backlog detected, recommend scaling up.")
+
                 one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
                 ten_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=10)
 
-                # Assuming a `system_metrics` table with `timestamp` (datetime) and `cpu_load` (float)
-                hourly_avg_query = text("SELECT AVG(cpu_load) FROM system_metrics WHERE timestamp > :since")
-                hourly_avg_cpu = conn.execute(hourly_avg_query, {"since": one_hour_ago}).scalar_one_or_none() or 0.0
+                avg_cpu_query = text(
+                    "SELECT AVG(cpu_load) FROM system_metrics WHERE timestamp > :since"
+                )
+                hourly_avg_cpu = conn.execute(avg_cpu_query, {"since": one_hour_ago}).scalar() or 0.0
+                recent_avg_cpu = conn.execute(avg_cpu_query, {"since": ten_mins_ago}).scalar() or 0.0
 
-                recent_avg_cpu = conn.execute(hourly_avg_query, {"since": ten_mins_ago}).scalar_one_or_none() or 0.0
-                
-                logger.info(f"📊 [Analyzer] System Metric: 1h avg CPU: {hourly_avg_cpu:.2f}%, 10m avg CPU: {recent_avg_cpu:.2f}%")
+                logger.info(f"📊 1h avg CPU: {hourly_avg_cpu:.2f}%, 10m avg CPU: {recent_avg_cpu:.2f}%")
 
-                # Reactive scaling for sustained high load
                 if hourly_avg_cpu > 80:
-                    recommendations["adjust_worker_count"] = 1
-                    logger.warning(f"📈 [Analyzer] Recommendation: Sustained high CPU ({hourly_avg_cpu:.2f}%), scaling up.")
-                
-                # Predictive scaling for sharp upward trends
+                    recommendations["scale_up"] = True
+                    logger.warning("📈 Sustained high CPU, recommend scaling up.")
                 elif recent_avg_cpu > 60 and recent_avg_cpu > hourly_avg_cpu * 1.5:
-                    recommendations["adjust_worker_count"] = 1
-                    logger.warning(f"📈 [Analyzer] Recommendation: Sharp CPU trend detected, scaling up proactively.")
-
-                # Scale down if load is consistently low and backlog is clear
+                    recommendations["scale_up"] = True
+                    logger.warning("📈 Sharp CPU increase detected, recommend scaling up.")
                 elif hourly_avg_cpu < 30 and pending_actions < 10:
-                    recommendations["adjust_worker_count"] = -1
-                    logger.info(f"📉 [Analyzer] Recommendation: Sustained low load and clear backlog, scaling down.")
+                    recommendations["scale_down"] = True
+                    logger.info("📉 Low load and clear backlog, recommend scaling down.")
 
         except Exception as e:
-            logger.error(f"[Analyzer] DB error: {e}", exc_info=True)
+            logger.error(f"DB analysis error: {e}", exc_info=True)
 
-        logger.info(f"💾 [Analyzer] Recommendations produced: {recommendations}")
+        logger.info(f"Recommendations: {recommendations}")
         return recommendations
 
     def manage(self, recommendations: dict) -> list:
-        """Applies adjustments to the Kubernetes deployment, respecting cooldowns."""
-        # **COOLDOWN LOGIC**: Prevent flapping by waiting after an action
         if self.last_action_time and (datetime.now(timezone.utc) - self.last_action_time < self.cooldown_period):
-            logger.info(f"❄️ [Manager] In cooldown period. No action will be taken.")
+            logger.info("❄️ In cooldown period, skipping management actions.")
             return []
 
-        logger.info(f"🛠️ [Manager] Running with recommendations: {recommendations}")
         actions_taken = []
-        if not self.k8s_apps_v1 or not recommendations:
-            return actions_taken
 
-        if "adjust_worker_count" in recommendations:
-            adjustment = recommendations["adjust_worker_count"]
-            try:
-                deployment = self.k8s_apps_v1.read_namespaced_deployment(name=KUBE_DEPLOYMENT_NAME, namespace=KUBE_NAMESPACE)
-                current_replicas = deployment.spec.replicas
-                desired_replicas = max(KUBE_MIN_REPLICAS, min(current_replicas + adjustment, KUBE_MAX_REPLICAS))
+        # Your management logic here
+        # For example, trigger autoscaling via another mechanism,
+        # send alerts, or update Redis flags.
+        # Since no Kubernetes, this part is mostly placeholders:
 
-                if desired_replicas != current_replicas:
-                    logger.info(f"🚀 [K8s] Scaling deployment '{KUBE_DEPLOYMENT_NAME}' from {current_replicas} to {desired_replicas} replicas.")
-                    body = {"spec": {"replicas": desired_replicas}}
-                    self.k8s_apps_v1.patch_namespaced_deployment_scale(name=KUBE_DEPLOYMENT_NAME, namespace=KUBE_NAMESPACE, body=body)
-                    action = f"Scaled Kubernetes deployment to {desired_replicas} replicas."
-                    actions_taken.append(action)
-                else:
-                    logger.info(f"✅ [K8s] Desired replica count ({desired_replicas}) already at limit. No action taken.")
-            except Exception as e:
-                error_msg = f"🔥 [K8s] Failed to scale deployment: {e}"
-                logger.error(error_msg)
-                actions_taken.append(error_msg)
-        
-        # If any action was successfully taken, update the cooldown timer
-        if actions_taken and "Failed" not in actions_taken[0]:
+        if recommendations.get("scale_up"):
+            logger.info("🔼 Triggering scale-up action (placeholder).")
+            actions_taken.append("Scale-up action triggered.")
+        elif recommendations.get("scale_down"):
+            logger.info("🔽 Triggering scale-down action (placeholder).")
+            actions_taken.append("Scale-down action triggered.")
+        else:
+            logger.info("No scaling actions required.")
+
+        if actions_taken:
             self.last_action_time = datetime.now(timezone.utc)
-            logger.info(f"⏱️ [Manager] Action taken. Cooldown timer started for {self.cooldown_period.total_seconds() / 60} minutes.")
+            logger.info(f"⏱️ Cooldown started for {self.cooldown_period.total_seconds()/60} minutes.")
 
         return actions_taken
 
     def _log_action_to_db(self, recommendations: dict, actions_taken: list):
-        """Logs recommendations and actions to the database for historical analysis."""
         if not recommendations and not actions_taken:
             return
-
         try:
             with self.db_engine.connect() as conn:
-                stmt = text("INSERT INTO controller_actions (timestamp, recommendations, actions_taken) VALUES (:ts, :rec, :act)")
-                conn.execute(stmt, {"ts": datetime.now(timezone.utc), "rec": json.dumps(recommendations), "act": json.dumps(actions_taken)})
+                stmt = text(
+                    "INSERT INTO controller_actions (timestamp, recommendations, actions_taken) VALUES (:ts, :rec, :act)"
+                )
+                conn.execute(
+                    stmt,
+                    {
+                        "ts": datetime.now(timezone.utc),
+                        "rec": json.dumps(recommendations),
+                        "act": json.dumps(actions_taken),
+                    },
+                )
                 conn.commit()
-                logger.info("✍️  [Logger] Stored action history to database.")
+                logger.info("Logged actions to DB.")
         except Exception as e:
-            logger.error(f"[Logger] Failed to log actions to DB: {e}")
-            
+            logger.error(f"Failed to log actions to DB: {e}")
+
     def run_cycle(self):
-        """A single, complete cycle of analysis, management, and logging."""
         recommendations = self.analyze()
         actions_taken = self.manage(recommendations)
         self._log_action_to_db(recommendations, actions_taken)
 
-# --- TEMPORARILY COMMENT OUT FOR CLOUD RUN DEPLOYMENT ---
-# This block should only run when the script is executed directly,
-# not when imported by Gunicorn for your Flask API.
+
+# Uncomment and adapt to run as a script or schedule with an external tool
 # if __name__ == "__main__":
 #     controller = SystemController(db_uri=DB_URI, redis_url=REDIS_URL)
-#     scheduler = BlockingScheduler(timezone="UTC")
-
-#     # Run the main analysis and management cycle every 5 minutes
-#     scheduler.add_job(controller.run_cycle, 'interval', minutes=5, id='management_cycle_job')
-
-#     logger.info("🚀 Starting Controller scheduler. Press Ctrl+C to exit.")
-#     try:
-#         scheduler.start()
-#     except (KeyboardInterrupt, SystemExit):
-#         logger.info("🛑 Shutting down controller.")
-#         scheduler.shutdown()
-# --- END TEMPORARY DISABLE ---
+#     # e.g., run every 5 minutes with a scheduler or cron
+#     import time
+#     while True:
+#         controller.run_cycle()
+#         time.sleep(300)
 

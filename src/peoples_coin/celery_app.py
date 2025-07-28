@@ -1,9 +1,9 @@
 from celery import Celery
 import os
 
-# Load broker and backend URLs from environment variables or default to local Redis
-broker_url = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-backend_url = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+# Load broker and backend URLs from environment variables with sensible defaults
+broker_url = os.getenv('CELERY_BROKER_URL', os.getenv('REDIS_URL', 'redis://10.128.0.4:6379/0'))
+backend_url = os.getenv('CELERY_RESULT_BACKEND', os.getenv('REDIS_URL', 'redis://10.128.0.4.6379/0'))
 
 celery = Celery(
     'peoples_coin',
@@ -19,10 +19,14 @@ celery.conf.update(
     result_serializer='json',
     timezone='UTC',
     enable_utc=True,
+    # You can add other configurations as needed, e.g. task time limits, retries, etc.
 )
 
-# Helper function to integrate Celery with Flask app context
 def make_celery(app):
+    """
+    Integrates Celery with Flask app context.
+    Ensures tasks have access to Flask's current_app and other context.
+    """
     celery.conf.update(app.config)
     TaskBase = celery.Task
 

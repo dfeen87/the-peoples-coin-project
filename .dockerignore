@@ -16,8 +16,6 @@ instance/
 *.db
 
 # === Configuration and Secrets ===
-.env
-.env.*
 secrets.*
 *.pem
 *.key

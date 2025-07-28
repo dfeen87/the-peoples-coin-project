@@ -5,7 +5,7 @@ from logging.handlers import RotatingFileHandler
 import atexit
 import signal
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials
@@ -13,13 +13,15 @@ from firebase_admin import credentials
 # Absolute imports (adjust model imports based on your actual model files)
 from peoples_coin.extensions import db, migrate, limiter
 from peoples_coin.models import UserAccount, UserWallet
-# import other models here explicitly if needed
-
 from peoples_coin.routes import register_routes
 
 
 def create_app():
-    app = Flask(__name__)
+    # Set Flask instance_path to a writable directory in Cloud Run
+    instance_path = '/tmp/instance'
+    os.makedirs(instance_path, exist_ok=True)
+
+    app = Flask(__name__, instance_path=instance_path)
 
     # Load configuration
     app.config.from_object('peoples_coin.config.Config')
@@ -32,9 +34,8 @@ def create_app():
         "http://localhost:8080"
     ]
 
-    # Apply CORS only to /api/* endpoints (covers /api/v1/* as well)
-    CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
-    # ------------------------------------
+    # Apply CORS to allow frontend to call backend
+    CORS(app, origins=allowed_origins, supports_credentials=True)
 
     # Initialize extensions
     db.init_app(app)
@@ -42,16 +43,24 @@ def create_app():
     limiter.init_app(app)
 
     # Initialize Firebase Admin SDK
-    firebase_cred_path = app.config.get("FIREBASE_CREDENTIAL_PATH")
-    if firebase_cred_path and os.path.exists(firebase_cred_path) and not firebase_admin._apps:
-        cred = credentials.Certificate(firebase_cred_path)
-        firebase_admin.initialize_app(cred)
-        app.logger.info("✅ Firebase initialized")
+    firebase_cred_path = app.config.get("FIREBASE_CREDENTIAL_PATH") or "serviceAccountKey.json"
+    if os.path.exists(firebase_cred_path) and not firebase_admin._apps:
+        try:
+            cred = credentials.Certificate(firebase_cred_path)
+            firebase_admin.initialize_app(cred)
+            app.logger.info("✅ Firebase initialized successfully")
+        except Exception as e:
+            app.logger.error(f"❌ Firebase initialization failed: {str(e)}")
     else:
         app.logger.warning("⚠️ Firebase not initialized: Missing or invalid credential path")
 
-    # Register all routes
+    # Register all routes with your register_routes function
     register_routes(app)
+
+    # Add simple health check route directly to app
+    @app.route("/api/v1/health")
+    def health_check():
+        return jsonify({"status": "ok"}), 200
 
     # Setup logging
     app.logger.setLevel(logging.INFO)
