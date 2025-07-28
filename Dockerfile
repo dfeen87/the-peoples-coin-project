@@ -3,7 +3,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8080 \
-    PYTHONPATH=/app/src
+    PYTHONPATH=/app
 
 WORKDIR /app
 
@@ -18,5 +18,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["gunicorn", "peoples_coin.factory:create_app()", "--bind", "0.0.0.0:8080"]
+CMD ["gunicorn", "peoples_coin.wsgi:app", "--bind", "0.0.0.0:8080"]
 

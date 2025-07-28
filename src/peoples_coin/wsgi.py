@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 try:
     # Import the app factory AFTER setting env vars, if needed
-    from peoples_coin.factory import create_app
+    from .factory import create_app
 
     # Create the Flask app instance
     app = create_app()
