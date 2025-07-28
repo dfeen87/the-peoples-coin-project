@@ -12,7 +12,6 @@ from firebase_admin import credentials
 
 from .extensions import db, migrate, limiter
 from .models import *
-# Import the corrected register_routes function
 from .routes import register_routes
 
 
@@ -22,16 +21,16 @@ def create_app():
     # Load configuration
     app.config.from_object('peoples_coin.config.Config')
 
-    # --- Hardcoded CORS Fix ---
+    # --- CORS Setup ---
     allowed_origins = [
         "https://brightacts.com",
         "https://peoples-coin-service-105378934751.us-central1.run.app",
         "http://localhost:5000",
         "http://localhost:8080"
     ]
-    CORS(app, resources={r"/api/*": {"origins": allowed_origins},
-                        r"/api/v1/*": {"origins": allowed_origins}}, supports_credentials=True)
 
+    # Apply CORS only to /api/* endpoints (covers /api/v1/* as well)
+    CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
     # ------------------------------------
 
     # Initialize extensions
@@ -48,13 +47,10 @@ def create_app():
     else:
         app.logger.warning("⚠️ Firebase not initialized: Missing or invalid credential path")
 
-    # --- Simplified Route Registration ---
-    # This single line now handles all your routes.
+    # Register all routes
     register_routes(app)
 
     # Setup logging
-    # ... (logging and shutdown handler code remains the same)
-
     app.logger.setLevel(logging.INFO)
     app.logger.info("🚀 People's Coin app startup complete")
 
