@@ -5,7 +5,7 @@ from functools import wraps
 from flask import Blueprint, request, jsonify, g
 from flask_cors import CORS
 from pydantic import BaseModel, ValidationError, constr
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token
@@ -37,9 +37,14 @@ def check_username_availability(username):
     try:
         exists = db.session.query(UserAccount).filter(UserAccount.username.ilike(username)).first()
         return jsonify({"available": exists is None}), http.HTTPStatus.OK
+
+    except OperationalError as oe:
+        logger.error(f"Database connection error during username availability check: {oe}", exc_info=True)
+        return jsonify({"available": False, "error": "Database connection error"}), http.HTTPStatus.SERVICE_UNAVAILABLE
+
     except Exception as e:
-        logger.error(f"Error during username availability check: {e}", exc_info=True)
-        return jsonify({"available": False, "error": "Database query failed"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
+        logger.error(f"Unexpected error during username availability check: {e}", exc_info=True)
+        return jsonify({"available": False, "error": "Internal server error"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @user_api_bp.route("/users/register-wallet", methods=["POST", "OPTIONS"])
