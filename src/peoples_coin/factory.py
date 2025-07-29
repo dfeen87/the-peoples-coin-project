@@ -8,19 +8,23 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 def create_app():
-    # Create Flask app instance
-    app = Flask(__name__)
+    # Use /tmp/instance for writable instance path on Cloud Run
+    instance_path = "/tmp/instance"
+    os.makedirs(instance_path, exist_ok=True)
 
-    # Load config from environment or fallback
+    # Create Flask app with writable instance_path
+    app = Flask(__name__, instance_path=instance_path)
+
+    # Load configuration (adjust as needed)
     app.config.from_mapping(
         SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL", "sqlite:///local.db"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret"),
     )
 
-    # Setup CORS
+    # Enable CORS - adjust origins as necessary
     CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-    
+
     # Setup logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
@@ -29,7 +33,7 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
 
-    # Register all blueprints using your register_routes function
+    # Register blueprints/routes
     try:
         from peoples_coin.routes import register_routes
         register_routes(app)

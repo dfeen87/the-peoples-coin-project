@@ -30,5 +30,5 @@ RUN useradd -m appuser
 USER appuser
 
 # Start the Gunicorn server, pointing to wsgi.py:app
-CMD ["sh", "-c", "gunicorn peoples_coin.app:app --bind 0.0.0.0:${PORT}"]
+CMD ["sh", "-c", "gunicorn peoples_coin.wsgi:app --bind 0.0.0.0:${PORT}"]
 
