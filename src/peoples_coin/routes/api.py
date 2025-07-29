@@ -17,25 +17,40 @@ logger = logging.getLogger(__name__)
 user_api_bp = Blueprint("user_api", __name__)
 
 # --- CORS Configuration ---
-CORS(user_api_bp, resources={r"/*": {"origins": ["https://brightacts.com", "http://localhost:3000"]}}, supports_credentials=True)
+CORS(
+    user_api_bp,
+    resources={r"/*": {"origins": ["https://brightacts.com", "http://localhost:3000"]}},
+    supports_credentials=True,
+)
 
-# --- Pydantic Schema ---
+# --- Pydantic Schemas ---
+
 class WalletRegistrationSchema(BaseModel):
     username: constr(strip_whitespace=True, min_length=3, max_length=32)
     public_key: str
     encrypted_private_key: str
 
+class UserCreateSchema(BaseModel):
+    firebase_uid: constr(strip_whitespace=True, min_length=1)
+    email: constr(strip_whitespace=True, min_length=5)
+    username: constr(strip_whitespace=True, min_length=3, max_length=32)
+
 # --- Routes ---
 
 @user_api_bp.route("/users/username-check/<username>", methods=["GET", "OPTIONS"])
 def check_username_availability(username):
-    """Check if a username is available in the database (CORS preflight supported)."""
+    """Check if a username is available (CORS preflight supported)."""
     if request.method == "OPTIONS":
-        return '', 200
+        return jsonify({}), 200
 
     logger.info(f"Checking availability for username: {username}")
     try:
-        exists = db.session.query(UserAccount).filter(UserAccount.username.ilike(username)).first()
+        # Case-insensitive exact match
+        exists = (
+            db.session.query(UserAccount)
+            .filter(UserAccount.username.ilike(f"{username}"))
+            .first()
+        )
         return jsonify({"available": exists is None}), http.HTTPStatus.OK
 
     except OperationalError as oe:
@@ -55,7 +70,7 @@ def register_user_wallet():
     Firebase auth required.
     """
     if request.method == "OPTIONS":
-        return '', 200
+        return jsonify({}), 200
 
     firebase_user = g.firebase_user
     logger.info(f"Registering wallet for Firebase UID: {firebase_user.get('uid')}")
@@ -66,6 +81,9 @@ def register_user_wallet():
             return jsonify(error="Missing JSON body"), http.HTTPStatus.BAD_REQUEST
 
         validated_data = WalletRegistrationSchema(**payload)
+
+        if firebase_user.get('email') is None:
+            return jsonify(error="Firebase user email is required"), http.HTTPStatus.BAD_REQUEST
 
         existing_user_by_email = db.session.query(UserAccount).filter_by(email=firebase_user['email']).first()
         if existing_user_by_email:
@@ -113,16 +131,36 @@ def register_user_wallet():
         return jsonify(error="An internal server error occurred."), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
 
+@user_api_bp.route("/users", methods=["POST", "OPTIONS"])
+@require_firebase_token
+def create_user():
+    """
+    Endpoint to create a new user.
+    Redirects to register-wallet endpoint logic.
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+
+    # Just proxy the call to register_user_wallet or duplicate logic if needed
+    return register_user_wallet()
+
+
 @user_api_bp.route("/profile", methods=["GET", "OPTIONS"])
 @require_firebase_token
 def get_user_profile():
     """Returns the authenticated user's profile information."""
     if request.method == "OPTIONS":
-        return '', 200
+        return jsonify({}), 200
 
     user = g.user
     if not user:
         return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
 
     return jsonify(user.to_dict()), http.HTTPStatus.OK
+
+
+# --- Helper to register blueprint ---
+
+def register_routes(app):
+    app.register_blueprint(user_api_bp, url_prefix="/api")
 

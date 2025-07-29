@@ -27,7 +27,7 @@ def create_app():
 
     # Setup CORS
     CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-    
+
     # Setup logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
@@ -36,13 +36,13 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
 
-    # Register all blueprints using your register_routes function
+    # Register all routes from the modular routes folder
     try:
         from peoples_coin.routes import register_routes
         register_routes(app)
         logger.info("✅ Blueprints registered.")
     except ImportError as e:
-        logger.warning("⚠️ Failed to register blueprints. Reason: %s", str(e))
+        logger.warning(f"⚠️ Failed to register blueprints. Reason: {e}")
 
     # Basic health check endpoint
     @app.route("/health")
