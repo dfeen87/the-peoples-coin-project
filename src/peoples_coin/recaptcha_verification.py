@@ -1,63 +1,36 @@
-import json
+import os
 import requests
-import logging
-from google.oauth2 import service_account
-from google.auth.transport.requests import Request
 
-SERVICE_ACCOUNT_FILE = 'recaptcha-service.json'
-PROJECT_ID = 'heroic-tide-428421'
-SITE_KEY = '6LcwyYUrAAAAAE2Bv6bXHjq23zTBE49ABYmi4ccs'
-
-def verify_recaptcha_enterprise(token: str, expected_action: str = 'login') -> bool:
+def verify_recaptcha_v2(token: str) -> bool:
     """
-    Verifies the reCAPTCHA Enterprise token using Google's API.
+    Verifies a reCAPTCHA v2 token with Google.
 
     Args:
-        token (str): The reCAPTCHA token received from the client.
-        expected_action (str): Action expected (e.g., 'login').
+        token: The 'g-recaptcha-response' token from the frontend form.
 
     Returns:
-        bool: True if verified and score meets threshold; False otherwise.
+        True if the token is valid, False otherwise.
     """
-    if not token:
-        logging.warning("No reCAPTCHA token provided.")
+    # 1. Get your v2 Secret Key from an environment variable.
+    secret_key = os.getenv("RECAPTCHA_V2_SECRET_KEY")
+    if not secret_key:
+        print("Error: RECAPTCHA_V2_SECRET_KEY environment variable is not set.")
         return False
+
+    # 2. Make the verification request to Google.
+    verification_url = "https://www.google.com/recaptcha/api/siteverify"
+    payload = {
+        "secret": secret_key,
+        "response": token,
+    }
 
     try:
-        credentials = service_account.Credentials.from_service_account_file(
-            SERVICE_ACCOUNT_FILE,
-            scopes=['https://www.googleapis.com/auth/cloud-platform']
-        )
-        credentials.refresh(Request())
-        access_token = credentials.token
-
-        url = f"https://recaptchaenterprise.googleapis.com/v1/projects/{PROJECT_ID}/assessments"
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json"
-        }
-        body = {
-            "event": {
-                "token": token,
-                "siteKey": SITE_KEY,
-                "expectedAction": expected_action
-                # "projectNumber": "YOUR_PROJECT_NUMBER"  # Optional, more accurate
-            }
-        }
-
-        response = requests.post(url, headers=headers, data=json.dumps(body))
-
-        if response.status_code != 200:
-            logging.error(f"reCAPTCHA API error {response.status_code}: {response.text}")
-            return False
-
-        result = response.json()
-        score = result.get("riskAnalysis", {}).get("score", 0.0)
-        logging.info(f"reCAPTCHA score: {score:.2f} (action: {expected_action})")
-
-        return score >= 0.5
-
-    except Exception as e:
-        logging.exception("reCAPTCHA verification failed.")
+        response = requests.post(verification_url, data=payload, timeout=5)
+        response_data = response.json()
+        
+        # 3. Check if Google says the verification was successful.
+        return response_data.get("success", False)
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error during reCAPTCHA verification: {e}")
         return False
-
