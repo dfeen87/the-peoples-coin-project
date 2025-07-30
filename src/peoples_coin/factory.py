@@ -1,3 +1,5 @@
+# src/peoples_coin/factory.py
+
 import os
 import logging
 from flask import Flask
@@ -20,6 +22,8 @@ def create_app():
         SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL", "sqlite:///local.db"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret"),
+        RECAPTCHA_SITE_KEY=os.environ.get("RECAPTCHA_SITE_KEY", ""),     # Add your site key
+        RECAPTCHA_SECRET_KEY=os.environ.get("RECAPTCHA_SECRET_KEY", ""), # Add your secret key
         SQLALCHEMY_ENGINE_OPTIONS={
             "pool_pre_ping": True,  # Helps handle stale DB connections
         },
