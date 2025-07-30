@@ -27,8 +27,9 @@ def create_app():
         },
     )
 
-    # Setup CORS
-    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+    # Setup CORS - APPLY THIS CHANGE
+    CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"], "headers": ["Content-Type", "Authorization"]}}, supports_credentials=True)
+
 
     # Setup logging
     logging.basicConfig(level=logging.INFO)
