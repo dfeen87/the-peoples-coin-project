@@ -33,14 +33,15 @@ def require_api_key(f):
                 return jsonify({KEY_ERROR: "Invalid or expired API key"}), http.HTTPStatus.UNAUTHORIZED
 
             key_record.last_used_at = datetime.now(timezone.utc)
-            g.user = key_record.user  # Assumes relationship from ApiKey -> UserAccount
+            g.user = key_record.user
             session.commit()
 
         return f(*args, **kwargs)
     return decorated
 
+
 def require_firebase_token(f):
-    """Decorator to protect routes with a Firebase ID token and load the application user."""
+    """Decorator to protect routes with a Firebase ID token and auto-create DB user if needed."""
     @wraps(f)
     def decorated(*args, **kwargs):
         auth_header = request.headers.get("Authorization")
@@ -52,25 +53,31 @@ def require_firebase_token(f):
         try:
             decoded_token = auth.verify_id_token(id_token)
             uid = decoded_token['uid']
+            email = decoded_token.get('email')
+            name = decoded_token.get('name') or (email.split('@')[0] if email else None)
 
             with get_session_scope(db) as session:
                 user = session.query(UserAccount).filter_by(firebase_uid=uid).first()
+                
+                # Auto-create user if not found
                 if not user:
-                    return jsonify({KEY_ERROR: "User profile not found"}), http.HTTPStatus.FORBIDDEN
+                    logger.info(f"No user found for UID {uid}, creating new account.")
+                    user = UserAccount(
+                        firebase_uid=uid,
+                        email=email,
+                        username=name,
+                        balance=0,
+                        goodwill_coins=0
+                    )
+                    session.add(user)
+                    session.flush()
+                    logger.info(f"Created new user {user.id} for Firebase UID {uid}")
+
                 g.user = user
 
-        except auth.InvalidIdTokenError:
-            logger.warning("Invalid Firebase ID token")
-            return jsonify({KEY_ERROR: "Invalid Firebase ID token"}), http.HTTPStatus.UNAUTHORIZED
-        except auth.ExpiredIdTokenError:
-            logger.warning("Expired Firebase ID token")
-            return jsonify({KEY_ERROR: "Expired Firebase ID token"}), http.HTTPStatus.UNAUTHORIZED
-        except auth.RevokedIdTokenError:
-            logger.warning("Revoked Firebase ID token")
-            return jsonify({KEY_ERROR: "Revoked Firebase ID token"}), http.HTTPStatus.UNAUTHORIZED
         except Exception as e:
-            logger.error(f"An unexpected error occurred during token verification: {e}")
-            return jsonify({KEY_ERROR: "Could not process authentication token"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
+            logger.error(f"Error verifying Firebase token: {e}")
+            return jsonify({KEY_ERROR: "Invalid, expired, or revoked token"}), http.HTTPStatus.UNAUTHORIZED
 
         return f(*args, **kwargs)
     return decorated
