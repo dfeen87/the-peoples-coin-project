@@ -1,10 +1,14 @@
 import http
 import secrets
-from flask import Blueprint, request, jsonify, current_app
+from functools import wraps
+from flask import Blueprint, request, jsonify, current_app, g
 from peoples_coin.models.db_utils import get_session_scope
 from peoples_coin.models.models import ApiKey, UserAccount
 from peoples_coin.extensions import db
 from werkzeug.security import check_password_hash
+# We need this import to use the token validation decorator from your utils
+from peoples_coin.utils.auth import require_firebase_token
+
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -72,3 +76,51 @@ def signin():
             "user": user_info
         }), http.HTTPStatus.OK
 
+
+# This is the new endpoint you need to add to fix the issue.
+@auth_bp.route("/users/me", methods=["GET"])
+@require_firebase_token
+def get_current_user():
+    """
+    Retrieves the current authenticated user's profile and card information.
+    This endpoint is protected by a Firebase token.
+    """
+    try:
+        # The 'require_firebase_token' decorator is assumed to authenticate the user
+        # and attach the user's information (like user_id) to the Flask 'g' object.
+        user_id = g.user_id
+
+        if not user_id:
+            return jsonify({KEY_ERROR: "User ID not found in token"}), http.HTTPStatus.UNAUTHORIZED
+
+        with get_session_scope(db) as session:
+            # Fetch the user from the database. We use the 'UserAccount' model you already have.
+            user = session.query(UserAccount).filter_by(id=user_id).first()
+
+            if user is None:
+                return jsonify({KEY_ERROR: "User not found"}), http.HTTPStatus.NOT_FOUND
+
+            # Assuming your UserAccount model has a relationship to a 'cards' collection/list.
+            # You may need to adjust this part based on your actual model.
+            cards = [
+                {"id": str(card.id), "type": card.card_type, "last4": card.last_four}
+                for card in user.cards
+            ] if hasattr(user, 'cards') else []
+
+            # Prepare the user data to be sent as a JSON response.
+            # This will fix the issue of not fetching user name and account information.
+            user_profile = {
+                "id": str(user.id),
+                "name": user.username,  # Adjust field name if 'name' is different
+                "email": user.email,
+                "balance": str(user.balance),
+                "goodwill_coins": user.goodwill_coins,
+                "cards": cards
+            }
+
+            return jsonify(user_profile), http.HTTPStatus.OK
+
+    except Exception as e:
+        # Log the error for debugging purposes in case something goes wrong
+        current_app.logger.error(f"Error fetching user profile: {e}")
+        return jsonify({KEY_ERROR: "An internal server error occurred"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
