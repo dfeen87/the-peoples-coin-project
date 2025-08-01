@@ -1,19 +1,17 @@
 import http
 import secrets
-from functools import wraps
 from flask import Blueprint, request, jsonify, current_app, g
 from peoples_coin.models.db_utils import get_session_scope
 from peoples_coin.models.models import ApiKey, UserAccount
 from peoples_coin.extensions import db
 from werkzeug.security import check_password_hash
-# We need this import to use the token validation decorator from your utils
 from peoples_coin.utils.auth import require_firebase_token
-
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 KEY_ERROR = "error"
 KEY_MESSAGE = "message"
+
 
 @auth_bp.route("/create-api-key", methods=["POST"])
 def create_api_key():
@@ -58,11 +56,9 @@ def signin():
         if not user:
             return jsonify({KEY_ERROR: "Invalid email or password"}), http.HTTPStatus.UNAUTHORIZED
 
-        # Check password hash (assuming your UserAccount stores hashed password)
         if not user.password_hash or not check_password_hash(user.password_hash, password):
             return jsonify({KEY_ERROR: "Invalid email or password"}), http.HTTPStatus.UNAUTHORIZED
 
-        # Return user info (exclude sensitive info)
         user_info = {
             "id": str(user.id),
             "email": user.email,
@@ -77,50 +73,77 @@ def signin():
         }), http.HTTPStatus.OK
 
 
-# This is the new endpoint you need to add to fix the issue.
+def serialize_user(user):
+    """
+    Helper function to serialize user object to JSON-compatible dict.
+    """
+    cards = [
+        {"id": str(card.id), "type": card.card_type, "last4": card.last_four}
+        for card in getattr(user, 'cards', [])
+    ]
+
+    return {
+        "id": str(user.id),
+        "name": user.username,
+        "email": user.email,
+        "balance": str(user.balance),
+        "goodwill_coins": user.goodwill_coins,
+        "cards": cards
+    }
+
+
 @auth_bp.route("/users/me", methods=["GET"])
 @require_firebase_token
 def get_current_user():
     """
-    Retrieves the current authenticated user's profile and card information.
-    This endpoint is protected by a Firebase token.
+    Retrieves the current authenticated user's profile.
+    Auto-creates the user in DB if not found.
     """
     try:
-        # The 'require_firebase_token' decorator is assumed to authenticate the user
-        # and attach the user's information (like user_id) to the Flask 'g' object.
-        user_id = g.user_id
+        user_id = g.user_id  # Firebase UID from token
+        user_email = getattr(g, "user_email", None)
+        user_name = getattr(g, "user_name", None) or (user_email.split("@")[0] if user_email else None)
 
         if not user_id:
             return jsonify({KEY_ERROR: "User ID not found in token"}), http.HTTPStatus.UNAUTHORIZED
 
         with get_session_scope(db) as session:
-            # Fetch the user from the database. We use the 'UserAccount' model you already have.
             user = session.query(UserAccount).filter_by(id=user_id).first()
 
-            if user is None:
-                return jsonify({KEY_ERROR: "User not found"}), http.HTTPStatus.NOT_FOUND
+            if not user:
+                # Create new user if not exists
+                user = UserAccount(
+                    id=user_id,
+                    email=user_email,
+                    username=user_name,
+                    balance=0,
+                    goodwill_coins=0
+                )
+                session.add(user)
+                session.flush()
 
-            # Assuming your UserAccount model has a relationship to a 'cards' collection/list.
-            # You may need to adjust this part based on your actual model.
-            cards = [
-                {"id": str(card.id), "type": card.card_type, "last4": card.last_four}
-                for card in user.cards
-            ] if hasattr(user, 'cards') else []
-
-            # Prepare the user data to be sent as a JSON response.
-            # This will fix the issue of not fetching user name and account information.
-            user_profile = {
-                "id": str(user.id),
-                "name": user.username,  # Adjust field name if 'name' is different
-                "email": user.email,
-                "balance": str(user.balance),
-                "goodwill_coins": user.goodwill_coins,
-                "cards": cards
-            }
-
-            return jsonify(user_profile), http.HTTPStatus.OK
+            return jsonify(serialize_user(user)), http.HTTPStatus.OK
 
     except Exception as e:
-        # Log the error for debugging purposes in case something goes wrong
-        current_app.logger.error(f"Error fetching user profile: {e}")
+        current_app.logger.error(f"Error fetching or creating user profile: {e}")
         return jsonify({KEY_ERROR: "An internal server error occurred"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+@auth_bp.route("/users/<user_id>", methods=["GET"])
+@require_firebase_token
+def get_user_by_id(user_id):
+    """
+    Fetch user profile by user_id.
+    """
+    try:
+        with get_session_scope(db) as session:
+            user = session.query(UserAccount).filter_by(id=user_id).first()
+            if not user:
+                return jsonify({KEY_ERROR: "User not found"}), http.HTTPStatus.NOT_FOUND
+
+            return jsonify(serialize_user(user)), http.HTTPStatus.OK
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching user by ID: {e}")
+        return jsonify({KEY_ERROR: "An internal server error occurred"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
+

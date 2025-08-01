@@ -33,7 +33,7 @@ def require_api_key(f):
                 return jsonify({KEY_ERROR: "Invalid or expired API key"}), http.HTTPStatus.UNAUTHORIZED
 
             key_record.last_used_at = datetime.now(timezone.utc)
-            g.user = key_record.user # Assumes relationship from ApiKey -> UserAccount
+            g.user = key_record.user  # Assumes relationship from ApiKey -> UserAccount
             session.commit()
 
         return f(*args, **kwargs)
@@ -59,12 +59,19 @@ def require_firebase_token(f):
                     return jsonify({KEY_ERROR: "User profile not found"}), http.HTTPStatus.FORBIDDEN
                 g.user = user
 
-        except auth.AuthError as e:
-            logger.warning(f"Firebase token verification failed: {e}")
-            return jsonify({KEY_ERROR: "Invalid, expired, or revoked token"}), http.HTTPStatus.UNAUTHORIZED
+        except auth.InvalidIdTokenError:
+            logger.warning("Invalid Firebase ID token")
+            return jsonify({KEY_ERROR: "Invalid Firebase ID token"}), http.HTTPStatus.UNAUTHORIZED
+        except auth.ExpiredIdTokenError:
+            logger.warning("Expired Firebase ID token")
+            return jsonify({KEY_ERROR: "Expired Firebase ID token"}), http.HTTPStatus.UNAUTHORIZED
+        except auth.RevokedIdTokenError:
+            logger.warning("Revoked Firebase ID token")
+            return jsonify({KEY_ERROR: "Revoked Firebase ID token"}), http.HTTPStatus.UNAUTHORIZED
         except Exception as e:
             logger.error(f"An unexpected error occurred during token verification: {e}")
             return jsonify({KEY_ERROR: "Could not process authentication token"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
         return f(*args, **kwargs)
     return decorated
+
