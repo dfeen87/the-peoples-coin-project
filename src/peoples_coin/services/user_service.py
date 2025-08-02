@@ -2,6 +2,7 @@ import logging
 from typing import Optional, Dict, Any, Tuple, List
 from uuid import UUID
 from decimal import Decimal
+import base64
 
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
@@ -144,45 +145,46 @@ class UserService:
                 logger.exception(f"UserService: Error decrementing goodwill_coins for user {user_id}.")
                 return False, f"Internal error: {e}"
 
-    def link_user_wallet(
-        self,
-        user_id: UUID,
-        public_address: str,
-        encrypted_private_key: str,
-        blockchain_network: str,
-        is_primary: bool = False
-    ) -> Tuple[bool, str]:
-        """Link a blockchain wallet to a user. Demotes existing primary wallet if needed."""
-        with get_session_scope(self.db) as session:
-            try:
-                user = session.query(UserAccount).filter_by(id=user_id).first()
-                if not user:
-                    return False, "User not found."
+def link_user_wallet(
+    self,
+    user_id: UUID,
+    public_address: str,
+    encrypted_private_key: str,  # base64 encoded string
+    blockchain_network: str,
+    is_primary: bool = False
+) -> Tuple[bool, str]:
+    with get_session_scope(self.db) as session:
+        try:
+            user = session.query(UserAccount).filter_by(id=user_id).first()
+            if not user:
+                return False, "User not found."
 
-                if is_primary:
-                    # Demote existing primary wallets
-                    existing_primary = session.query(UserWallet).filter_by(user_id=user_id, is_primary=True).first()
-                    if existing_primary:
-                        existing_primary.is_primary = False
-                        session.add(existing_primary)
+            if is_primary:
+                existing_primary = session.query(UserWallet).filter_by(user_id=user_id, is_primary=True).first()
+                if existing_primary:
+                    existing_primary.is_primary = False
+                    session.add(existing_primary)
 
-                new_wallet = UserWallet(
-                    user_id=user_id,
-                    public_address=public_address,
-                    encrypted_private_key=encrypted_private_key,
-                    blockchain_network=blockchain_network,
-                    is_primary=is_primary
-                )
-                session.add(new_wallet)
-                session.flush()
-                logger.info(f"UserService: Linked wallet {public_address} to user {user_id}.")
-                return True, "Wallet linked successfully."
-            except IntegrityError:
-                logger.warning(f"UserService: Wallet {public_address} already linked to user {user_id}.")
-                return False, "Wallet already linked."
-            except Exception as e:
-                logger.exception(f"UserService: Error linking wallet {public_address} to user {user_id}.")
-                return False, f"Internal error: {e}"
+            # Decode base64 string to bytes before saving
+            encrypted_key_bytes = base64.b64decode(encrypted_private_key)
+
+            new_wallet = UserWallet(
+                user_id=user_id,
+                public_address=public_address,
+                encrypted_private_key=encrypted_key_bytes,
+                blockchain_network=blockchain_network,
+                is_primary=is_primary
+            )
+            session.add(new_wallet)
+            session.flush()
+            logger.info(f"UserService: Linked wallet {public_address} to user {user_id}.")
+            return True, "Wallet linked successfully."
+        except IntegrityError:
+            logger.warning(f"UserService: Wallet {public_address} already linked to user {user_id}.")
+            return False, "Wallet already linked."
+        except Exception as e:
+            logger.exception(f"UserService: Error linking wallet {public_address} to user {user_id}.")
+            return False, f"Internal error: {e}"
 
     def get_user_wallets(self, user_id: UUID) -> List[Dict[str, Any]]:
         """Get all wallets linked to the user."""

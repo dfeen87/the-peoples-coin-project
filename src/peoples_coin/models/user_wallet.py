@@ -12,7 +12,7 @@ class UserWallet(db.Model):
     public_address = Column(String(42), unique=True, nullable=False)
     blockchain_network = Column(String(50), nullable=False, default='Ethereum Mainnet')
     is_primary = Column(Boolean, nullable=False, default=False)
-    encrypted_data = Column(LargeBinary, nullable=True)
+    encrypted_private_key = Column(LargeBinary, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
