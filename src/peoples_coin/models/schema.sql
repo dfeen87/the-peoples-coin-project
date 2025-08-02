@@ -374,3 +374,68 @@ CREATE TABLE content_reports (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 CREATE TRIGGER update_content_reports_updated_at BEFORE UPDATE ON content_reports FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+
+-- Enable extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Update trigger function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- Chain Blocks Table (Strict & Safe Version)
+-- =========================================
+CREATE TABLE chain_blocks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+    -- Core blockchain properties
+    height INTEGER NOT NULL UNIQUE CHECK (height >= 0),
+
+    -- Hashes stored as binary (BYTEA), always 32 bytes (SHA-256)
+    previous_hash BYTEA NULL,
+    current_hash BYTEA NOT NULL UNIQUE,
+
+    -- Metadata
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),  -- Block's own timestamp
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), -- When inserted into DB
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    miner VARCHAR(64) NULL,
+
+    -- Summary information for API efficiency
+    tx_count INTEGER NOT NULL DEFAULT 0 CHECK (tx_count >= 0),
+    goodwill_actions_count INTEGER NOT NULL DEFAULT 0 CHECK (goodwill_actions_count >= 0),
+    proposals_count INTEGER NOT NULL DEFAULT 0 CHECK (proposals_count >= 0),
+    ledger_total_amount NUMERIC(20, 8) NOT NULL DEFAULT 0.0,
+
+    -- Optional: JSON summary for quick API retrieval
+    block_summary JSONB NULL DEFAULT '{}'::jsonb,
+
+    -- Data integrity check for hashes (SHA-256 → 32 bytes)
+    CONSTRAINT check_hash_length
+        CHECK (octet_length(current_hash) = 32 AND (previous_hash IS NULL OR octet_length(previous_hash) = 32)),
+
+    -- Foreign key linking to previous block (must match format exactly)
+    CONSTRAINT fk_previous_hash
+        FOREIGN KEY (previous_hash)
+        REFERENCES chain_blocks (current_hash)
+        ON DELETE SET NULL
+);
+
+-- Indexes for fast lookups
+CREATE INDEX IF NOT EXISTS idx_chain_blocks_height ON chain_blocks(height);
+CREATE INDEX IF NOT EXISTS idx_chain_blocks_current_hash ON chain_blocks(current_hash);
+CREATE INDEX IF NOT EXISTS idx_chain_blocks_timestamp ON chain_blocks(timestamp);
+CREATE INDEX IF NOT EXISTS idx_chain_blocks_miner ON chain_blocks(miner);
+
+-- Trigger to automatically update updated_at
+CREATE TRIGGER update_chain_blocks_updated_at
+BEFORE UPDATE ON chain_blocks
+FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
