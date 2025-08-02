@@ -8,12 +8,7 @@ class UserWallet(db.Model):
     __tablename__ = 'user_wallets'
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(
-        PG_UUID(as_uuid=True),
-        ForeignKey('user_accounts.id', ondelete='CASCADE'),
-        nullable=False,
-        index=True
-    )
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey('user_accounts.id', ondelete='CASCADE'), nullable=False, index=True)
     public_address = Column(String(42), unique=True, nullable=False)
     blockchain_network = Column(String(50), nullable=False, default='Ethereum Mainnet')
     is_primary = Column(Boolean, nullable=False, default=False)
@@ -21,16 +16,11 @@ class UserWallet(db.Model):
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
-    # Relationship back to UserAccount
     user = relationship("UserAccount", back_populates="user_wallets")
 
     def to_dict(self):
-        """Converts UserWallet object to a dictionary for JSON serialization.
-        Excludes sensitive encrypted_private_key field.
-        """
         return {
             "id": str(self.id),
-            "user_id": str(self.user_id),
             "public_address": self.public_address,
             "blockchain_network": self.blockchain_network,
             "is_primary": self.is_primary,
