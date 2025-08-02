@@ -25,20 +25,23 @@ def create_app():
         },
     )
 
-    # Setup CORS with specific allowed origins
+    # --- UPDATED CORS CONFIGURATION ---
+    # Define the list of allowed origins
+    allowed_origins = [
+        "https://brightacts.com",
+        "https://www.brightacts.com",
+        "https://brightacts-frontend-50f58.web.app",      # Added Firebase URL
+        "https://brightacts-frontend-50f58.firebaseapp.com", # Added Firebase URL
+    ]
+
+    # Dynamically add localhost for development, matching any port
+    # This is more flexible than hardcoding a single port like 3000
     CORS(
         app,
-        resources={
-            r"/*": {
-                "origins": [
-                    "https://brightacts.com",
-                    "https://www.brightacts.com",
-                    "http://localhost:3000",
-                ]
-            }
-        },
+        origins=allowed_origins + [r"http://localhost:\d+"], # Use a regex for localhost
         supports_credentials=True,
     )
+    # ------------------------------------
 
     # Setup logging
     logging.basicConfig(level=logging.INFO)
@@ -63,4 +66,3 @@ def create_app():
         return {"status": "ok"}, 200
 
     return app
-

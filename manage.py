@@ -1,15 +1,14 @@
-<<<<<<< HEAD
-import sys
 import os
+import sys
+from flask.cli import FlaskGroup
+from flask_migrate import Migrate
 
-# Add the 'src' directory to sys.path so 'peoples_coin' module can be found
+# This line adds your 'src' folder to the Python path
+# so it can find your 'peoples_coin' code.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 
-=======
->>>>>>> 36760cc (Initial commit of local project to new repository)
+# Now we can import your app from the peoples_coin module
 from peoples_coin import create_app, db
-from flask_migrate import Migrate
-from flask.cli import FlaskGroup
 
 app = create_app()
 migrate = Migrate(app, db)
@@ -17,7 +16,3 @@ cli = FlaskGroup(app)
 
 if __name__ == '__main__':
     cli()
-<<<<<<< HEAD
-
-=======
->>>>>>> 36760cc (Initial commit of local project to new repository)
