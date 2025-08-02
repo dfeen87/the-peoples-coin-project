@@ -1,6 +1,8 @@
 # src/peoples_coin/routes/auth.py
 import http
+import secrets
 from flask import Blueprint, request, jsonify, g
+from werkzeug.security import check_password_hash, generate_password_hash
 from peoples_coin.models.db_utils import get_session_scope
 from peoples_coin.models.models import ApiKey, UserAccount
 from peoples_coin.extensions import db
@@ -10,49 +12,99 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 KEY_ERROR = "error"
 KEY_MESSAGE = "message"
 
+# ---------------------------
+# Create API Key
+# ---------------------------
+@auth_bp.route("/create-api-key", methods=["POST"])
+def create_api_key():
+    if not request.is_json:
+        return jsonify({KEY_ERROR: "Content-Type must be application/json"}), http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE
 
+    data = request.get_json()
+    user_id = data.get("user_id")
+    if not user_id:
+        return jsonify({KEY_ERROR: "Missing 'user_id' in request body"}), http.HTTPStatus.BAD_REQUEST
+
+    with get_session_scope(db) as session:
+        user = session.query(UserAccount).filter_by(id=user_id).first()
+        if not user:
+            return jsonify({KEY_ERROR: f"User with user_id '{user_id}' not found"}), http.HTTPStatus.NOT_FOUND
+
+        new_key = secrets.token_urlsafe(30)
+        api_key_obj = ApiKey(key=new_key, user_id=user.id)
+        session.add(api_key_obj)
+        session.flush()
+
+        return jsonify({
+            KEY_MESSAGE: "API key created successfully",
+            "api_key": new_key
+        }), http.HTTPStatus.CREATED
+
+# ---------------------------
+# Sign-in using email/password
+# ---------------------------
+@auth_bp.route("/signin", methods=["POST"])
+def signin():
+    if not request.is_json:
+        return jsonify({KEY_ERROR: "Content-Type must be application/json"}), http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({KEY_ERROR: "Email and password are required"}), http.HTTPStatus.BAD_REQUEST
+
+    with get_session_scope(db) as session:
+        user = session.query(UserAccount).filter_by(email=email).first()
+        if not user:
+            return jsonify({KEY_ERROR: "Invalid email or password"}), http.HTTPStatus.UNAUTHORIZED
+
+        if not user.password_hash or not check_password_hash(user.password_hash, password):
+            return jsonify({KEY_ERROR: "Invalid email or password"}), http.HTTPStatus.UNAUTHORIZED
+
+        # Return user info
+        return jsonify({
+            KEY_MESSAGE: "Sign-in successful",
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "username": user.username,
+                "balance": str(user.balance),
+                "goodwill_coins": user.goodwill_coins,
+            }
+        }), http.HTTPStatus.OK
+
+# ---------------------------
+# Get Current Authenticated User (Auto-create if missing)
+# ---------------------------
 @auth_bp.route("/users/me", methods=["GET"])
 @require_firebase_token
 def get_current_user():
-    """Return the currently authenticated user's profile."""
-    user = g.user
-    if not user:
-        return jsonify({KEY_ERROR: "User not found"}), http.HTTPStatus.NOT_FOUND
-
-    user_profile = {
-        "id": str(user.id),
-        "name": user.username,
-        "email": user.email,
-        "balance": str(user.balance),
-        "goodwill_coins": user.goodwill_coins,
-    }
-    return jsonify(user_profile), http.HTTPStatus.OK
-
-
-@auth_bp.route("/users/<firebase_uid>", methods=["GET"])
-def get_user_by_uid(firebase_uid):
-    """Get a user by Firebase UID, auto-create if missing."""
+    """Returns the authenticated user's profile from DB. Creates DB record if missing."""
     with get_session_scope(db) as session:
-        user = session.query(UserAccount).filter_by(firebase_uid=firebase_uid).first()
+        # Try to find user in DB by Firebase UID
+        user = session.query(UserAccount).filter_by(firebase_uid=g.user.firebase_uid).first()
 
+        # Auto-create DB record if not found
         if not user:
-            # Create a minimal placeholder user
             user = UserAccount(
-                firebase_uid=firebase_uid,
-                email=None,
-                username=None,
+                firebase_uid=g.user.firebase_uid,
+                email=g.user.email,
+                username=g.user.username or g.user.email.split("@")[0],
+                password_hash=generate_password_hash(secrets.token_hex(8)),  # Random internal password
                 balance=0,
                 goodwill_coins=0
             )
             session.add(user)
             session.flush()
 
-        user_profile = {
+        # Return full user profile
+        return jsonify({
             "id": str(user.id),
-            "name": user.username,
             "email": user.email,
+            "username": user.username,
             "balance": str(user.balance),
-            "goodwill_coins": user.goodwill_coins,
-        }
-        return jsonify(user_profile), http.HTTPStatus.OK
+            "goodwill_coins": user.goodwill_coins
+        }), http.HTTPStatus.OK
 
