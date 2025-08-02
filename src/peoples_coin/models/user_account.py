@@ -1,9 +1,8 @@
 import uuid
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID # Import PG_UUID
-from sqlalchemy import Column, String, Boolean, ForeignKey, LargeBinary, DateTime, func, Text, Numeric, Integer # Ensure all necessary types and func are imported
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy import Column, String, Integer, Text, DateTime, Numeric, func
 from sqlalchemy.orm import relationship
 from peoples_coin.extensions import db
-# REMOVED: from werkzeug.security import generate_password_hash, check_password_hash # No longer needed if no password_hash column
 
 class UserAccount(db.Model):
     __tablename__ = 'user_accounts'
@@ -19,18 +18,11 @@ class UserAccount(db.Model):
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
-    # REMOVED: password_hash column to match your provided DDL
-    # password_hash = Column(Text, nullable=False, default='')
-
     # Relationships
     user_wallets = relationship("UserWallet", back_populates="user", cascade="all, delete-orphan")
 
-    # REMOVED: set_password and check_password methods as password_hash is removed
-    # def set_password(self, password: str):
-    #     self.password_hash = generate_password_hash(password)
-
-    # def check_password(self, password: str) -> bool:
-    #     return check_password_hash(self.password_hash, password)
+    # Add this line for the API keys relationship:
+    api_keys = relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
 
     def to_dict(self):
         """Converts UserAccount object to a dictionary for JSON serialization."""
@@ -46,3 +38,4 @@ class UserAccount(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+

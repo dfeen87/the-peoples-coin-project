@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Tuple, Dict
 
 from peoples_coin.models.db_utils import get_session_scope
-from peoples_coin.models.models import GoodwillAction
+from peoples_coin.models.goodwill_action import GoodwillAction
 from peoples_coin.ailee.ailee_monitor import AILEE_Monitor # Assuming this class exists
 from peoples_coin.config import Config
 

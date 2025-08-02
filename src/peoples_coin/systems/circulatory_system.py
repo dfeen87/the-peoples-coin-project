@@ -12,7 +12,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from peoples_coin.utils.auth import require_api_key # Use our specific, secure decorator
 from peoples_coin.models.db_utils import get_session_scope
-from peoples_coin.models.models import GoodwillAction, UserAccount, LedgerEntry, UserWallet
+from peoples_coin.models.models.goodwill_action import GoodwillAction, UserAccount, LedgerEntry, UserWallet
 from peoples_coin.consensus import Consensus # Assuming Consensus is a class defined elsewhere
 from peoples_coin.extensions import db # Import db from extensions
 

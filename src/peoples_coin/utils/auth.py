@@ -1,12 +1,22 @@
 # src/peoples_coin/utils/auth.py
+
 import http
 import logging
 from functools import wraps
 from flask import request, jsonify, g
-from firebase_admin import auth
+from firebase_admin import auth as firebase_auth
+from sqlalchemy import func
+
+from peoples_coin.extensions import db
+from peoples_coin.models.models import ApiKey
 
 logger = logging.getLogger(__name__)
 KEY_ERROR = "error"
+
+
+# ------------------------------------------------------------------------------
+# Firebase Auth Support
+# ------------------------------------------------------------------------------
 
 class FirebaseUser:
     """Lightweight object to hold Firebase-authenticated user info."""
@@ -14,6 +24,7 @@ class FirebaseUser:
         self.firebase_uid = uid
         self.email = email
         self.username = username
+
 
 def require_firebase_token(f):
     """Decorator to protect routes with a Firebase ID token."""
@@ -26,7 +37,7 @@ def require_firebase_token(f):
         id_token = auth_header.split("Bearer ")[1]
 
         try:
-            decoded_token = auth.verify_id_token(id_token)
+            decoded_token = firebase_auth.verify_id_token(id_token)
             uid = decoded_token.get("uid")
             email = decoded_token.get("email")
             display_name = decoded_token.get("name")
@@ -44,6 +55,40 @@ def require_firebase_token(f):
         except Exception as e:
             logger.error(f"Firebase token verification failed: {e}")
             return jsonify({KEY_ERROR: "Invalid, expired, or revoked token"}), http.HTTPStatus.UNAUTHORIZED
+
+        return f(*args, **kwargs)
+    return decorated
+
+
+# ------------------------------------------------------------------------------
+# API Key Auth Support
+# ------------------------------------------------------------------------------
+
+def require_api_key(f):
+    """Decorator to require a valid API key via 'X-API-Key' header."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        api_key = request.headers.get("X-API-Key")
+        if not api_key:
+            return jsonify({KEY_ERROR: "API key missing"}), http.HTTPStatus.UNAUTHORIZED
+
+        try:
+            # Look up the API key in the database
+            key_obj = db.session.query(ApiKey).filter_by(key=api_key).first()
+
+            if not key_obj:
+                return jsonify({KEY_ERROR: "Invalid API key"}), http.HTTPStatus.FORBIDDEN
+
+            # Check expiration
+            if key_obj.expires_at and key_obj.expires_at < func.now():
+                return jsonify({KEY_ERROR: "API key expired"}), http.HTTPStatus.FORBIDDEN
+
+            # Attach the API key's user to g.api_user for downstream use
+            g.api_user = key_obj.user
+
+        except Exception as e:
+            logger.error(f"API key validation failed: {e}")
+            return jsonify({KEY_ERROR: "Internal authentication error"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
         return f(*args, **kwargs)
     return decorated
