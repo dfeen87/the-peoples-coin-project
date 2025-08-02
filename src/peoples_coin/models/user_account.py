@@ -20,13 +20,11 @@ class UserAccount(db.Model):
 
     # Relationships
     user_wallets = relationship("UserWallet", back_populates="user", cascade="all, delete-orphan")
-
-    # Add this line for the API keys relationship:
     api_keys = relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
 
-    def to_dict(self):
+    def to_dict(self, include_wallets: bool = True):
         """Converts UserAccount object to a dictionary for JSON serialization."""
-        return {
+        user_data = {
             "id": str(self.id),
             "firebase_uid": self.firebase_uid,
             "email": self.email,
@@ -36,6 +34,12 @@ class UserAccount(db.Model):
             "bio": self.bio,
             "profile_image_url": self.profile_image_url,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
+
+        # Optionally include wallets
+        if include_wallets:
+            user_data["wallets"] = [wallet.to_dict() for wallet in self.user_wallets]
+
+        return user_data
 
