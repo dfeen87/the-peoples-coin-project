@@ -3,9 +3,8 @@ import logging
 from functools import wraps
 
 from flask import Blueprint, request, jsonify, g
-from flask_cors import CORS
 from pydantic import BaseModel, ValidationError, constr
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.exc import IntegrityError
 
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token
@@ -16,35 +15,44 @@ logger = logging.getLogger(__name__)
 # --- Blueprint Setup ---
 user_api_bp = Blueprint("user_api", __name__)
 
-# --- CORS Configuration ---
-CORS(
-    user_api_bp,
-    resources={r"/*": {"origins": ["https://brightacts.com", "http://localhost:3000"]}},
-    supports_credentials=True,
-)
 
 # --- Pydantic Schemas ---
-
 class WalletRegistrationSchema(BaseModel):
     username: constr(strip_whitespace=True, min_length=3, max_length=32)
     public_key: str
     encrypted_private_key: str
-    blockchain_network: constr(strip_whitespace=True, min_length=1)  # added if you want this field
+    blockchain_network: constr(strip_whitespace=True, min_length=1)
 
 class UserCreateSchema(BaseModel):
     firebase_uid: constr(strip_whitespace=True, min_length=1)
     email: constr(strip_whitespace=True, min_length=5)
     username: constr(strip_whitespace=True, min_length=3, max_length=32)
 
+
 # --- Routes ---
 
-@user_api_bp.route("/profile", methods=["GET", "OPTIONS"])
+# --- THIS IS THE MISSING ENDPOINT ---
+@user_api_bp.route("/users/username-check/<username>", methods=["GET"])
+def username_check(username):
+    """Checks if a username is already taken."""
+    try:
+        # Query the database to see if a user with this username exists
+        user_exists = db.session.query(UserAccount).filter_by(username=username).first()
+        
+        # If user_exists is None, the username is available
+        is_available = not user_exists
+        
+        return jsonify(available=is_available), http.HTTPStatus.OK
+        
+    except Exception as e:
+        logger.error(f"Error checking username '{username}': {e}", exc_info=True)
+        return jsonify(error="An internal server error occurred."), http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+@user_api_bp.route("/profile", methods=["GET"])
 @require_firebase_token
 def get_user_profile():
     """Returns the authenticated user's profile information including wallets."""
-    if request.method == "OPTIONS":
-        return jsonify({}), http.HTTPStatus.OK
-
     user = g.user
     if not user:
         return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
@@ -57,16 +65,13 @@ def get_user_profile():
         return jsonify(error="Failed to load profile"), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@user_api_bp.route("/users/register-wallet", methods=["POST", "OPTIONS"])
+@user_api_bp.route("/users/register-wallet", methods=["POST"])
 @require_firebase_token
 def register_user_wallet():
     """
     Register a new UserAccount and associated UserWallet.
     Firebase auth required.
     """
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-
     firebase_user = g.firebase_user
     logger.info(f"Registering wallet for Firebase UID: {firebase_user.get('uid')}")
 
@@ -81,13 +86,11 @@ def register_user_wallet():
             return jsonify(error="Firebase user email is required"), http.HTTPStatus.BAD_REQUEST
 
         # Check if user already exists by email or firebase_uid
-        existing_user_by_email = db.session.query(UserAccount).filter_by(email=firebase_user['email']).first()
-        if existing_user_by_email:
-            return jsonify(error="User with this email already exists."), http.HTTPStatus.CONFLICT
-
-        existing_user_by_uid = db.session.query(UserAccount).filter_by(firebase_uid=firebase_user['uid']).first()
-        if existing_user_by_uid:
-            return jsonify(error="User with this Firebase UID already exists."), http.HTTPStatus.CONFLICT
+        existing_user = db.session.query(UserAccount).filter(
+            (UserAccount.email == firebase_user['email']) | (UserAccount.firebase_uid == firebase_user['uid'])
+        ).first()
+        if existing_user:
+            return jsonify(error="User with this email or Firebase UID already exists."), http.HTTPStatus.CONFLICT
 
         # Check if wallet public address already exists
         existing_wallet = db.session.query(UserWallet).filter_by(public_address=validated_data.public_key).first()
@@ -100,13 +103,13 @@ def register_user_wallet():
             username=validated_data.username
         )
         db.session.add(new_user)
-        db.session.flush()  # flush to get new_user.id
+        db.session.flush()
 
         new_wallet = UserWallet(
             user_id=new_user.id,
             public_address=validated_data.public_key,
             encrypted_private_key=validated_data.encrypted_private_key,
-            blockchain_network=validated_data.blockchain_network,  # assuming your model has this
+            blockchain_network=validated_data.blockchain_network,
             is_primary=True
         )
         db.session.add(new_wallet)
@@ -133,40 +136,12 @@ def register_user_wallet():
         return jsonify(error="An internal server error occurred."), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@user_api_bp.route("/users", methods=["POST", "OPTIONS"])
+@user_api_bp.route("/users", methods=["POST"])
 @require_firebase_token
 def create_user():
     """
     Endpoint to create a new user.
     Redirects to register-wallet endpoint logic.
     """
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-
-    # Proxy to register_user_wallet for now
+    # This is a simple proxy; you might want more distinct logic later.
     return register_user_wallet()
-
-
-@user_api_bp.route("/profile", methods=["GET", "OPTIONS"])
-@require_firebase_token
-def get_user_profile():
-    """Returns the authenticated user's profile information including wallets."""
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-
-    user = g.user
-    if not user:
-        return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
-
-    wallets = db.session.query(UserWallet).filter_by(user_id=user.id).all()
-    user_data = user.to_dict()
-    user_data['wallets'] = [wallet.to_dict() for wallet in wallets]
-
-    return jsonify(user_data), http.HTTPStatus.OK
-
-
-# --- Helper to register blueprint ---
-
-def register_routes(app):
-    app.register_blueprint(user_api_bp, url_prefix="/api")
-
