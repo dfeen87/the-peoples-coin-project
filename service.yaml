@@ -22,7 +22,7 @@ spec:
     spec:
       containerConcurrency: 80
       timeoutSeconds: 600 # Overall request timeout for a single request
-      serviceAccountName: peoples-coin-sa@heroic-tide-428421-q7.iam.gserviceaccount.com
+      serviceAccountName: peoples-coin-sa@heroic-tide-428421-q7.iam.gserviceaccount.com 
       containers:
       - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest
         ports:
