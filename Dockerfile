@@ -8,15 +8,18 @@ ENV PYTHONUNBUFFERED=1
 # Set the working directory
 WORKDIR /app
 
-# Copy and install requirements
+# Explicitly copy only the necessary files
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY wsgi.py .
+COPY peoples_coin/ ./peoples_coin/
+# If alembic is needed for runtime, uncomment the next line
+# COPY alembic/ ./alembic/
 
-# Copy all project code from the clean GitHub repo
-COPY . .
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the port
 EXPOSE 8080
 
-# The simple command for the flat structure
+# Run the application
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "wsgi:app"]
