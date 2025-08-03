@@ -9,7 +9,7 @@ DB_URI = os.environ.get(
     "DB_URI",
     "postgresql+psycopg2://user:password@/peoples-coin-cluster-final"  # Replace with actual connection string if needed
 )
-REDIS_URL = os.environ.get("REDIS_URL", "redis://10.128.0.4:6379/0")
+REDIS_URL = os.environ.get("REDIS_URL", "redis://10.128.0.12:6379/0")  # Updated Redis IP here
 CONTROLLER_COOLDOWN_MINUTES = int(os.environ.get("CONTROLLER_COOLDOWN_MINUTES", 10))
 
 # --- Setup ---
@@ -78,11 +78,6 @@ class SystemController:
             return []
 
         actions_taken = []
-
-        # Your management logic here
-        # For example, trigger autoscaling via another mechanism,
-        # send alerts, or update Redis flags.
-        # Since no Kubernetes, this part is mostly placeholders:
 
         if recommendations.get("scale_up"):
             logger.info("🔼 Triggering scale-up action (placeholder).")

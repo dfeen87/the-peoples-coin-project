@@ -9,7 +9,7 @@ metadata:
     run.googleapis.com/client-name: gcloud
     run.googleapis.com/client-version: 531.0.0 # Or your current gcloud version
   labels:
-    cloud.googleapis.com/location: us-east4
+    cloud.googleapis.com/location: us-central1
     run.googleapis.com/satisfiesPzs: 'true'
 spec:
   template:
@@ -17,14 +17,14 @@ spec:
       annotations:
         autoscaling.knative.dev/maxScale: '20'
         run.googleapis.com/startup-cpu-boost: 'true'
-        run.googleapis.com/vpc-access-connector: pc-backend-connector
+        run.googleapis.com/vpc-access-connector: peoples-coin-connector
         run.googleapis.com/vpc-access-egress: private-ranges-only
     spec:
       containerConcurrency: 80
       timeoutSeconds: 600 # Overall request timeout for a single request
       serviceAccountName: peoples-coin-sa@heroic-tide-428421-q7.iam.gserviceaccount.com
       containers:
-      - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest # Ensure this is your latest image
+      - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest
         ports:
         - containerPort: 8080
           name: http1
@@ -32,19 +32,19 @@ spec:
         - name: FIREBASE_CREDENTIALS_PATH
           value: /app/firebase-admin-sdk-key.json
         - name: REDIS_URL
-          value: redis://10.150.0.37:6379/0 # <<< Ensure this is your correct Redis IP
+          value: redis://10.128.0.12:6379/0 # <<< UPDATED to your new Redis
         resources:
           limits:
-            cpu: '1'
+            cpu: '2' # You mentioned 2 vCPU now
             memory: 4Gi
         startupProbe:
           httpGet:
-            path: / # <<< CRITICAL CHANGE: Probe path is now '/'
+            path: /
             port: 8080
-          timeoutSeconds: 30     # Must be less than periodSeconds
-          periodSeconds: 60      # How often to probe
-          failureThreshold: 10   # Number of consecutive failures (10 * 60s = 600s total startup time)
-          initialDelaySeconds: 0 # Start probing immediately
+          timeoutSeconds: 30
+          periodSeconds: 60
+          failureThreshold: 10
+          initialDelaySeconds: 0
         volumeMounts:
         - mountPath: /app
           name: firebase-backend-service-account-bap-lis-woc

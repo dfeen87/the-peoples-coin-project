@@ -38,11 +38,10 @@ class Config:
     # --- Redis & Rate Limiting ---
 
     # Use explicit host and port for Redis so you can override with your VPC Redis IP easily
-    REDIS_HOST = os.environ.get("REDIS_HOST", "10.128.0.4")
+    REDIS_HOST = os.environ.get("REDIS_HOST", "10.128.0.12")
     REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
     REDIS_DB = int(os.environ.get("REDIS_DB", 0))
 
-    # Construct Redis URL dynamically from host/port/db
     REDIS_URL = os.environ.get("REDIS_URL") or f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
     # Rate limiting config using Redis as backend storage

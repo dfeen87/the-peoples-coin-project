@@ -2,8 +2,8 @@ from celery import Celery
 import os
 
 # Load broker and backend URLs from environment variables with sensible defaults
-broker_url = os.getenv('CELERY_BROKER_URL', os.getenv('REDIS_URL', 'redis://10.128.0.4:6379/0'))
-backend_url = os.getenv('CELERY_RESULT_BACKEND', os.getenv('REDIS_URL', 'redis://10.128.0.4.6379/0'))
+broker_url = os.getenv('CELERY_BROKER_URL', os.getenv('REDIS_URL', 'redis://10.128.0.12:6379/0'))
+backend_url = os.getenv('CELERY_RESULT_BACKEND', os.getenv('REDIS_URL', 'redis://10.128.0.12:6379/0'))
 
 celery = Celery(
     'peoples_coin',
