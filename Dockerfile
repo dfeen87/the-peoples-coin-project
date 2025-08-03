@@ -19,4 +19,4 @@ COPY . .
 EXPOSE 8080
 
 # The simple command for the flat structure
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "peoples_coin.wsgi:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "wsgi:app"]
