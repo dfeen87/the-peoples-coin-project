@@ -27,3 +27,6 @@ steps:
 # This section must have zero indentation and a colon
 images:
 - 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA' 
+
+options:
+  logging: CLOUD_LOGGING_ONLY
