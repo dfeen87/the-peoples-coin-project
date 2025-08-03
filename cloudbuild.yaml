@@ -1,8 +1,9 @@
 steps:
 # 1. Build the container image
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'Build'
-  args: ['build', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA', '.']
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: 'List Files'
+  entrypoint: 'ls'
+  args: ['-la']
 
 # 2. Push the container image to the registry
 - name: 'gcr.io/cloud-builders/docker'
