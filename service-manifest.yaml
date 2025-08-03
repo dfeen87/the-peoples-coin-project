@@ -1,0 +1,118 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/client-name: gcloud
+    run.googleapis.com/client-version: 531.0.0
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/operation-id: ab54da61-9834-4529-af62-fdf799dd7648
+    run.googleapis.com/urls: '["https://peoples-coin-service-105378934751.us-central1.run.app","https://peoples-coin-service-caah4w2jza-uc.a.run.app"]'
+    serving.knative.dev/creator: dfeen87@gmail.com
+    serving.knative.dev/lastModifier: dfeen87@gmail.com
+  creationTimestamp: '2025-07-26T17:41:37.138908Z'
+  generation: 127
+  labels:
+    cloud.googleapis.com/location: us-central1
+  name: peoples-coin-service
+  namespace: '105378934751'
+  resourceVersion: AAY7eR+5+vo
+  selfLink: /apis/serving.knative.dev/v1/namespaces/105378934751/services/peoples-coin-service
+  uid: 490265d5-71ac-431e-8a6f-8692ec7f3060
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '20'
+        autoscaling.knative.dev/minScale: '2'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 531.0.0
+        run.googleapis.com/execution-environment: gen2
+        run.googleapis.com/startup-cpu-boost: 'true'
+        run.googleapis.com/vpc-access-connector: projects/heroic-tide-428421-q7/locations/us-central1/connectors/peoples-coin-connector
+        run.googleapis.com/vpc-access-egress: private-ranges-only
+      labels:
+        client.knative.dev/nonce: zxqdrkmelr
+        run.googleapis.com/startupProbeType: Custom
+    spec:
+      containerConcurrency: 80
+      containers:
+      - env:
+        - name: FIREBASE_CREDENTIALS_PATH
+          value: /app/firebase-admin-sdk-key.json
+        - name: REDIS_URL
+          value: redis://10.128.0.12:6379/0
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: '1'
+              name: NEW_SECRET_KEY
+        image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest
+        name: peoples-coin-service-1
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1Gi
+        startupProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 60
+          timeoutSeconds: 30
+        volumeMounts:
+        - mountPath: /app
+          name: firebase-backend-service-account-bap-lis-woc
+      serviceAccountName: peoples-coin-sa@heroic-tide-428421-q7.iam.gserviceaccount.com
+      timeoutSeconds: 600
+      volumes:
+      - name: firebase-backend-service-account-bap-lis-woc
+        secret:
+          items:
+          - key: latest
+            path: firebase-admin-sdk-key.json
+          secretName: firebase-backend-service-account
+  traffic:
+  - latestRevision: true
+    percent: 100
+status:
+  address:
+    url: https://peoples-coin-service-caah4w2jza-uc.a.run.app
+  conditions:
+  - lastTransitionTime: '2025-08-03T17:14:29.550386Z'
+    message: |-
+      Revision 'peoples-coin-service-00126-dlp' is not ready and cannot serve traffic. The user-provided container failed the configured startup probe checks. Logs for this revision might contain more information.
+
+      Logs URL: https://console.cloud.google.com/logs/viewer?project=heroic-tide-428421-q7&resource=cloud_run_revision/service_name/peoples-coin-service/revision_name/peoples-coin-service-00126-dlp&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22peoples-coin-service%22%0Aresource.labels.revision_name%3D%22peoples-coin-service-00126-dlp%22 
+      For more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start
+    reason: HealthCheckContainerError
+    status: 'False'
+    type: Ready
+  - lastTransitionTime: '2025-08-03T17:14:29.539710Z'
+    message: |-
+      The user-provided container failed the configured startup probe checks. Logs for this revision might contain more information.
+
+      Logs URL: https://console.cloud.google.com/logs/viewer?project=heroic-tide-428421-q7&resource=cloud_run_revision/service_name/peoples-coin-service/revision_name/peoples-coin-service-00126-dlp&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22peoples-coin-service%22%0Aresource.labels.revision_name%3D%22peoples-coin-service-00126-dlp%22 
+      For more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start
+    status: 'True'
+    type: ConfigurationsReady
+  - lastTransitionTime: '2025-08-03T17:14:29.550386Z'
+    message: |-
+      Revision 'peoples-coin-service-00126-dlp' is not ready and cannot serve traffic. The user-provided container failed the configured startup probe checks. Logs for this revision might contain more information.
+
+      Logs URL: https://console.cloud.google.com/logs/viewer?project=heroic-tide-428421-q7&resource=cloud_run_revision/service_name/peoples-coin-service/revision_name/peoples-coin-service-00126-dlp&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22peoples-coin-service%22%0Aresource.labels.revision_name%3D%22peoples-coin-service-00126-dlp%22 
+      For more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start
+    reason: HealthCheckContainerError
+    status: 'False'
+    type: RoutesReady
+  latestCreatedRevisionName: peoples-coin-service-00126-dlp
+  latestReadyRevisionName: peoples-coin-service-00109-kxz
+  observedGeneration: 127
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: peoples-coin-service-00109-kxz
+  url: https://peoples-coin-service-caah4w2jza-uc.a.run.app
