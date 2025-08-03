@@ -2,44 +2,48 @@ import os
 import logging
 from flask import Flask
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
 
-# Initialize extensions globally
-db = SQLAlchemy()
+from peoples_coin.extensions import db, migrate, cors, limiter, swagger, make_celery
 
 def create_app():
-    # Configure logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     try:
-        # Create Flask app instance
         app = Flask(__name__, instance_relative_config=True)
 
-        # Load configuration
+        # Load config from environment or defaults
         app.config.from_mapping(
             SECRET_KEY=os.environ.get("SECRET_KEY", "a-strong-dev-secret-key"),
             SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL"),
             SQLALCHEMY_TRACK_MODIFICATIONS=False,
             SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping": True},
+
+            # Celery config example (adjust as needed)
+            CELERY_BROKER_URL=os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0"),
+            CELERY_RESULT_BACKEND=os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0"),
         )
         logger.info("✅ App configured.")
 
-        # Setup CORS
-        allowed_origins = [
+        # Initialize extensions with app
+        db.init_app(app)
+        migrate.init_app(app, db)
+        cors.init_app(app, origins=[
             "https://brightacts.com",
             "https://www.brightacts.com",
             "https://brightacts-frontend-50f58.web.app",
             "https://brightacts-frontend-50f58.firebaseapp.com",
-        ]
-        CORS(app, origins=allowed_origins + [r"http://localhost:\d+"], supports_credentials=True)
-        logger.info("✅ CORS configured.")
+            r"http://localhost:\d+",
+        ], supports_credentials=True)
+        limiter.init_app(app)
+        swagger.init_app(app)
+        logger.info("✅ Extensions initialized.")
 
-        # Initialize extensions
-        db.init_app(app)
-        logger.info("✅ Database initialized.")
+        # Initialize Celery app context binding
+        celery = make_celery(app)
+        logger.info("✅ Celery initialized.")
 
-        # Import and register blueprints
+        # Register blueprints
         from peoples_coin.routes import register_routes
         register_routes(app)
         logger.info("✅ Blueprints registered.")
@@ -54,5 +58,5 @@ def create_app():
 
     except Exception as e:
         logger.exception(f"🚨 CRITICAL ERROR DURING APP CREATION: {e}")
-        # Re-raise the exception to ensure the server process fails as expected
         raise
+
