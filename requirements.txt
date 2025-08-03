@@ -12,7 +12,7 @@ Flask-SQLAlchemy==3.1.1
 SQLAlchemy==2.0.41
 alembic==1.16.4
 Flask-Migrate==4.0.3
-psycopg2-binary==2.9.10
+psycopg2==2.9.10
 Flask-Cors==4.0.0
 
 # ======================

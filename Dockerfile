@@ -1,22 +1,18 @@
 # Use a slim Python image
 FROM python:3.11-slim
 
-# Set environment variables for Python
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Install system dependencies needed to build psycopg2 and other packages
+RUN apt-get update && apt-get install -y build-essential libpq-dev && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /app
 
-# Explicitly copy only the necessary files
+# Copy requirements file and install dependencies
 COPY requirements.txt .
-COPY wsgi.py .
-COPY peoples_coin/ ./peoples_coin/
-# If alembic is needed for runtime, uncomment the next line
-# COPY alembic/ ./alembic/
-
-# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of your application code
+COPY . .
 
 # Expose the port
 EXPOSE 8080
