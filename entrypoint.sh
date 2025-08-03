@@ -13,3 +13,4 @@
     python -m gunicorn -w 4 -b 0.0.0.0:$PORT peoples_coin.wsgi:app
 
     echo "--- Gunicorn exited ---" >&2
+

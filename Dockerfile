@@ -5,19 +5,21 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set the working directory in the container
+# Set the working directory
 WORKDIR /app
 
-# Copy requirements file first to leverage Docker's layer cache
+# Copy and install requirements
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all project code from your current directory into /app
-# The .dockerignore file will correctly exclude venv, etc.
+# Copy all your project files (including your entrypoint.sh)
 COPY . .
 
-# Expose the port the application will run on
+# Make your entrypoint script executable
+RUN chmod +x /app/entrypoint.sh
+
+# Expose the port (Cloud Run will provide the $PORT variable)
 EXPOSE 8080
 
-# The command to run your application, now with the correct path
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--chdir", "peoples-coin", "peoples_coin.wsgi:app"]
+# Set the entrypoint script as the startup command for the container
+ENTRYPOINT ["/app/entrypoint.sh"]
