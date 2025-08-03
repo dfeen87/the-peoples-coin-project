@@ -32,3 +32,4 @@ def health_check():
             results[name] = {"status": "unreachable", "detail": str(e)}
 
     return jsonify(results)
+

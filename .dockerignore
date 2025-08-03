@@ -1,19 +1,38 @@
-# === Python Bytecode and Artifacts ===
-__pycache__/
-*.py[cod]
-*.pyd
-*.so
-*.dll
+# Git
+.git
+.gitignore
 
-# === Virtual Environments ===
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose*.yml
+
+# === Python ===
+# Virtual Environments
 venv/
 env/
 ENV/
 .venv/
 
-# === Flask-specific ===
+# Bytecode and artifacts
+__pycache__/
+*.py[cod]
+*.so
+
+# C extensions
+*.pyd
+*.dll
+
+# Instance folders and local databases
 instance/
 *.db
+*.sqlite
+*.sqlite3
+
+# === Environment Files (Important) ===
+# Never copy local environment files into the image
+.env
+.env.*
 
 # === Configuration and Secrets ===
 secrets.*
@@ -21,36 +40,36 @@ secrets.*
 *.key
 *.crt
 
-# === Git ===
-.git/
-.gitignore
+# === Testing ===
+.coverage
+coverage.*
+htmlcov/
+pytest_cache/
+.pytest_cache/
 
-# === Logs and Output ===
+# === Node / Frontend ===
+node_modules/
+build/
+dist/
+*.map
+*.bundle.js
+
+# === Logs and Caches ===
 *.log
+*.log.*
 *.out
 *.err
 *.pid
-*.coverage
-coverage.*
 .cache/
-pytest_cache/
-
-# === Node / Frontend Artifacts ===
-node_modules/
-*.map
-*.bundle.js
-build/
-dist/
 
 # === Editor and OS Metadata ===
+# Mac
 .DS_Store
+# Windows
+Thumbs.db
+# Vim
 *.swp
 *.swo
 *.bak
+# General
 *.tmp
-
-# === Docker Build Files (Optional) ===
-Dockerfile
-docker-compose.yml
-docker-compose*.yml
-

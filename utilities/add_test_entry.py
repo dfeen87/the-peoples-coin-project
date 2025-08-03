@@ -13,3 +13,4 @@ entry = DataEntry(value="Test data", processed=False, created_at=datetime.utcnow
 session.add(entry)
 session.commit()
 print(f"Inserted DataEntry with id: {entry.id}")
+

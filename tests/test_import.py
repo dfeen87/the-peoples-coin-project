@@ -1,19 +1,21 @@
-# test_import.py
-import unittest
+# /Users/donfeeney/peoples_coin/test_import.py
+import sys
+import os
 
-# Assuming your main app is in 'run.py' and imports other modules
-# You might need to adjust this import based on your actual app's structure
-# from your_app_name import db, systems # Example if you define a main package
+# Ensure the project root is at the beginning of sys.path for running from outside
+project_root = "/Users/donfeeney/peoples_coin"
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-class TestImports(unittest.TestCase):
-    def test_can_import_modules(self):
-        # Basic test to ensure modules can be imported without errors
-        try:
-            import db.models
-            import systems.nervous_system
-            # Add other critical imports here
-        except ImportError as e:
-            self.fail(f"Could not import a module: {e}")
-
-if __name__ == '__main__':
-    unittest.main()
+try:
+    # Attempt to import the main run.py from the inner peoples_coin package
+    from peoples_coin.import run
+    print("Successfully imported peoples_coin.peoples_coin.run!")
+except ImportError as e:
+    print(f"ImportError encountered: {e}")
+    print("Please ensure your PYTHONPATH is not interfering and module caches are clear.")
+    print("\nSys path:")
+    for p in sys.path:
+        print(p)
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
