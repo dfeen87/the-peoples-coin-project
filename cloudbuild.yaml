@@ -1,35 +1,17 @@
-steps:
-# Step 1: Build the container image
-# This step builds the Docker image from the Dockerfile in the current directory.
-# The '-t' flag tags the image with the full Artifact Registry path.
-- name: 'gcr.io/cloud-builders/docker'
-  args: [
-    'build',
-    '-t',
-    'us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest',
-    '.'
-  ]
-
-# Step 2: Deploy to Cloud Run
-# This step uses the gcloud command to deploy the image we just built.
-# It pulls the image directly from the Artifact Registry path specified.
+# 3. Deploy the container image to Cloud Run
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  id: 'Deploy to Cloud Run'
   entrypoint: gcloud
-  args: [
-    'run', 'deploy', 'peoples-coin-service',
-    '--image', 'us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest',
-    '--region', 'us-central1',
-    '--platform', 'managed',
-    '--memory', '1Gi',
-    '--cpu', '1',
-    '--allow-unauthenticated'
-  ]
-
-# The 'images' key is the magic part. It tells Cloud Build to automatically
-# push the image we built in Step 1 to the Artifact Registry before Step 2 runs.
-images:
-- 'us-central1-docker.pkg.dev/heroic-tide-428421-q7/docker-repo/peoples-coin-service:latest'
-
-options:
-  logging: CLOUD_LOGGING_ONLY
+  args:
+    - 'run'
+    - 'deploy'
+    - 'peoples-coin-service'
+    - '--image=gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA'
+    - '--region=us-central1'
+    - '--platform=managed'
+    - '--allow-unauthenticated'
+    # THIS IS THE CRITICAL NEW LINE
+    - '--add-cloudsql-instances=heroic-tide-428421-q7:us-central1:peoples-coin-cluster-final'
+    # YOU MUST UPDATE YOUR DATABASE_URL TO THIS FORMAT
+    - '--set-env-vars=DATABASE_URL=postgresql+pg8000://postgres:NDfcIdlRk0@/brightacts?unix_socket=/cloudsql/heroic-tide-428421-q7:us-central1:peoples-coin-cluster-final'
 
