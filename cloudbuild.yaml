@@ -1,6 +1,17 @@
-# 3. Deploy the container image to Cloud Run
+steps:
+# 1. Build the container image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Build'
+  args: ['build', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA', '.']
+
+# 2. Push the container image to the registry
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Push'
+  args: ['push', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA']
+
+# 3. Deploy the new image to Cloud Run
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  id: 'Deploy to Cloud Run'
+  id: 'Deploy'
   entrypoint: gcloud
   args:
     - 'run'
@@ -10,8 +21,8 @@
     - '--region=us-central1'
     - '--platform=managed'
     - '--allow-unauthenticated'
-    # THIS IS THE CRITICAL NEW LINE
     - '--add-cloudsql-instances=heroic-tide-428421-q7:us-central1:peoples-coin-cluster-final'
-    # YOU MUST UPDATE YOUR DATABASE_URL TO THIS FORMAT
-    - '--set-env-vars=DATABASE_URL=postgresql+pg8000://postgres:NDfcIdlRk0@/brightacts?unix_socket=/cloudsql/heroic-tide-428421-q7:us-central1:peoples-coin-cluster-final'
+    - '--set-env-vars=DATABASE_URL=postgresql+pg8000://postgres:NDfcIdlRk0@/brightacts?unix_sock$
 
+images:
+- 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA'
