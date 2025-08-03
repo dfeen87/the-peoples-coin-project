@@ -13,11 +13,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy all project code from your current directory into /app
-# The .dockerignore file will now correctly exclude venv, etc.
+# The .dockerignore file will correctly exclude venv, etc.
 COPY . .
 
 # Expose the port the application will run on
 EXPOSE 8080
 
-# Run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "peoples_coin.wsgi:app"]
+# The command to run your application, now with the correct path
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--chdir", "peoples-coin", "peoples_coin.wsgi:app"]
