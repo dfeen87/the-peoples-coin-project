@@ -4,65 +4,55 @@ from flask import Flask
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 
-# Initialize extensions globally so they can be imported anywhere
+# Initialize extensions globally
 db = SQLAlchemy()
 
 def create_app():
-    # Use /tmp/instance to avoid permission errors (good for Cloud Run or containers)
-    instance_path = "/tmp/instance"
-    os.makedirs(instance_path, exist_ok=True)
-
-    # Create Flask app instance with writable instance_path
-    app = Flask(__name__, instance_path=instance_path)
-
-    # Load config from environment variables or use defaults
-    app.config.from_mapping(
-        SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL", "sqlite:///local.db"),
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret"),
-        SQLALCHEMY_ENGINE_OPTIONS={
-            "pool_pre_ping": True,  # Handle stale DB connections gracefully
-        },
-    )
-
-    # --- UPDATED CORS CONFIGURATION ---
-    # Define the list of allowed origins
-    allowed_origins = [
-        "https://brightacts.com",
-        "https://www.brightacts.com",
-        "https://brightacts-frontend-50f58.web.app",      # Added Firebase URL
-        "https://brightacts-frontend-50f58.firebaseapp.com", # Added Firebase URL
-    ]
-
-    # Dynamically add localhost for development, matching any port
-    # This is more flexible than hardcoding a single port like 3000
-    CORS(
-        app,
-        origins=allowed_origins + [r"http://localhost:\d+"], # Use a regex for localhost
-        supports_credentials=True,
-    )
-    # ------------------------------------
-
-    # Setup logging
+    # Configure logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info("✅ Flask app instance created and configured.")
 
-    # Initialize extensions with app
-    db.init_app(app)
-
-    # Import and register blueprints here
     try:
-        # Import the register_routes function and call it to register blueprints
+        # Create Flask app instance
+        app = Flask(__name__, instance_relative_config=True)
+
+        # Load configuration
+        app.config.from_mapping(
+            SECRET_KEY=os.environ.get("SECRET_KEY", "a-strong-dev-secret-key"),
+            SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL"),
+            SQLALCHEMY_TRACK_MODIFICATIONS=False,
+            SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping": True},
+        )
+        logger.info("✅ App configured.")
+
+        # Setup CORS
+        allowed_origins = [
+            "https://brightacts.com",
+            "https://www.brightacts.com",
+            "https://brightacts-frontend-50f58.web.app",
+            "https://brightacts-frontend-50f58.firebaseapp.com",
+        ]
+        CORS(app, origins=allowed_origins + [r"http://localhost:\d+"], supports_credentials=True)
+        logger.info("✅ CORS configured.")
+
+        # Initialize extensions
+        db.init_app(app)
+        logger.info("✅ Database initialized.")
+
+        # Import and register blueprints
         from peoples_coin.routes import register_routes
         register_routes(app)
         logger.info("✅ Blueprints registered.")
-    except ImportError as e:
-        logger.warning(f"⚠️ Failed to register blueprints. Reason: {e}")
 
-    # Health check endpoint
-    @app.route("/health")
-    def health():
-        return {"status": "ok"}, 200
+        # Health check endpoint
+        @app.route("/health")
+        def health():
+            return {"status": "ok"}, 200
 
-    return app
+        logger.info("🚀 Flask app created successfully!")
+        return app
+
+    except Exception as e:
+        logger.exception(f"🚨 CRITICAL ERROR DURING APP CREATION: {e}")
+        # Re-raise the exception to ensure the server process fails as expected
+        raise
