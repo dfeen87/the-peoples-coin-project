@@ -12,14 +12,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all your project files (including your entrypoint.sh)
+# Copy all project code from the clean GitHub repo
 COPY . .
 
-# Make your entrypoint script executable
-RUN chmod +x /app/entrypoint.sh
-
-# Expose the port (Cloud Run will provide the $PORT variable)
+# Expose the port
 EXPOSE 8080
 
-# Set the entrypoint script as the startup command for the container
-ENTRYPOINT ["/app/entrypoint.sh"]
+# The simple command for the flat structure
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "peoples_coin.wsgi:app"]
