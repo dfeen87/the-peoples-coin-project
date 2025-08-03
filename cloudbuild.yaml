@@ -22,7 +22,8 @@ steps:
     - '--platform=managed'
     - '--allow-unauthenticated'
     - '--add-cloudsql-instances=heroic-tide-428421-q7:us-central1:peoples-coin-cluster-final'
-    - '--set-env-vars=DATABASE_URL=postgresql+pg8000://postgres:NDfcIdlRk0@/brightacts?unix_sock$
+    - '--set-env-vars=DATABASE_URL=postgresql+pg8000://postgres:NDfcIdlRk0@/brightacts?unix_sock$
 
+# This section must have zero indentation
 images:
 - 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA'
