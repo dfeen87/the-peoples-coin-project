@@ -7,15 +7,16 @@ RUN apt-get update && apt-get install -y build-essential libpq-dev && rm -rf /va
 # Set the working directory
 WORKDIR /app
 
-# Copy requirements file and install dependencies
+# Explicitly copy ONLY the necessary files and folders
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY wsgi.py .
+COPY peoples_coin/ ./peoples_coin/
 
-# Copy the rest of your application code
-COPY . .
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the port
 EXPOSE 8080
 
-# The final command, now in shell form
-CMD exec gunicorn --bind 0.0.0.0:8080 --workers 2 wsgi:app
+# Run the application
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "wsgi:app"]
