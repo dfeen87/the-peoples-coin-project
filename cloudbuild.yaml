@@ -8,7 +8,7 @@ steps:
 # Step 1: Build the container image
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build'
-  args: ['build', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA', '.']
+  args: ['build', '--no-cache', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA', '.']
 
 # Step 2: Push the container image to the registry
 - name: 'gcr.io/cloud-builders/docker'
