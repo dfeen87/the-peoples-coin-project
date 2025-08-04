@@ -5,6 +5,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from peoples_coin.extensions import db
+from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 
 class Proposal(db.Model):
@@ -15,7 +16,7 @@ class Proposal(db.Model):
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
     status = Column(
-        ENUM('DRAFT', 'ACTIVE', 'CLOSED', 'REJECTED', name='proposal_status'),
+        EnumType('DRAFT', 'ACTIVE', 'CLOSED', 'REJECTED', name='proposal_status'),
         nullable=False,
         server_default='DRAFT'
     )
@@ -23,7 +24,7 @@ class Proposal(db.Model):
     vote_end_time = Column(DateTime(timezone=True), nullable=True)
     required_quorum = Column(Numeric(5, 2), nullable=False, default=0)
     proposal_type = Column(String(100), nullable=False)
-    details = Column(db.JSON().with_variant(db.JSONB, "postgresql"), nullable=True, server_default=text("'{}'::jsonb"))
+    details = Column(JSONType, nullable=True, server_default=text("'{}'::jsonb"))
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
@@ -44,4 +45,3 @@ class Proposal(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
-

@@ -5,6 +5,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from peoples_coin.extensions import db
+from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 
 class LedgerEntry(db.Model):
@@ -21,7 +22,7 @@ class LedgerEntry(db.Model):
     block_number = Column(BigInteger, nullable=False)
     block_timestamp = Column(DateTime(timezone=True), nullable=False)
     status = Column(String(20), nullable=False, default='CONFIRMED')
-    meta_data = Column(db.JSON().with_variant(db.JSONB, "postgresql"), nullable=True, server_default=text("'{}'::jsonb"))
+    meta_data = Column(JSONType, nullable=True, server_default=text("'{}'::jsonb"))
     initiator_user_id = Column(PG_UUID(as_uuid=True), ForeignKey("user_accounts.id"), nullable=True)
     receiver_user_id = Column(PG_UUID(as_uuid=True), ForeignKey("user_accounts.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
@@ -50,4 +51,3 @@ class LedgerEntry(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
-

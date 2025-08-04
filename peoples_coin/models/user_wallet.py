@@ -3,6 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy import Column, String, Boolean, ForeignKey, Text, DateTime, func
 from sqlalchemy.orm import relationship
 from peoples_coin.extensions import db
+from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 class UserWallet(db.Model):
     __tablename__ = 'user_wallets'
@@ -27,4 +28,3 @@ class UserWallet(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
-

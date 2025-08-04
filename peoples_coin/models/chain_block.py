@@ -4,6 +4,8 @@ import uuid
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy import Column, Integer, LargeBinary, String, DateTime, Numeric, func, CheckConstraint, ForeignKey
 from peoples_coin.extensions import db
+from peoples_coin.db_types import JSONType, UUIDType, EnumType
+from peoples_coin.db_types import JSONB
 
 class ChainBlock(db.Model):
     __tablename__ = "chain_blocks"
@@ -54,4 +56,3 @@ class ChainBlock(db.Model):
             "ledger_total_amount": float(self.ledger_total_amount),
             "block_summary": self.block_summary or {},
         }
-

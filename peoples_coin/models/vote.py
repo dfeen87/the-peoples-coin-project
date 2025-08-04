@@ -5,6 +5,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from peoples_coin.extensions import db
+from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 
 class Vote(db.Model):
@@ -14,7 +15,7 @@ class Vote(db.Model):
     voter_user_id = Column(PG_UUID(as_uuid=True), ForeignKey("user_accounts.id", ondelete="SET NULL"), nullable=True)
     proposal_id = Column(PG_UUID(as_uuid=True), ForeignKey("proposals.id", ondelete="CASCADE"), nullable=False)
     vote_value = Column(
-        ENUM('FOR', 'AGAINST', 'ABSTAIN', name='vote_option'),
+        EnumType('FOR', 'AGAINST', 'ABSTAIN', name='vote_option'),
         nullable=False
     )
     rationale = Column(Text, nullable=True)
@@ -38,4 +39,3 @@ class Vote(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
-

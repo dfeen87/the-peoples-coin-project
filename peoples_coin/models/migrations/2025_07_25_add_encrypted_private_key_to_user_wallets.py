@@ -7,6 +7,7 @@ Create Date: 2025-07-25 12:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
+from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 
 # revision identifiers, used by Alembic.
@@ -22,4 +23,3 @@ def upgrade():
 
 def downgrade():
     op.drop_column('user_wallets', 'encrypted_private_key')
-

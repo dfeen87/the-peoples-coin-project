@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from sqlalchemy.orm import Session
 
 from peoples_coin.extensions import db  # Centralized SQLAlchemy instance
+from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 logger = logging.getLogger(__name__)
 
@@ -102,4 +103,3 @@ def close_session(session=None):
         session.close()
     except Exception as e:
         logger.error(f"Failed to close session: {e}", exc_info=True)
-

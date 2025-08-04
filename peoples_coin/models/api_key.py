@@ -3,6 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy import Column, String, DateTime, ForeignKey, func
 from sqlalchemy.orm import relationship
 from peoples_coin.extensions import db
+from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 class ApiKey(db.Model):
     __tablename__ = "api_keys"
@@ -16,4 +17,3 @@ class ApiKey(db.Model):
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
     user = relationship("UserAccount", back_populates="api_keys")
-

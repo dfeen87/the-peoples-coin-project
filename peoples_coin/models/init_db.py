@@ -8,6 +8,7 @@ from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 
 from peoples_coin.extensions import db
+from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 try:
     from dotenv import load_dotenv
@@ -119,4 +120,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

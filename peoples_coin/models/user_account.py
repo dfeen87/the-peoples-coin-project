@@ -3,6 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy import Column, String, Integer, Text, DateTime, Numeric, func
 from sqlalchemy.orm import relationship
 from peoples_coin.extensions import db
+from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 class UserAccount(db.Model):
     __tablename__ = 'user_accounts'
@@ -37,4 +38,3 @@ class UserAccount(db.Model):
         if include_wallets:
             user_data["wallets"] = [wallet.to_dict() for wallet in self.user_wallets]
         return user_data
-
