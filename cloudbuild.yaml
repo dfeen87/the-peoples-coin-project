@@ -1,16 +1,21 @@
 steps:
-# 1. Build the container image
+# Step 0: List the files from GitHub for debugging
 - name: 'gcr.io/cloud-builders/gcloud'
   id: 'List Files'
   entrypoint: 'ls'
   args: ['-la']
 
-# 2. Push the container image to the registry
+# Step 1: Build the container image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Build'
+  args: ['build', '-t', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA', '.']
+
+# Step 2: Push the container image to the registry
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Push'
   args: ['push', 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA']
 
-# 3. Deploy the new image to Cloud Run
+# Step 3: Deploy the new image to Cloud Run
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   id: 'Deploy'
   entrypoint: gcloud
@@ -25,9 +30,8 @@ steps:
     - '--add-cloudsql-instances=heroic-tide-428421-q7:us-central1:peoples-coin-cluster-final'
     - '--set-env-vars=DATABASE_URL=postgresql+pg8000://postgres:NDfcIdlRk0@/brightacts?unix_socket=/cloudsql/heroic-tide-428421-q7:us-central1:peoples-coin-cluster-final'
 
-# This section must have zero indentation and a colon
 images:
-- 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA' 
+- 'gcr.io/heroic-tide-428421-q7/peoples-coin-service:$COMMIT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY
