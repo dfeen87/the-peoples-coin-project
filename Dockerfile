@@ -33,3 +33,4 @@ ENV PYTHONUNBUFFERED=1 \
 #  - Allow threads for better concurrency on small containers
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "8", "wsgi:app"]
 
+
