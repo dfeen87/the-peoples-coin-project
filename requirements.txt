@@ -14,6 +14,7 @@ alembic==1.16.4
 Flask-Migrate==4.0.3
 psycopg2==2.9.10
 Flask-Cors==4.0.0
+pg8000
 
 # ======================
 # Validation & Utilities

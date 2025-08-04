@@ -1,7 +1,5 @@
 import http
 import logging
-from functools import wraps
-
 from flask import Blueprint, request, jsonify, g
 from pydantic import BaseModel, ValidationError, constr
 from sqlalchemy.exc import IntegrityError
@@ -10,6 +8,7 @@ from sqlalchemy import func
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token
 from peoples_coin.models import UserAccount, UserWallet
+from peoples_coin.models.db_utils import get_session_scope
 
 logger = logging.getLogger(__name__)
 
@@ -37,14 +36,15 @@ class UserCreateSchema(BaseModel):
 @user_api_bp.route("/users/username-check/<username>", methods=["GET"])
 def username_check(username):
     """Checks if a username is already taken."""
+    logger.info(f"Checking availability for username: {username}")
     try:
-        # Case-insensitive username check
-        user_exists = db.session.query(UserAccount).filter(
-            func.lower(UserAccount.username) == username.lower()
-        ).first()
+        with get_session_scope(db) as session:
+            user_exists = session.query(UserAccount).filter(
+                func.lower(UserAccount.username) == username.lower()
+            ).first()
 
-        is_available = not user_exists
-        return jsonify(available=is_available), http.HTTPStatus.OK
+            is_available = not user_exists
+            return jsonify(available=is_available), http.HTTPStatus.OK
 
     except Exception as e:
         logger.error(f"Error checking username '{username}': {e}", exc_info=True)
@@ -87,59 +87,55 @@ def create_user_and_wallet():
         if not firebase_user.get('email'):
             return jsonify(error="Firebase user email is required"), http.HTTPStatus.BAD_REQUEST
 
-        # Case-insensitive check for existing user by email or exact firebase_uid match
-        existing_user = db.session.query(UserAccount).filter(
-            (func.lower(UserAccount.email) == firebase_user['email'].lower()) |
-            (UserAccount.firebase_uid == firebase_user['uid'])
-        ).first()
-        if existing_user:
-            return jsonify(error="User with this email or Firebase UID already exists."), http.HTTPStatus.CONFLICT
+        with get_session_scope(db) as session:
+            # Case-insensitive check for existing user by email or exact firebase_uid match
+            existing_user = session.query(UserAccount).filter(
+                (func.lower(UserAccount.email) == firebase_user['email'].lower()) |
+                (UserAccount.firebase_uid == firebase_user['uid'])
+            ).first()
+            if existing_user:
+                return jsonify(error="User with this email or Firebase UID already exists."), http.HTTPStatus.CONFLICT
 
-        # Check if wallet public address already exists (normalize casing if needed)
-        existing_wallet = db.session.query(UserWallet).filter(
-            func.lower(UserWallet.public_address) == validated_data.public_key.lower()
-        ).first()
-        if existing_wallet:
-            return jsonify(error="Wallet address already registered."), http.HTTPStatus.CONFLICT
+            # Check if wallet public address already exists (normalize casing if needed)
+            existing_wallet = session.query(UserWallet).filter(
+                func.lower(UserWallet.public_address) == validated_data.public_key.lower()
+            ).first()
+            if existing_wallet:
+                return jsonify(error="Wallet address already registered."), http.HTTPStatus.CONFLICT
 
-        new_user = UserAccount(
-            firebase_uid=firebase_user['uid'],
-            email=firebase_user['email'],
-            username=validated_data.username
-        )
-        db.session.add(new_user)
-        db.session.flush()  # get new_user.id before commit
+            new_user = UserAccount(
+                firebase_uid=firebase_user['uid'],
+                email=firebase_user['email'],
+                username=validated_data.username
+            )
+            session.add(new_user)
+            session.flush()  # get new_user.id before commit
 
-        # If you want to enforce only one primary wallet per user, consider:
-        # query for existing primary wallets here or set logic accordingly
+            new_wallet = UserWallet(
+                user_id=new_user.id,
+                public_address=validated_data.public_key,
+                encrypted_private_key=validated_data.encrypted_private_key,
+                blockchain_network=validated_data.blockchain_network,
+                is_primary=True
+            )
+            session.add(new_wallet)
+            session.commit()
 
-        new_wallet = UserWallet(
-            user_id=new_user.id,
-            public_address=validated_data.public_key,
-            encrypted_private_key=validated_data.encrypted_private_key,
-            blockchain_network=validated_data.blockchain_network,
-            is_primary=True
-        )
-        db.session.add(new_wallet)
-        db.session.commit()
-
-        logger.info(f"User '{validated_data.username}' registered successfully with ID: {new_user.id}")
-        return jsonify({
-            "message": "User and wallet created successfully",
-            "userId": str(new_user.id)
-        }), http.HTTPStatus.CREATED
+            logger.info(f"User '{validated_data.username}' registered successfully with ID: {new_user.id}")
+            return jsonify({
+                "message": "User and wallet created successfully",
+                "userId": str(new_user.id)
+            }), http.HTTPStatus.CREATED
 
     except ValidationError as ve:
         logger.warning(f"Validation failed: {ve.errors()}")
         return jsonify(error="Invalid input", details=ve.errors()), http.HTTPStatus.UNPROCESSABLE_ENTITY
 
     except IntegrityError as e:
-        db.session.rollback()
         logger.warning(f"Integrity error (duplicate): {e}")
         return jsonify(error="User with this email, UID, or wallet address already exists."), http.HTTPStatus.CONFLICT
 
     except Exception as e:
-        db.session.rollback()
         logger.error(f"Unexpected error during registration: {e}", exc_info=True)
         return jsonify(error="An internal server error occurred."), http.HTTPStatus.INTERNAL_SERVER_ERROR
 

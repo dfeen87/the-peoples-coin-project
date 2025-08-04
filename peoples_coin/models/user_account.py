@@ -27,7 +27,7 @@ class UserAccount(db.Model):
             "firebase_uid": self.firebase_uid,
             "email": self.email,
             "username": self.username,
-            "balance": float(self.balance),
+            "balance": format(self.balance, '.4f'),
             "goodwill_coins": self.goodwill_coins,
             "bio": self.bio,
             "profile_image_url": self.profile_image_url,

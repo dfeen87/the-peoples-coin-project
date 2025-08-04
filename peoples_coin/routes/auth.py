@@ -1,4 +1,3 @@
-# src/peoples_coin/routes/auth.py
 import http
 import secrets
 from flask import Blueprint, request, jsonify, g
@@ -107,4 +106,51 @@ def get_current_user():
             "balance": str(user.balance),
             "goodwill_coins": user.goodwill_coins
         }), http.HTTPStatus.OK
+
+# ---------------------------
+# Sign-up new user
+# ---------------------------
+@auth_bp.route("/signup", methods=["POST"])
+def signup():
+    if not request.is_json:
+        return jsonify({KEY_ERROR: "Content-Type must be application/json"}), http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+
+    data = request.get_json()
+    email = data.get("email")
+    username = data.get("username")
+    password = data.get("password")
+
+    if not email or not username or not password:
+        return jsonify({KEY_ERROR: "Email, username and password are required"}), http.HTTPStatus.BAD_REQUEST
+
+    with get_session_scope(db) as session:
+        # Check if email or username already exists
+        existing_user = session.query(UserAccount).filter(
+            (UserAccount.email == email) | (UserAccount.username == username)
+        ).first()
+
+        if existing_user:
+            return jsonify({KEY_ERROR: "User with that email or username already exists"}), http.HTTPStatus.CONFLICT
+
+        # Create new user with hashed password
+        user = UserAccount(
+            email=email,
+            username=username,
+            password_hash=generate_password_hash(password),
+            balance=0,
+            goodwill_coins=0
+        )
+        session.add(user)
+        session.flush()
+
+        return jsonify({
+            KEY_MESSAGE: "User created successfully",
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "username": user.username,
+                "balance": str(user.balance),
+                "goodwill_coins": user.goodwill_coins
+            }
+        }), http.HTTPStatus.CREATED
 

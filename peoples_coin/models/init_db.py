@@ -7,48 +7,58 @@ import traceback
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 
-# Import Base and db from your package's db module
-from peoples_coin.models import db, Base
+from peoples_coin.extensions import db
 
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    pass  # dotenv is optional
-
+    pass
 
 logger = logging.getLogger(__name__)
+
+# Full production schema SQL (matches your July 25, 2025 final version)
+SCHEMA_SQL_PATH = os.path.join(
+    os.path.dirname(__file__), "final_production_schema.sql"
+)
 
 
 def setup_logging(verbose: bool):
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
-        format='%(asctime)s [%(levelname)s] %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
 
+def run_schema_sql(engine):
+    """
+    Executes your full production schema SQL so that enums,
+    triggers, functions match production exactly.
+    """
+    if not os.path.exists(SCHEMA_SQL_PATH):
+        raise FileNotFoundError(f"Schema file not found: {SCHEMA_SQL_PATH}")
+
+    with open(SCHEMA_SQL_PATH, "r", encoding="utf-8") as f:
+        schema_sql = f.read()
+
+    with engine.begin() as conn:
+        conn.execute(text(schema_sql))
+
+
 def init_db(drop: bool = False) -> int:
-    """
-    Initialize the database: create all tables, optionally drop existing tables.
+    db_url = os.getenv(
+        "DATABASE_URL",
+        "postgresql+psycopg2://postgres:postgres@localhost:5432/peoples_coin",
+    )
 
-    Args:
-        drop (bool): If True, drop all tables before creating.
+    if not db_url.startswith("postgresql"):
+        logger.warning(
+            "⚠️ DATABASE_URL is not PostgreSQL — schema behavior may differ from production."
+        )
 
-    Returns:
-        int: Exit code (0=success, >0=failure)
-    """
-    db_url = os.getenv('DATABASE_URL', 'sqlite:///instance/peoples_coin.models')
     logger.info(f"Using database URL: {db_url}")
-
-    # Ensure SQLite folder exists if needed
-    if db_url.startswith('sqlite:///'):
-        db_path = db_url.replace('sqlite:///', '', 1)
-        folder = os.path.dirname(db_path)
-        if folder and not os.path.exists(folder):
-            logger.info(f"Creating missing folder: {folder}")
-            os.makedirs(folder, exist_ok=True)
 
     try:
         engine = create_engine(db_url)
@@ -57,16 +67,20 @@ def init_db(drop: bool = False) -> int:
         logger.info("Testing database connection...")
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        logger.info("Database connection successful.")
+        logger.info("✅ Database connection successful.")
 
         if drop:
             logger.warning("⚠️ Dropping all tables...")
-            Base.metadata.drop_all(engine)
+            db.Model.metadata.drop_all(engine)
 
-        Base.metadata.create_all(engine)
-        logger.info("✅ Database tables created successfully.")
+        # Run SQLAlchemy create_all to create mapped models
+        db.Model.metadata.create_all(engine)
 
-        # Report tables created
+        # Then run raw SQL to ensure enums, triggers, etc. match production exactly
+        logger.info("Running production schema SQL...")
+        run_schema_sql(engine)
+
+        # Show tables
         insp = inspect(engine)
         tables = insp.get_table_names()
         logger.info(f"Tables in database: {tables or 'None'}")
@@ -89,8 +103,12 @@ def init_db(drop: bool = False) -> int:
 
 def main():
     parser = argparse.ArgumentParser(description="Initialize the database.")
-    parser.add_argument('--drop', action='store_true', help="Drop all tables before creating them")
-    parser.add_argument('--verbose', action='store_true', help="Enable debug logging")
+    parser.add_argument(
+        "--drop", action="store_true", help="Drop all tables before creating them"
+    )
+    parser.add_argument(
+        "--verbose", action="store_true", help="Enable debug logging"
+    )
     args = parser.parse_args()
 
     setup_logging(args.verbose)
@@ -101,3 +119,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
