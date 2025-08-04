@@ -5,6 +5,7 @@ from functools import wraps
 from flask import Blueprint, request, jsonify, g
 from pydantic import BaseModel, ValidationError, constr
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
 
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token
@@ -23,6 +24,7 @@ class WalletRegistrationSchema(BaseModel):
     encrypted_private_key: str
     blockchain_network: constr(strip_whitespace=True, min_length=1)
 
+
 class UserCreateSchema(BaseModel):
     firebase_uid: constr(strip_whitespace=True, min_length=1)
     email: constr(strip_whitespace=True, min_length=5)
@@ -31,19 +33,19 @@ class UserCreateSchema(BaseModel):
 
 # --- Routes ---
 
-# --- THIS IS THE MISSING ENDPOINT ---
+
 @user_api_bp.route("/users/username-check/<username>", methods=["GET"])
 def username_check(username):
     """Checks if a username is already taken."""
     try:
-        # Query the database to see if a user with this username exists
-        user_exists = db.session.query(UserAccount).filter_by(username=username).first()
-        
-        # If user_exists is None, the username is available
+        # Case-insensitive username check
+        user_exists = db.session.query(UserAccount).filter(
+            func.lower(UserAccount.username) == username.lower()
+        ).first()
+
         is_available = not user_exists
-        
         return jsonify(available=is_available), http.HTTPStatus.OK
-        
+
     except Exception as e:
         logger.error(f"Error checking username '{username}': {e}", exc_info=True)
         return jsonify(error="An internal server error occurred."), http.HTTPStatus.INTERNAL_SERVER_ERROR
@@ -58,7 +60,7 @@ def get_user_profile():
         return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
 
     try:
-        # Use our enhanced to_dict to include wallets
+        # Ensure user.to_dict supports include_wallets parameter
         return jsonify(user.to_dict(include_wallets=True)), http.HTTPStatus.OK
     except Exception as e:
         logger.exception(f"Error serializing user profile: {e}")
@@ -67,13 +69,13 @@ def get_user_profile():
 
 @user_api_bp.route("/users/register-wallet", methods=["POST"])
 @require_firebase_token
-def register_user_wallet():
+def create_user_and_wallet():
     """
-    Register a new UserAccount and associated UserWallet.
+    Create a new UserAccount and associated UserWallet.
     Firebase auth required.
     """
     firebase_user = g.firebase_user
-    logger.info(f"Registering wallet for Firebase UID: {firebase_user.get('uid')}")
+    logger.info(f"Creating user and wallet for Firebase UID: {firebase_user.get('uid')}")
 
     try:
         payload = request.get_json()
@@ -82,18 +84,21 @@ def register_user_wallet():
 
         validated_data = WalletRegistrationSchema(**payload)
 
-        if firebase_user.get('email') is None:
+        if not firebase_user.get('email'):
             return jsonify(error="Firebase user email is required"), http.HTTPStatus.BAD_REQUEST
 
-        # Check if user already exists by email or firebase_uid
+        # Case-insensitive check for existing user by email or exact firebase_uid match
         existing_user = db.session.query(UserAccount).filter(
-            (UserAccount.email == firebase_user['email']) | (UserAccount.firebase_uid == firebase_user['uid'])
+            (func.lower(UserAccount.email) == firebase_user['email'].lower()) |
+            (UserAccount.firebase_uid == firebase_user['uid'])
         ).first()
         if existing_user:
             return jsonify(error="User with this email or Firebase UID already exists."), http.HTTPStatus.CONFLICT
 
-        # Check if wallet public address already exists
-        existing_wallet = db.session.query(UserWallet).filter_by(public_address=validated_data.public_key).first()
+        # Check if wallet public address already exists (normalize casing if needed)
+        existing_wallet = db.session.query(UserWallet).filter(
+            func.lower(UserWallet.public_address) == validated_data.public_key.lower()
+        ).first()
         if existing_wallet:
             return jsonify(error="Wallet address already registered."), http.HTTPStatus.CONFLICT
 
@@ -103,7 +108,10 @@ def register_user_wallet():
             username=validated_data.username
         )
         db.session.add(new_user)
-        db.session.flush()
+        db.session.flush()  # get new_user.id before commit
+
+        # If you want to enforce only one primary wallet per user, consider:
+        # query for existing primary wallets here or set logic accordingly
 
         new_wallet = UserWallet(
             user_id=new_user.id,
@@ -140,8 +148,8 @@ def register_user_wallet():
 @require_firebase_token
 def create_user():
     """
-    Endpoint to create a new user.
-    Redirects to register-wallet endpoint logic.
+    Unified user creation endpoint.
+    Proxies to create_user_and_wallet for now.
     """
-    # This is a simple proxy; you might want more distinct logic later.
-    return register_user_wallet()
+    return create_user_and_wallet()
+

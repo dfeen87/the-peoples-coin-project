@@ -40,6 +40,7 @@ def create_app():
             "https://www.brightacts.com",
             "https://brightacts-frontend-50f58.web.app",
             "https://brightacts-frontend-50f58.firebaseapp.com",
+            "https://peoples-coin-service-105378934751.us-central1.run.app",
             # This regex correctly allows any port on localhost
             r"http://localhost:\d+",
         ], supports_credentials=True)
