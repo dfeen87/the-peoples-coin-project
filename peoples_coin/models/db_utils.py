@@ -21,7 +21,7 @@ def get_session_scope():
             session.add(...)
             # commit happens automatically unless an exception occurs
     """
-    session: Session = db.session
+    session: Session = db.session()
     try:
         yield session
         session.commit()
