@@ -24,7 +24,7 @@ def create_api_key():
     if not user_id:
         return jsonify({KEY_ERROR: "Missing 'user_id' in request body"}), http.HTTPStatus.BAD_REQUEST
 
-    with get_session_scope(db) as session:
+    with get_session_scope() as session:
         user = session.query(UserAccount).filter_by(id=user_id).first()
         if not user:
             return jsonify({KEY_ERROR: f"User with user_id '{user_id}' not found"}), http.HTTPStatus.NOT_FOUND
@@ -54,7 +54,7 @@ def signin():
     if not email or not password:
         return jsonify({KEY_ERROR: "Email and password are required"}), http.HTTPStatus.BAD_REQUEST
 
-    with get_session_scope(db) as session:
+    with get_session_scope() as session:
         user = session.query(UserAccount).filter_by(email=email).first()
         if not user:
             return jsonify({KEY_ERROR: "Invalid email or password"}), http.HTTPStatus.UNAUTHORIZED
@@ -81,7 +81,7 @@ def signin():
 @require_firebase_token
 def get_current_user():
     """Returns the authenticated user's profile from DB. Creates DB record if missing."""
-    with get_session_scope(db) as session:
+    with get_session_scope() as session:
         # Try to find user in DB by Firebase UID
         user = session.query(UserAccount).filter_by(firebase_uid=g.user.firebase_uid).first()
 
@@ -123,7 +123,7 @@ def signup():
     if not email or not username or not password:
         return jsonify({KEY_ERROR: "Email, username and password are required"}), http.HTTPStatus.BAD_REQUEST
 
-    with get_session_scope(db) as session:
+    with get_session_scope() as session:
         # Check if email or username already exists
         existing_user = session.query(UserAccount).filter(
             (UserAccount.email == email) | (UserAccount.username == username)

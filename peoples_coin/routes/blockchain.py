@@ -46,7 +46,7 @@ def full_chain():
     except (TypeError, ValueError):
         return jsonify({"error": "Invalid pagination parameters"}), http.HTTPStatus.BAD_REQUEST
 
-    with get_session_scope(db) as session:
+    with get_session_scope() as session:
         # **IMPROVEMENT**: Use Flask-SQLAlchemy's paginate for efficient querying.
         # You'll need to configure your db session for this or use a manual slice.
         # Manual pagination approach:

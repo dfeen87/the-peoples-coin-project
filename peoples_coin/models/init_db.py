@@ -7,8 +7,8 @@ import traceback
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 
+from peoples_coin.factory import create_app
 from peoples_coin.extensions import db
-from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 try:
     from dotenv import load_dotenv
@@ -16,15 +16,16 @@ try:
 except ImportError:
     pass
 
-logger = logging.getLogger(__name__)
-
-# Full production schema SQL (matches your July 25, 2025 final version)
+# Path to production schema SQL
 SCHEMA_SQL_PATH = os.path.join(
     os.path.dirname(__file__), "final_production_schema.sql"
 )
 
+logger = logging.getLogger(__name__)
+
 
 def setup_logging(verbose: bool):
+    """Configure logging for console output."""
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
@@ -35,12 +36,14 @@ def setup_logging(verbose: bool):
 
 def run_schema_sql(engine):
     """
-    Executes your full production schema SQL so that enums,
-    triggers, functions match production exactly.
+    Executes full production schema SQL so enums, triggers,
+    and functions match production exactly.
     """
     if not os.path.exists(SCHEMA_SQL_PATH):
+        logger.error(f"❌ Schema file not found: {SCHEMA_SQL_PATH}")
         raise FileNotFoundError(f"Schema file not found: {SCHEMA_SQL_PATH}")
 
+    logger.info(f"📜 Running schema from: {SCHEMA_SQL_PATH}")
     with open(SCHEMA_SQL_PATH, "r", encoding="utf-8") as f:
         schema_sql = f.read()
 
@@ -48,43 +51,66 @@ def run_schema_sql(engine):
         conn.execute(text(schema_sql))
 
 
-def init_db(drop: bool = False) -> int:
-    db_url = os.getenv(
-        "DATABASE_URL",
-        "postgresql+psycopg2://postgres:postgres@localhost:5432/peoples_coin",
-    )
+def get_database_url():
+    """
+    Always use the same logic as in factory.py so Cloud Run + local dev work identically.
+    """
+    if os.environ.get("K_SERVICE"):
+        # Running in Cloud Run
+        db_user = os.environ.get("DB_USER")
+        db_pass = os.environ.get("DB_PASS")
+        db_name = os.environ.get("DB_NAME")
+        instance_connection_name = os.environ.get("INSTANCE_CONNECTION_NAME")
 
-    if not db_url.startswith("postgresql"):
-        logger.warning(
-            "⚠️ DATABASE_URL is not PostgreSQL — schema behavior may differ from production."
+        if not all([db_user, db_pass, db_name, instance_connection_name]):
+            raise ValueError("Missing required Cloud SQL configuration in environment variables.")
+
+        return (
+            f"postgresql+psycopg2://{db_user}:{db_pass}@/{db_name}"
+            f"?host=/cloudsql/{instance_connection_name}"
         )
 
-    logger.info(f"Using database URL: {db_url}")
+    # Local development
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        raise ValueError("DATABASE_URL is not set for local development.")
+    return db_url
 
+
+def init_db(drop: bool = False) -> int:
+    """
+    Initialize the database by creating tables and running production schema SQL.
+    """
     try:
-        engine = create_engine(db_url)
+        database_url = get_database_url()
+        logger.info(f"🔗 Using database URL: {database_url}")
 
-        # Test connection
-        logger.info("Testing database connection...")
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        logger.info("✅ Database connection successful.")
+        # Create Flask app context so db.Model knows about all models
+        app = create_app()
 
-        if drop:
-            logger.warning("⚠️ Dropping all tables...")
-            db.Model.metadata.drop_all(engine)
+        with app.app_context():
+            engine = create_engine(database_url)
 
-        # Run SQLAlchemy create_all to create mapped models
-        db.Model.metadata.create_all(engine)
+            # Test DB connection
+            logger.info("🔍 Testing database connection...")
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            logger.info("✅ Database connection successful.")
 
-        # Then run raw SQL to ensure enums, triggers, etc. match production exactly
-        logger.info("Running production schema SQL...")
-        run_schema_sql(engine)
+            if drop:
+                logger.warning("⚠️ Dropping all tables...")
+                db.drop_all(bind=engine)
 
-        # Show tables
-        insp = inspect(engine)
-        tables = insp.get_table_names()
-        logger.info(f"Tables in database: {tables or 'None'}")
+            logger.info("🛠 Creating all mapped tables from SQLAlchemy models...")
+            db.create_all(bind=engine)
+
+            logger.info("📜 Applying production schema SQL...")
+            run_schema_sql(engine)
+
+            # Show all tables for confirmation
+            insp = inspect(engine)
+            tables = insp.get_table_names()
+            logger.info(f"📂 Tables in database: {tables or 'None'}")
 
         return 0
 
@@ -113,10 +139,10 @@ def main():
     args = parser.parse_args()
 
     setup_logging(args.verbose)
-
     exit_code = init_db(drop=args.drop)
     sys.exit(exit_code)
 
 
 if __name__ == "__main__":
     main()
+

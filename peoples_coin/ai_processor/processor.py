@@ -57,7 +57,7 @@ def process_goodwill_action(action_id: str, db, app_config: Config) -> bool:
     a final resonance score, and updates the database.
     """
     try:
-        with get_session_scope(db) as session:
+        with get_session_scope() as session:
             # Lock the row to prevent other workers from processing the same action
             goodwill_action = session.query(GoodwillAction).with_for_update().filter_by(id=action_id).first()
 

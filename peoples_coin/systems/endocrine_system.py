@@ -94,7 +94,7 @@ class EndocrineSystem:
         batch_size = self.app.config.get("AILEE_BATCH_SIZE", 5)
 
         def db_op():
-            with get_session_scope(db) as session:
+            with get_session_scope() as session:
                 # **CRITICAL FIX**: Use `with_for_update(skip_locked=True)` to prevent race conditions.
                 # This ensures each worker gets a unique set of rows to process, effectively
                 # turning the database table into a reliable job queue.

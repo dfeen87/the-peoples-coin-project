@@ -5,6 +5,7 @@ from pydantic import BaseModel, ValidationError, constr
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
 
+from peoples_coin.utils.recaptcha import verify_recaptcha
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token
 from peoples_coin.models import UserAccount, UserWallet
@@ -15,7 +16,6 @@ logger = logging.getLogger(__name__)
 # --- Blueprint Setup ---
 user_api_bp = Blueprint("user_api", __name__)
 
-
 # --- Pydantic Schemas ---
 class WalletRegistrationSchema(BaseModel):
     username: constr(strip_whitespace=True, min_length=3, max_length=32)
@@ -23,22 +23,18 @@ class WalletRegistrationSchema(BaseModel):
     encrypted_private_key: str
     blockchain_network: constr(strip_whitespace=True, min_length=1)
 
-
 class UserCreateSchema(BaseModel):
     firebase_uid: constr(strip_whitespace=True, min_length=1)
     email: constr(strip_whitespace=True, min_length=5)
     username: constr(strip_whitespace=True, min_length=3, max_length=32)
 
-
 # --- Routes ---
-
 
 @user_api_bp.route("/users/username-check/<username>", methods=["GET"])
 def username_check(username):
-    """Checks if a username is already taken."""
     logger.info(f"Checking availability for username: {username}")
     try:
-        with get_session_scope(db) as session:
+        with get_session_scope() as session:
             user_exists = session.query(UserAccount).filter(
                 func.lower(UserAccount.username) == username.lower()
             ).first()
@@ -54,13 +50,11 @@ def username_check(username):
 @user_api_bp.route("/profile", methods=["GET"])
 @require_firebase_token
 def get_user_profile():
-    """Returns the authenticated user's profile information including wallets."""
     user = g.user
     if not user:
         return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
 
     try:
-        # Ensure user.to_dict supports include_wallets parameter
         return jsonify(user.to_dict(include_wallets=True)), http.HTTPStatus.OK
     except Exception as e:
         logger.exception(f"Error serializing user profile: {e}")
@@ -70,10 +64,6 @@ def get_user_profile():
 @user_api_bp.route("/users/register-wallet", methods=["POST"])
 @require_firebase_token
 def create_user_and_wallet():
-    """
-    Create a new UserAccount and associated UserWallet.
-    Firebase auth required.
-    """
     firebase_user = g.firebase_user
     logger.info(f"Creating user and wallet for Firebase UID: {firebase_user.get('uid')}")
 
@@ -82,13 +72,32 @@ def create_user_and_wallet():
         if not payload:
             return jsonify(error="Missing JSON body"), http.HTTPStatus.BAD_REQUEST
 
+        # Extract reCAPTCHA token from request JSON
+        recaptcha_token = payload.get("recaptcha_token")
+        if not recaptcha_token:
+            return jsonify(error="Missing reCAPTCHA token"), http.HTTPStatus.BAD_REQUEST
+
+        # Get user IP and User-Agent for verification context
+        user_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+        user_agent = request.headers.get("User-Agent", "")
+
+        # Verify reCAPTCHA token - action name matches this endpoint
+        valid, message = verify_recaptcha(
+            token=recaptcha_token,
+            action="create_user_and_wallet",
+            user_ip=user_ip,
+            user_agent=user_agent,
+        )
+        if not valid:
+            return jsonify(error="reCAPTCHA validation failed", details=message), http.HTTPStatus.BAD_REQUEST
+
+        # Proceed with wallet registration as before
         validated_data = WalletRegistrationSchema(**payload)
 
         if not firebase_user.get('email'):
             return jsonify(error="Firebase user email is required"), http.HTTPStatus.BAD_REQUEST
 
-        with get_session_scope(db) as session:
-            # Case-insensitive check for existing user by email or exact firebase_uid match
+        with get_session_scope() as session:
             existing_user = session.query(UserAccount).filter(
                 (func.lower(UserAccount.email) == firebase_user['email'].lower()) |
                 (UserAccount.firebase_uid == firebase_user['uid'])
@@ -96,7 +105,6 @@ def create_user_and_wallet():
             if existing_user:
                 return jsonify(error="User with this email or Firebase UID already exists."), http.HTTPStatus.CONFLICT
 
-            # Check if wallet public address already exists (normalize casing if needed)
             existing_wallet = session.query(UserWallet).filter(
                 func.lower(UserWallet.public_address) == validated_data.public_key.lower()
             ).first()
@@ -147,5 +155,6 @@ def create_user():
     Unified user creation endpoint.
     Proxies to create_user_and_wallet for now.
     """
+    # If you want a separate action for reCAPTCHA, adjust here
     return create_user_and_wallet()
 

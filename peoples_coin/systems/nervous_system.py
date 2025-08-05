@@ -129,7 +129,7 @@ def receive_node_data() -> Tuple[Response, int]:
         # Pydantic automatically parses the data into the correct model from the Union.
         validated_data = parse_obj_as(InternalNodeDataSchema, raw_data)
 
-        with get_session_scope(db) as session:
+        with get_session_scope() as session:
             # Business logic is now handled by checking the model's type
             if isinstance(validated_data, BlockSyncMessage):
                 logger.info(f"Processing block sync from {source_node_id}, block #{validated_data.payload.block_number}")
@@ -157,12 +157,12 @@ def receive_node_data() -> Tuple[Response, int]:
 
     except ValidationError as ve:
         logger.warning(f"🚫 Validation failed for internal node data: {ve.errors()}")
-        with get_session_scope(db) as session:
+        with get_session_scope() as session:
             _create_and_enqueue_cognitive_event(session, EVENT_NERVOUS_DATA_PROCESSING_FAILED, {"validation_errors": ve.errors(), "source_node_id": source_node_id, "correlation_id": correlation_id})
         return json_response({KEY_STATUS: "error", KEY_ERROR: "Invalid internal data format", KEY_DETAILS: ve.errors()}, http.HTTPStatus.BAD_REQUEST)
 
     except Exception as e:
         logger.exception(f"💥 Unexpected error processing internal node data from {source_node_id}.")
-        with get_session_scope(db) as session:
+        with get_session_scope() as session:
             _create_and_enqueue_cognitive_event(session, EVENT_NERVOUS_DATA_PROCESSING_FAILED, {"error_message": str(e), "source_node_id": source_node_id, "correlation_id": correlation_id})
         return json_response({KEY_STATUS: "error", KEY_ERROR: "Internal server error"}, http.HTTPStatus.INTERNAL_SERVER_ERROR)

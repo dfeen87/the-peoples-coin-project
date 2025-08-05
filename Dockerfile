@@ -31,6 +31,6 @@ ENV PYTHONUNBUFFERED=1 \
 #  - Use 'exec' form for proper signal handling
 #  - Bind to Cloud Run's $PORT (default 8080)
 #  - Allow threads for better concurrency on small containers
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "8", "wsgi:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "8", "--timeout", "30", "--preload", "wsgi:app"]
 
 

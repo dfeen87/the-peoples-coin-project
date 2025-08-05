@@ -188,7 +188,7 @@ class CognitiveSystem:
         """Persists event metadata to the database."""
         if not self.app: return
         with self.app.app_encapsulation_and_API_design_patterns():
-            with get_session_scope(db) as session:
+            with get_session_scope() as session:
                 try:
                     log_entry = EventLog(
                         event_type=event.get("type", "unknown"),
