@@ -6,6 +6,7 @@ from peoples_coin.models.db_utils import get_session_scope
 from peoples_coin.models.models import ApiKey, UserAccount
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token
+from peoples_coin.utils.recaptcha_enterprise import verify_recaptcha  # Added import
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 KEY_ERROR = "error"
@@ -108,7 +109,7 @@ def get_current_user():
         }), http.HTTPStatus.OK
 
 # ---------------------------
-# Sign-up new user
+# Sign-up new user (with reCAPTCHA verification)
 # ---------------------------
 @auth_bp.route("/signup", methods=["POST"])
 def signup():
@@ -119,9 +120,18 @@ def signup():
     email = data.get("email")
     username = data.get("username")
     password = data.get("password")
+    recaptcha_token = data.get("recaptchaToken")  # Get reCAPTCHA token from frontend
 
-    if not email or not username or not password:
-        return jsonify({KEY_ERROR: "Email, username and password are required"}), http.HTTPStatus.BAD_REQUEST
+    if not email or not username or not password or not recaptcha_token:
+        return jsonify({KEY_ERROR: "Email, username, password, and recaptchaToken are required"}), http.HTTPStatus.BAD_REQUEST
+
+    # Verify reCAPTCHA
+    RECAPTCHA_EXPECTED_ACTION = "signup"
+    user_ip = request.remote_addr
+    user_agent = request.headers.get("User-Agent")
+
+    if not verify_recaptcha(recaptcha_token, RECAPTCHA_EXPECTED_ACTION, user_ip, user_agent):
+        return jsonify({KEY_ERROR: "Invalid or failed reCAPTCHA verification"}), http.HTTPStatus.BAD_REQUEST
 
     with get_session_scope() as session:
         # Check if email or username already exists

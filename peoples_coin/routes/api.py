@@ -158,3 +158,21 @@ def create_user():
     # If you want a separate action for reCAPTCHA, adjust here
     return create_user_and_wallet()
 
+@user_api_bp.route("/users/<user_id>", methods=["GET"])
+@require_firebase_token
+def get_user_by_id(user_id):
+    """
+    Get user profile by user ID. This is a protected route.
+    """
+    user = g.user
+    if not user:
+        return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
+
+    try:
+        if user.firebase_uid != g.firebase_user['uid']:
+            return jsonify(error="Unauthorized access to user profile"), http.HTTPStatus.FORBIDDEN
+
+        return jsonify(user.to_dict(include_wallets=True)), http.HTTPStatus.OK
+    except Exception as e:
+        logger.exception(f"Error serializing user profile for ID '{user_id}': {e}")
+        return jsonify(error="Failed to load profile"), http.HTTPStatus.INTERNAL_SERVER_ERROR
