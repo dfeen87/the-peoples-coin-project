@@ -5,6 +5,9 @@ from pydantic import BaseModel, ValidationError, constr
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
 
+# Added for the account deletion functionality
+from firebase_admin import auth as firebase_auth
+
 from peoples_coin.utils.recaptcha import verify_recaptcha
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token
@@ -61,6 +64,35 @@ def get_user_profile():
         return jsonify(error="Failed to load profile"), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
 
+# New DELETE endpoint to delete the user account from both systems
+@user_api_bp.route("/profile", methods=["DELETE"])
+@require_firebase_token
+def delete_user_account():
+    user = g.user
+    firebase_user = g.firebase_user
+    if not user:
+        return jsonify(error="User not found."), http.HTTPStatus.NOT_FOUND
+
+    try:
+        # 1. Delete user from Firebase
+        firebase_auth.delete_user(firebase_user['uid'])
+        logger.info(f"Deleted user from Firebase: {firebase_user['uid']}")
+
+        # 2. Delete user and their wallets from our database
+        with get_session_scope() as session:
+            session.query(UserWallet).filter(UserWallet.user_id == user.id).delete()
+            session.query(UserAccount).filter(UserAccount.id == user.id).delete()
+            session.commit()
+
+        logger.info(f"Deleted user from database: {user.username}")
+
+        return jsonify(message="Account deleted successfully."), http.HTTPStatus.OK
+
+    except Exception as e:
+        logger.error(f"Error during account deletion: {e}", exc_info=True)
+        return jsonify(error="An internal server error occurred."), http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+
 @user_api_bp.route("/users/register-wallet", methods=["POST"])
 @require_firebase_token
 def create_user_and_wallet():
@@ -72,16 +104,13 @@ def create_user_and_wallet():
         if not payload:
             return jsonify(error="Missing JSON body"), http.HTTPStatus.BAD_REQUEST
 
-        # Extract reCAPTCHA token from request JSON
         recaptcha_token = payload.get("recaptcha_token")
         if not recaptcha_token:
             return jsonify(error="Missing reCAPTCHA token"), http.HTTPStatus.BAD_REQUEST
 
-        # Get user IP and User-Agent for verification context
         user_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
         user_agent = request.headers.get("User-Agent", "")
 
-        # Verify reCAPTCHA token - action name matches this endpoint
         valid, message = verify_recaptcha(
             token=recaptcha_token,
             action="create_user_and_wallet",
@@ -91,7 +120,6 @@ def create_user_and_wallet():
         if not valid:
             return jsonify(error="reCAPTCHA validation failed", details=message), http.HTTPStatus.BAD_REQUEST
 
-        # Proceed with wallet registration as before
         validated_data = WalletRegistrationSchema(**payload)
 
         if not firebase_user.get('email'):
@@ -117,7 +145,7 @@ def create_user_and_wallet():
                 username=validated_data.username
             )
             session.add(new_user)
-            session.flush()  # get new_user.id before commit
+            session.flush()
 
             new_wallet = UserWallet(
                 user_id=new_user.id,
@@ -151,19 +179,11 @@ def create_user_and_wallet():
 @user_api_bp.route("/users", methods=["POST"])
 @require_firebase_token
 def create_user():
-    """
-    Unified user creation endpoint.
-    Proxies to create_user_and_wallet for now.
-    """
-    # If you want a separate action for reCAPTCHA, adjust here
     return create_user_and_wallet()
 
 @user_api_bp.route("/users/<user_id>", methods=["GET"])
 @require_firebase_token
 def get_user_by_id(user_id):
-    """
-    Get user profile by user ID. This is a protected route.
-    """
     user = g.user
     if not user:
         return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
