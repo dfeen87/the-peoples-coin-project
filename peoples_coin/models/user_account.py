@@ -11,7 +11,11 @@ class UserAccount(db.Model):
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     firebase_uid = Column(String(128), unique=True, nullable=False)
     email = Column(String(256), unique=True, nullable=True)
-    username = Column(String(64), nullable=True)
+    
+    # --- MODIFIED LINE ---
+    username = Column(String(64), unique=True, nullable=False)
+    # --- END MODIFIED LINE ---
+
     balance = Column(Numeric(20, 4), nullable=False, default=0.0)
     goodwill_coins = Column(Integer, nullable=False, default=0)
     bio = Column(Text, nullable=True)

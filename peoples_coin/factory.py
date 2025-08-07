@@ -91,4 +91,3 @@ def create_app():
     except Exception as e:
         logger.exception(f"🚨 CRITICAL ERROR DURING APP CREATION: {e}")
         raise
-

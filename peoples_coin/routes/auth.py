@@ -6,7 +6,7 @@ from peoples_coin.models.db_utils import get_session_scope
 from peoples_coin.models.models import ApiKey, UserAccount
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token
-from peoples_coin.utils.recaptcha_enterprise import verify_recaptcha  # Added import
+from peoples_coin.utils.recaptcha import verify_recaptcha
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 KEY_ERROR = "error"
@@ -163,4 +163,18 @@ def signup():
                 "goodwill_coins": user.goodwill_coins
             }
         }), http.HTTPStatus.CREATED
+
+
+
+@auth_bp.route("/check-username", methods=["GET"])
+def check_username():
+    username = request.args.get("username", "").strip()
+
+    if not username:
+        return jsonify({KEY_ERROR: "Missing 'username' parameter"}), http.HTTPStatus.BAD_REQUEST
+
+    with get_session_scope() as session:
+        exists = session.query(UserAccount).filter_by(username=username).first() is not None
+
+    return jsonify({"available": not exists}), http.HTTPStatus.OK
 

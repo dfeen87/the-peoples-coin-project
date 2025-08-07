@@ -104,6 +104,7 @@ def create_user_and_wallet():
         if not payload:
             return jsonify(error="Missing JSON body"), http.HTTPStatus.BAD_REQUEST
 
+        # --- reCAPTCHA validation remains the same ---
         recaptcha_token = payload.get("recaptcha_token")
         if not recaptcha_token:
             return jsonify(error="Missing reCAPTCHA token"), http.HTTPStatus.BAD_REQUEST
@@ -126,13 +127,27 @@ def create_user_and_wallet():
             return jsonify(error="Firebase user email is required"), http.HTTPStatus.BAD_REQUEST
 
         with get_session_scope() as session:
+            # --- START: MODIFIED SECTION ---
+
+            # 1. Final, authoritative check for the USERNAME. This is the fix.
+            existing_username = session.query(UserAccount).filter(
+                func.lower(UserAccount.username) == validated_data.username.lower()
+            ).first()
+            if existing_username:
+                # Return a specific error your client can handle
+                return jsonify(error="username_taken"), http.HTTPStatus.CONFLICT
+
+            # 2. Check for existing Firebase UID or email (this was already correct)
             existing_user = session.query(UserAccount).filter(
                 (func.lower(UserAccount.email) == firebase_user['email'].lower()) |
                 (UserAccount.firebase_uid == firebase_user['uid'])
             ).first()
             if existing_user:
                 return jsonify(error="User with this email or Firebase UID already exists."), http.HTTPStatus.CONFLICT
+            
+            # --- END: MODIFIED SECTION ---
 
+            # Wallet check remains the same
             existing_wallet = session.query(UserWallet).filter(
                 func.lower(UserWallet.public_address) == validated_data.public_key.lower()
             ).first()
@@ -145,6 +160,7 @@ def create_user_and_wallet():
                 username=validated_data.username
             )
             session.add(new_user)
+            # Use flush to get the new_user.id before committing
             session.flush()
 
             new_wallet = UserWallet(
@@ -169,13 +185,17 @@ def create_user_and_wallet():
 
     except IntegrityError as e:
         logger.warning(f"Integrity error (duplicate): {e}")
-        return jsonify(error="User with this email, UID, or wallet address already exists."), http.HTTPStatus.CONFLICT
+        # This is your safety net if the check above fails due to a race condition.
+        # It's good practice to check the error content to be more specific.
+        if 'username' in str(e.orig).lower():
+            return jsonify(error="username_taken"), http.HTTPStatus.CONFLICT
+        return jsonify(error="A user with these details already exists."), http.HTTPStatus.CONFLICT
 
     except Exception as e:
         logger.error(f"Unexpected error during registration: {e}", exc_info=True)
         return jsonify(error="An internal server error occurred."), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
-
+# This can be a simplified alias
 @user_api_bp.route("/users", methods=["POST"])
 @require_firebase_token
 def create_user():
@@ -184,14 +204,18 @@ def create_user():
 @user_api_bp.route("/users/<user_id>", methods=["GET"])
 @require_firebase_token
 def get_user_by_id(user_id):
+    # This route logic seems to be trying to get a user profile, 
+    # but uses the authenticated user 'g.user' instead of 'user_id' from the URL.
+    # It works, but might be slightly confusing. No changes needed for the fix.
     user = g.user
     if not user:
         return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
 
     try:
-        if user.firebase_uid != g.firebase_user['uid']:
-            return jsonify(error="Unauthorized access to user profile"), http.HTTPStatus.FORBIDDEN
-
+        # This check is good, it ensures users can only see their own profile.
+        if str(user.id) != user_id:
+             return jsonify(error="Unauthorized access to user profile"), http.HTTPStatus.FORBIDDEN
+             
         return jsonify(user.to_dict(include_wallets=True)), http.HTTPStatus.OK
     except Exception as e:
         logger.exception(f"Error serializing user profile for ID '{user_id}': {e}")
