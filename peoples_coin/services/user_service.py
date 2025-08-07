@@ -36,14 +36,10 @@ class UserService:
             return
         self.app = app
         self.db = db_instance
-        # Optionally initialize Firebase Admin SDK here if needed
-        # if FIREBASE_ADMIN_AVAILABLE and not firebase_admin._apps:
-        #     firebase_admin.initialize_app()
         self._initialized = True
         logger.info("UserService initialized and configured.")
 
     def get_user_by_id(self, user_id: UUID) -> Optional[Dict[str, Any]]:
-        """Retrieve user account by internal UUID ID, including goodwill_coins."""
         with get_session_scope(self.db) as session:
             user = session.query(UserAccount).filter_by(id=user_id).first()
             if not user:
@@ -53,7 +49,6 @@ class UserService:
             return user_dict
 
     def get_user_by_firebase_uid(self, firebase_uid: str) -> Optional[Dict[str, Any]]:
-        """Retrieve user account by Firebase UID, including goodwill_coins."""
         with get_session_scope(self.db) as session:
             user = session.query(UserAccount).filter_by(firebase_uid=firebase_uid).first()
             if not user:
@@ -63,10 +58,6 @@ class UserService:
             return user_dict
 
     def create_or_get_user_account(self, firebase_uid: str, email: str, username: str) -> Tuple[UserAccount, bool]:
-        """
-        Create a new UserAccount or return existing one.
-        Returns tuple: (UserAccount instance, created_flag).
-        """
         with get_session_scope(self.db) as session:
             existing_user = session.query(UserAccount).filter_by(firebase_uid=firebase_uid).first()
             if existing_user:
@@ -78,7 +69,7 @@ class UserService:
                     email=email,
                     username=username,
                     balance=Decimal('0.0'),
-                    goodwill_coins=0,  # initialize goodwill coins
+                    goodwill_coins=0,
                     is_premium=False
                 )
                 session.add(new_user)
@@ -95,7 +86,6 @@ class UserService:
                 raise
 
     def update_user_balance(self, user_id: UUID, amount: Decimal) -> Tuple[bool, str]:
-        """Add amount to user's balance atomically."""
         with get_session_scope(self.db) as session:
             try:
                 user = session.query(UserAccount).filter_by(id=user_id).with_for_update().one()
@@ -110,7 +100,6 @@ class UserService:
                 return False, f"Internal error: {e}"
 
     def increment_goodwill_coins(self, user_id: UUID, amount: int = 1) -> Tuple[bool, str]:
-        """Increment goodwill_coins atomically."""
         if amount < 0:
             return False, "Amount must be positive"
         with get_session_scope(self.db) as session:
@@ -127,7 +116,6 @@ class UserService:
                 return False, f"Internal error: {e}"
 
     def decrement_goodwill_coins(self, user_id: UUID, amount: int = 1) -> Tuple[bool, str]:
-        """Decrement goodwill_coins atomically."""
         if amount < 0:
             return False, "Amount must be positive"
         with get_session_scope(self.db) as session:
@@ -145,55 +133,52 @@ class UserService:
                 logger.exception(f"UserService: Error decrementing goodwill_coins for user {user_id}.")
                 return False, f"Internal error: {e}"
 
-def link_user_wallet(
-    self,
-    user_id: UUID,
-    public_address: str,
-    encrypted_private_key: str,  # base64 encoded string
-    blockchain_network: str,
-    is_primary: bool = False
-) -> Tuple[bool, str]:
-    with get_session_scope(self.db) as session:
-        try:
-            user = session.query(UserAccount).filter_by(id=user_id).first()
-            if not user:
-                return False, "User not found."
+    def link_user_wallet(
+        self,
+        user_id: UUID,
+        public_address: str,
+        encrypted_private_key: str,  # base64 encoded string
+        blockchain_network: str,
+        is_primary: bool = False
+    ) -> Tuple[bool, str]:
+        with get_session_scope(self.db) as session:
+            try:
+                user = session.query(UserAccount).filter_by(id=user_id).first()
+                if not user:
+                    return False, "User not found."
 
-            if is_primary:
-                existing_primary = session.query(UserWallet).filter_by(user_id=user_id, is_primary=True).first()
-                if existing_primary:
-                    existing_primary.is_primary = False
-                    session.add(existing_primary)
+                if is_primary:
+                    existing_primary = session.query(UserWallet).filter_by(user_id=user_id, is_primary=True).first()
+                    if existing_primary:
+                        existing_primary.is_primary = False
+                        session.add(existing_primary)
 
-            # Decode base64 string to bytes before saving
-            encrypted_key_bytes = base64.b64decode(encrypted_private_key)
+                encrypted_key_bytes = base64.b64decode(encrypted_private_key)
 
-            new_wallet = UserWallet(
-                user_id=user_id,
-                public_address=public_address,
-                encrypted_private_key=encrypted_key_bytes,
-                blockchain_network=blockchain_network,
-                is_primary=is_primary
-            )
-            session.add(new_wallet)
-            session.flush()
-            logger.info(f"UserService: Linked wallet {public_address} to user {user_id}.")
-            return True, "Wallet linked successfully."
-        except IntegrityError:
-            logger.warning(f"UserService: Wallet {public_address} already linked to user {user_id}.")
-            return False, "Wallet already linked."
-        except Exception as e:
-            logger.exception(f"UserService: Error linking wallet {public_address} to user {user_id}.")
-            return False, f"Internal error: {e}"
+                new_wallet = UserWallet(
+                    user_id=user_id,
+                    public_address=public_address,
+                    encrypted_private_key=encrypted_key_bytes,
+                    blockchain_network=blockchain_network,
+                    is_primary=is_primary
+                )
+                session.add(new_wallet)
+                session.flush()
+                logger.info(f"UserService: Linked wallet {public_address} to user {user_id}.")
+                return True, "Wallet linked successfully."
+            except IntegrityError:
+                logger.warning(f"UserService: Wallet {public_address} already linked to user {user_id}.")
+                return False, "Wallet already linked."
+            except Exception as e:
+                logger.exception(f"UserService: Error linking wallet {public_address} to user {user_id}.")
+                return False, f"Internal error: {e}"
 
     def get_user_wallets(self, user_id: UUID) -> List[Dict[str, Any]]:
-        """Get all wallets linked to the user."""
         with get_session_scope(self.db) as session:
             wallets = session.query(UserWallet).filter_by(user_id=user_id).all()
             return [wallet.to_dict() for wallet in wallets]
 
     def set_user_premium_status(self, user_id: UUID, is_premium: bool) -> Tuple[bool, str]:
-        """Update user's premium status."""
         with get_session_scope(self.db) as session:
             try:
                 user = session.query(UserAccount).filter_by(id=user_id).one()

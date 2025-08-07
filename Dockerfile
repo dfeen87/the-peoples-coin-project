@@ -20,6 +20,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY wsgi.py ./
 COPY peoples_coin/ ./peoples_coin/
 
+# COPY the Firebase service account JSON key
+COPY peoples_coin/heroic-tide-428421-q7-9ff07058342c.json /app/peoples_coin/heroic-tide-428421-q7-9ff07058342c.json
+
 # Expose the port Cloud Run will use
 EXPOSE 8080
 
@@ -28,9 +31,5 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 # Run the application with Gunicorn
-#  - Use 'exec' form for proper signal handling
-#  - Bind to Cloud Run's $PORT (default 8080)
-#  - Allow threads for better concurrency on small containers
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "8", "--timeout", "30", "--preload", "wsgi:app"]
-
 

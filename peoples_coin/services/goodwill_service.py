@@ -2,6 +2,7 @@ import logging
 from typing import Dict, Any
 from sqlalchemy.exc import IntegrityError
 
+from peoples_coin.models.models import UserAccount
 from peoples_coin.models.db_utils import get_session_scope
 from peoples_coin.models.goodwill_action import GoodwillAction
 from peoples_coin.validate.validate_transaction import validate_transaction
@@ -71,7 +72,8 @@ class GoodwillService:
                 logger.info(f"GoodwillAction {goodwill_action.id} persisted. Queueing for blockchain minting.")
 
                 if self.message_queue_client:
-                    # Example placeholder for queuing logic:
+                    # Placeholder for queueing logic — implement your message broker here
+                    # e.g.,
                     # topic_path = self.message_queue_client.publisher.topic_path(
                     #     self.app.config['GCP_PROJECT_ID'],
                     #     self.app.config['MINTING_TOPIC_ID']

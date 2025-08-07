@@ -3,6 +3,7 @@
     "firebase-tools": "^14.10.1"
   },
   "dependencies": {
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express-rate-limit": "^8.0.1"
   }
 }

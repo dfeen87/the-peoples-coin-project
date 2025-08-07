@@ -106,3 +106,7 @@ secrets.yaml
 
 
 alembic.ini
+
+
+migrations/
+pyproject.toml

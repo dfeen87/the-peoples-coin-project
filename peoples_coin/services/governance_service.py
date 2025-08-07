@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
 
@@ -14,14 +13,12 @@ from peoples_coin.extensions import db
 
 logger = logging.getLogger(__name__)
 
-# Proposal status constants
 STATUS_PROPOSAL_DRAFT = 'DRAFT'
 STATUS_PROPOSAL_VOTING = 'VOTING'
 STATUS_PROPOSAL_PASSED = 'PASSED'
 STATUS_PROPOSAL_FAILED = 'FAILED'
 STATUS_PROPOSAL_EXECUTED = 'EXECUTED'
 
-# Vote choice constants
 VOTE_CHOICE_YES = 'YES'
 VOTE_CHOICE_NO = 'NO'
 VOTE_CHOICE_ABSTAIN = 'ABSTAIN'
@@ -38,12 +35,8 @@ class GovernanceService:
         self.db = db_instance
 
     def create_new_proposal(self, proposal_data: Dict[str, Any]) -> Tuple[bool, Union[Dict[str, Any], str]]:
-        """
-        Create a new proposal draft. Sets vote_start_time now, optional vote_end_time by vote_duration_days.
-        """
         with get_session_scope(self.db) as session:
             try:
-                # Lookup user by firebase_uid, not by user ID (be sure client sends firebase_uid here)
                 user_account = session.query(UserAccount).filter_by(firebase_uid=proposal_data['proposer_user_id']).first()
                 if not user_account:
                     return False, "Proposer user not found."
@@ -77,12 +70,6 @@ class GovernanceService:
                 return False, f"Internal error: {e}"
 
     def submit_user_vote(self, proposal_id: UUID, vote_data: Dict[str, Any]) -> Tuple[bool, Union[Dict[str, Any], str]]:
-        """
-        Submit a vote from a user for a given proposal.
-        Vote weight must be <= voter balance.
-        Actual vote power is sqrt(vote_weight) as per business logic.
-        Voting must be within the vote window and proposal must be in VOTING status.
-        """
         with get_session_scope(self.db) as session:
             try:
                 proposal = session.query(Proposal).filter_by(id=proposal_id).first()
@@ -111,24 +98,22 @@ class GovernanceService:
                 if existing_vote:
                     return False, "Already voted on this proposal."
 
-                # Calculate actual vote power — square root of the raw vote weight
                 actual_vote_power = raw_vote_weight.sqrt()
 
                 new_vote = Vote(
                     proposal_id=proposal.id,
                     voter_user_id=voter_account.id,
-                    vote_value=vote_data['vote_choice'],  # your model uses vote_value not vote_choice
+                    vote_value=vote_data['vote_choice'],
                     rationale=vote_data.get('rationale', None),
+                    vote_weight=raw_vote_weight,
+                    actual_vote_power=actual_vote_power
                 )
-                # Assuming your Vote model has vote_weight and actual_vote_power columns — add them if not
-                new_vote.vote_weight = raw_vote_weight
-                new_vote.actual_vote_power = actual_vote_power
 
                 session.add(new_vote)
 
-                # Deduct loves (balance) permanently from user - no refund, consistent with your immutable blockchain logic
                 voter_account.balance -= raw_vote_weight
                 session.add(voter_account)
+
                 session.flush()
 
                 return True, new_vote.to_dict()
@@ -138,9 +123,6 @@ class GovernanceService:
                 return False, f"Internal error: {e}"
 
     def get_all_proposals(self, status: Optional[str] = None, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
-        """
-        Get all proposals filtered by optional status and/or user.
-        """
         with get_session_scope(self.db) as session:
             query = session.query(Proposal).order_by(Proposal.created_at.desc())
             if status:
@@ -150,7 +132,7 @@ class GovernanceService:
                 if user_account:
                     query = query.filter_by(proposer_user_id=user_account.id)
                 else:
-                    return []  # No proposals if user not found
+                    return []
             return [p.to_dict() for p in query.all()]
 
     def get_proposal_by_id(self, proposal_id: UUID) -> Optional[Dict[str, Any]]:
@@ -159,21 +141,13 @@ class GovernanceService:
             return proposal.to_dict() if proposal else None
 
     def get_council_members(self, role: Optional[str] = None) -> List[Dict[str, Any]]:
-        """
-        Return council members filtered by optional role. Only ACTIVE status members returned.
-        """
         with get_session_scope(self.db) as session:
-            # NOTE: Your CouncilMember model does not currently have a 'status' column; consider adding it.
             query = session.query(CouncilMember)
             if role:
                 query = query.filter(func.lower(CouncilMember.role) == role.lower())
             return [m.to_dict() for m in query.all()]
 
     def evaluate_proposal_results(self, proposal_id: UUID) -> Tuple[bool, str]:
-        """
-        Evaluate voting results after voting ends. Checks quorum, compares YES vs NO votes.
-        Updates proposal status accordingly.
-        """
         logger.info(f"Evaluating results for Proposal ID {proposal_id}.")
         with get_session_scope(self.db) as session:
             proposal = session.query(Proposal).filter_by(id=proposal_id).first()
@@ -216,11 +190,8 @@ class GovernanceService:
                 return False, "Proposal failed by vote."
 
     def get_total_vote_power_at_start_of_vote(self) -> Decimal:
-        """
-        Placeholder for total voting power snapshot at vote start.
-        Implement snapshotting logic as needed.
-        """
-        return Decimal('1000000.0')  # Placeholder
+        # Placeholder: implement real snapshot logic as needed
+        return Decimal('1000000.0')
 
 governance_service = GovernanceService()
 
