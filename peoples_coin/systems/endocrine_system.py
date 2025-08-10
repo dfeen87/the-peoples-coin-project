@@ -8,7 +8,8 @@ from typing import Optional, Callable
 from flask import Flask
 
 from peoples_coin.models.db_utils import get_session_scope, retry_db_operation
-from peoples_coin.models.goodwill_action import GoodwillAction
+# CORRECTED: Import from the central models package
+from peoples_coin.models import GoodwillAction
 from peoples_coin.extensions import db, celery
 
 logger = logging.getLogger(__name__)

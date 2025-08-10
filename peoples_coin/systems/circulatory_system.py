@@ -10,6 +10,7 @@ from typing import Tuple, Optional
 from flask import Flask
 from sqlalchemy.orm.exc import NoResultFound
 
+from peoples_coin.utils.auth import require_api_key
 from peoples_coin.models.db_utils import get_session_scope
 from peoples_coin.models.models import GoodwillAction, UserAccount, LedgerEntry, UserWallet
 from peoples_coin.consensus import Consensus
@@ -36,14 +37,14 @@ class CirculatorySystem:
         self.consensus = consensus_instance
         self.minter_wallet_address = self.app.config.get("MINTER_WALLET_ADDRESS")
         if not self.minter_wallet_address:
-            raise RuntimeError("MINTER_WALLET_ADDRESS must be configured.")
+            raise RuntimeError("MINTER_WALLET_ADDRESS must be configured in the environment.")
         self._initialized = True
-        logger.info("🫀 CirculatorySystem initialized.")
+        logger.info("🫀 CirculatorySystem initialized and configured.")
 
     def process_goodwill_for_minting(self, goodwill_action_id: uuid.UUID) -> Tuple[bool, str, int]:
         """Processes a verified GoodwillAction for minting."""
         if not self._initialized or not self.consensus:
-            msg = "CirculatorySystem or Consensus not initialized."
+            msg = "CirculatorySystem or Consensus has not been properly initialized."
             logger.critical(msg)
             return False, msg, http.HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -52,20 +53,24 @@ class CirculatorySystem:
                 goodwill_action = session.query(GoodwillAction).with_for_update().filter_by(id=goodwill_action_id).one()
 
                 if goodwill_action.status == 'ISSUED_ON_CHAIN':
-                    return True, "Skipped: Action already issued on-chain.", http.HTTPStatus.OK
+                    msg = f"Skipped: GoodwillAction {goodwill_action_id} already issued on-chain."
+                    return True, msg, http.HTTPStatus.OK
 
                 if goodwill_action.status != 'VERIFIED':
-                    return False, f"Skipped: Action status is '{goodwill_action.status}'.", http.HTTPStatus.UNPROCESSABLE_ENTITY
+                    msg = f"Skipped: GoodwillAction {goodwill_action_id} status is '{goodwill_action.status}', not 'VERIFIED'."
+                    return False, msg, http.HTTPStatus.UNPROCESSABLE_ENTITY
 
                 user_account = session.query(UserAccount).filter_by(id=goodwill_action.performer_user_id).first()
                 if not user_account:
+                    msg = f"Minting failed: UserAccount not found for performer ID {goodwill_action.performer_user_id}."
                     goodwill_action.status = 'FAILED_USER_NOT_FOUND'
-                    return False, "UserAccount not found.", http.HTTPStatus.UNPROCESSABLE_ENTITY
+                    return False, msg, http.HTTPStatus.UNPROCESSABLE_ENTITY
 
                 user_wallet = session.query(UserWallet).filter_by(user_id=user_account.id, is_primary=True).first()
                 if not user_wallet:
+                    msg = f"Minting failed: No primary wallet found for user ID {user_account.id}."
                     goodwill_action.status = 'FAILED_WALLET_MISSING'
-                    return False, "No primary wallet found for user.", http.HTTPStatus.UNPROCESSABLE_ENTITY
+                    return False, msg, http.HTTPStatus.UNPROCESSABLE_ENTITY
 
                 loves_to_mint = Decimal(goodwill_action.loves_value)
                 now_utc = datetime.now(timezone.utc)
@@ -98,12 +103,13 @@ class CirculatorySystem:
                 return True, msg, http.HTTPStatus.OK
 
             except NoResultFound:
-                return False, f"GoodwillAction ID {goodwill_action_id} not found.", http.HTTPStatus.NOT_FOUND
+                msg = f"Minting failed: GoodwillAction ID {goodwill_action_id} not found."
+                return False, msg, http.HTTPStatus.NOT_FOUND
             except Exception as e:
                 logger.exception(f"Unexpected error processing mint for GoodwillAction ID {goodwill_action_id}: {e}")
-                return False, "Internal error during minting.", http.HTTPStatus.INTERNAL_SERVER_ERROR
+                return False, "An internal error occurred during minting.", http.HTTPStatus.INTERNAL_SERVER_ERROR
 
-# Singleton instance
+# Singleton Instance
 circulatory_system = CirculatorySystem()
 
 # --- Function for status page ---

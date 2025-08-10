@@ -10,7 +10,8 @@ from typing_extensions import Literal
 
 from peoples_coin.extensions import cognitive_system, db
 from peoples_coin.models.db_utils import get_session_scope
-from peoples_coin.models.models import EventLog
+# CORRECTED: Import AuditLog, which exists in your final schema
+from peoples_coin.models.models import AuditLog
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,33 @@ TxPoolUpdateMessage.update_forward_refs()
 
 # --- Core Logic Functions ---
 
+def _create_and_log_cognitive_event(session, event_type: str, payload: dict):
+    """Creates and enqueues a cognitive event and logs it to the AuditLog."""
+    event_payload = {
+        **payload,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event_id": str(uuid.uuid4()),
+    }
+    try:
+        cognitive_system.enqueue_event({
+            "type": event_type,
+            "source": "NervousSystem",
+            "payload": event_payload
+        })
+        # CORRECTED: Create an AuditLog entry
+        log_entry = AuditLog(
+            action_type=event_type,
+            details={
+                "message": f"Cognitive event triggered. Payload keys: {list(payload.keys())}",
+                **payload
+            }
+        )
+        session.add(log_entry)
+        logger.info(f"[Nervous] Logged and enqueued cognitive event '{event_type}'")
+    except Exception as e:
+        logger.error(f"[Nervous] Failed to log/enqueue cognitive event '{event_type}': {e}", exc_info=True)
+
+
 def process_node_data(raw_data: dict) -> Dict[str, Any]:
     """Validates and processes incoming data from a peer node."""
     validated_data = parse_obj_as(InternalNodeDataSchema, raw_data)
@@ -58,19 +86,15 @@ def process_node_data(raw_data: dict) -> Dict[str, Any]:
             logger.info(f"Processing tx pool update from {source_node_id}, {len(validated_data.payload.new_transactions)} txs")
             # TODO: Update transaction pool or mempool here
             
-        # Enqueue an event for the cognitive system
-        event_payload = {
-            "data_type": validated_data.data_type,
-            "source_node_id": source_node_id,
-            "correlation_id": validated_data.correlation_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "event_id": str(uuid.uuid4())
-        }
-        cognitive_system.enqueue_event({
-            "type": 'nervous_node_data_received',
-            "source": "NervousSystem",
-            "payload": event_payload
-        })
+        _create_and_log_cognitive_event(
+            session,
+            'nervous_node_data_received',
+            {
+                "data_type": validated_data.data_type,
+                "source_node_id": source_node_id,
+                "correlation_id": validated_data.correlation_id,
+            }
+        )
     
     return {
         "message": f"Data of type '{validated_data.data_type}' from node '{source_node_id}' accepted."
@@ -80,7 +104,6 @@ def process_node_data(raw_data: dict) -> Dict[str, Any]:
 
 def get_nervous_status() -> Dict[str, Any]:
     """Health check for the Nervous System."""
-    # In a real system, you might check peer node connectivity
     return {"active": True, "healthy": True, "info": "Nervous System operational"}
 
 def get_nervous_transaction_state(txn_id: str) -> Dict[str, Any]:

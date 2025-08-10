@@ -7,7 +7,8 @@ from typing import Optional, Dict, Any
 from flask import Flask
 from peoples_coin.extensions import db
 from peoples_coin.models.db_utils import get_session_scope
-from peoples_coin.models.models import Proposal, Vote
+# CORRECTED: Import from the central models package
+from peoples_coin.models import Proposal, Vote
 
 logger = logging.getLogger(__name__)
 
@@ -40,15 +41,18 @@ class ReproductiveSystem:
             if not proposal:
                 return None
             
-            # This logic can be further optimized in the future
-            yes_votes = session.query(db.func.sum(Vote.actual_vote_power)).filter_by(proposal_id=proposal_id, vote_choice='YES').scalar() or Decimal('0.0')
-            no_votes = session.query(db.func.sum(Vote.actual_vote_power)).filter_by(proposal_id=proposal_id, vote_choice='NO').scalar() or Decimal('0.0')
+            # NOTE: The 'actual_vote_power' column is not in the final Vote model.
+            # This logic will need to be updated in your service layer to calculate
+            # power based on the user's balance at the time of the vote.
+            # For now, we can count the votes.
+            yes_votes = session.query(Vote).filter_by(proposal_id=proposal_id, vote_value='FOR').count()
+            no_votes = session.query(Vote).filter_by(proposal_id=proposal_id, vote_value='AGAINST').count()
 
             return {
                 "proposal_id": str(proposal.id),
                 "status": proposal.status,
-                "total_power_yes": str(yes_votes),
-                "total_power_no": str(no_votes),
+                "yes_votes": yes_votes,
+                "no_votes": no_votes,
             }
 
 # Singleton instance

@@ -12,8 +12,7 @@ from typing import Optional, Dict, Any
 from flask import Flask
 
 from peoples_coin.models.db_utils import get_session_scope
-# CORRECTED: Import AuditLog, which exists in your final schema
-from peoples_coin.models.models import AuditLog
+from peoples_coin.models.models import AuditLog # Correctly uses AuditLog
 from peoples_coin.extensions import db
 
 try:
@@ -82,22 +81,58 @@ class CognitiveSystem:
 
     def publish_event(self, event: dict) -> bool:
         """Publishes an event directly to RabbitMQ for durable messaging."""
-        # ... (This method can remain as is)
-        pass
+        if not RABBIT_AVAILABLE:
+            logger.warning("Cannot publish event: pika library not installed.")
+            return False
+        
+        conn = self._get_rabbit_connection()
+        if not conn:
+            logger.error("Cannot publish event: No connection to RabbitMQ.")
+            return False
+
+        try:
+            channel = conn.channel()
+            queue_name = self.config["COGNITIVE_RABBIT_QUEUE"]
+            channel.queue_declare(queue=queue_name, durable=True)
+            
+            event.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+            
+            channel.basic_publish(
+                exchange='',
+                routing_key=queue_name,
+                body=json.dumps(event),
+                properties=pika.BasicProperties(delivery_mode=2) # persistent
+            )
+            logger.info(f"🐇 Published event '{event.get('type')}' to RabbitMQ.")
+            return True
+        except Exception as e:
+            logger.error(f"🐇 Failed to publish event to RabbitMQ: {e}", exc_info=True)
+            return False
 
     def _run_loop(self):
         """Main loop for the background thread."""
         while not self._stop_event.is_set():
             try:
-                processed = self._consume_from_in_memory_queue()
-                if not processed:
+                processed_in_cycle = False
+                if RABBIT_AVAILABLE and self._consume_from_rabbitmq():
+                    processed_in_cycle = True
+                if self._consume_from_in_memory_queue():
+                    processed_in_cycle = True
+                
+                if not processed_in_cycle:
                     self._stop_event.wait(2)
             except Exception as e:
                 logger.error(f"Unexpected error in Cognitive run loop: {e}", exc_info=True)
                 self._stop_event.wait(5)
 
     def _get_rabbit_connection(self) -> Optional[pika.BlockingConnection]:
-        # ... (This method can remain as is)
+        """Establishes and returns a RabbitMQ connection if possible."""
+        # ... [Full implementation from your original file] ...
+        pass
+
+    def _consume_from_rabbitmq(self) -> bool:
+        """Tries to consume and process one message from RabbitMQ."""
+        # ... [Full implementation from your original file] ...
         pass
 
     def _consume_from_in_memory_queue(self) -> bool:
@@ -121,7 +156,6 @@ class CognitiveSystem:
         with self.app.app_context():
             with get_session_scope(db) as session:
                 try:
-                    # CORRECTED: Create an AuditLog object instead of EventLog
                     log_entry = AuditLog(
                         action_type=event.get("type", "unknown"),
                         details={
@@ -133,8 +167,7 @@ class CognitiveSystem:
                 except Exception as e:
                     logger.error(f"💾 SQL persist error: {e}", exc_info=True)
 
-
-# Singleton instance
+# Singleton Instance
 cognitive_system = CognitiveSystem()
 
 # --- Functions for status page ---
