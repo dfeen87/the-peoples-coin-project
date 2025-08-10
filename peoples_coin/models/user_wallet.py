@@ -1,9 +1,10 @@
+# peoples_coin/models/user_wallet.py
+
 import uuid
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy import Column, String, Boolean, ForeignKey, Text, DateTime, func
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from peoples_coin.extensions import db
-from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 class UserWallet(db.Model):
     __tablename__ = 'user_wallets'
@@ -17,11 +18,14 @@ class UserWallet(db.Model):
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
-    user = relationship("UserAccount", back_populates="user_wallets")
+    # --- CHANGE: Update back_populates to match the attribute in UserAccount ---
+    user_account = relationship("UserAccount", back_populates="wallets")
 
     def to_dict(self):
+        """Serializes the UserWallet object to a dictionary."""
         return {
             "id": str(self.id),
+            "user_id": str(self.user_id),
             "public_address": self.public_address,
             "blockchain_network": self.blockchain_network,
             "is_primary": self.is_primary,
