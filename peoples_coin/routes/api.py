@@ -33,8 +33,7 @@ class UserCreateSchema(BaseModel):
 
 # --- Routes ---
 
-@user_api_bp.route("/users/username-check/<username>", methods=["GET"])
-@require_firebase_token  # <-- Add this line here
+@user_api_bp.route("/users/check-username/<username>", methods=["GET"])
 def username_check(username):
     logger.info(f"Checking availability for username: {username}")
     try:

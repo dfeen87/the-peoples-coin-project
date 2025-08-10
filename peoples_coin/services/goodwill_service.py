@@ -26,7 +26,7 @@ class GoodwillService:
         self.message_queue_client = message_queue_client
         logger.info("GoodwillService initialized.")
 
-    def submit_action(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def submit_and_queue_goodwill_action(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Validates goodwill action data, persists it, and queues it for blockchain minting.
 

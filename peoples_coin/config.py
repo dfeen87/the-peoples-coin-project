@@ -1,5 +1,6 @@
 import os
 import secrets
+import sys
 
 class Config:
     """
@@ -18,8 +19,18 @@ class Config:
     DB_USER = os.environ.get('DB_USER')
     DB_PASS = os.environ.get('DB_PASS')
     DB_NAME = os.environ.get('DB_NAME')
-    # Set your Cloud SQL instance connection name explicitly here as default
-    INSTANCE_CONNECTION_NAME = os.environ.get('INSTANCE_CONNECTION_NAME', 'peoples-coin-cluster-final')
+
+    INSTANCE_CONNECTION_NAME = os.environ.get('INSTANCE_CONNECTION_NAME')
+
+    # Validate INSTANCE_CONNECTION_NAME format (expecting project:region:instance)
+    if INSTANCE_CONNECTION_NAME:
+        parts = INSTANCE_CONNECTION_NAME.split(':')
+        if len(parts) != 3 or any(not part.strip() for part in parts):
+            print(f"ERROR: INSTANCE_CONNECTION_NAME must be in 'project:region:instance' format but got '{INSTANCE_CONNECTION_NAME}'", file=sys.stderr)
+            sys.exit(1)
+    else:
+        print("ERROR: INSTANCE_CONNECTION_NAME environment variable is NOT set.", file=sys.stderr)
+        sys.exit(1)
 
     if all([DB_USER, DB_PASS, DB_NAME, INSTANCE_CONNECTION_NAME]):
         SQLALCHEMY_DATABASE_URI = (
@@ -36,25 +47,23 @@ class Config:
     DB_SUPPORTS_SKIP_LOCKED = os.environ.get("DB_SUPPORTS_SKIP_LOCKED", "true").lower() == "true"
 
     # --- Redis & Rate Limiting ---
-
-    # Use explicit host and port for Redis so you can override with your VPC Redis IP easily
     REDIS_HOST = os.environ.get("REDIS_HOST", "10.128.0.12")
     REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
     REDIS_DB = int(os.environ.get("REDIS_DB", 0))
 
     REDIS_URL = os.environ.get("REDIS_URL") or f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
-    # Rate limiting config using Redis as backend storage
     RATELIMIT_STORAGE_URI = REDIS_URL
     RATELIMIT_DEFAULT = "100 per hour;20 per minute"
     
     # --- CORS Origins ---
     CORS_ORIGINS = [
-        "https://brightacts.com",  # Your primary production domain
-        "https://peoples-coin-service-105378934751.us-central1.run.app", # Your deployed backend URL
+        "https://brightacts.com",
+        "https://peoples-coin-service-105378934751.us-central1.run.app",
         "http://localhost:5000",
         "http://localhost:8080",
     ]
 
     # --- Firebase Admin ---
     FIREBASE_CREDENTIAL_PATH = os.environ.get("FIREBASE_CREDENTIAL_PATH", "serviceAccountKey.json")
+

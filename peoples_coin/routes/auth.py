@@ -2,6 +2,8 @@ import http
 import secrets
 from flask import Blueprint, request, jsonify, g
 from werkzeug.security import check_password_hash, generate_password_hash
+from sqlalchemy import func
+
 from peoples_coin.models.db_utils import get_session_scope
 from peoples_coin.models.models import ApiKey, UserAccount
 from peoples_coin.extensions import db
@@ -9,6 +11,7 @@ from peoples_coin.utils.auth import require_firebase_token
 from peoples_coin.utils.recaptcha import verify_recaptcha
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
+
 KEY_ERROR = "error"
 KEY_MESSAGE = "message"
 
@@ -40,6 +43,7 @@ def create_api_key():
             "api_key": new_key
         }), http.HTTPStatus.CREATED
 
+
 # ---------------------------
 # Sign-in using email/password
 # ---------------------------
@@ -56,7 +60,8 @@ def signin():
         return jsonify({KEY_ERROR: "Email and password are required"}), http.HTTPStatus.BAD_REQUEST
 
     with get_session_scope() as session:
-        user = session.query(UserAccount).filter_by(email=email).first()
+        # Use case-insensitive email check
+        user = session.query(UserAccount).filter(func.lower(UserAccount.email) == email.lower()).first()
         if not user:
             return jsonify({KEY_ERROR: "Invalid email or password"}), http.HTTPStatus.UNAUTHORIZED
 
@@ -75,23 +80,29 @@ def signin():
             }
         }), http.HTTPStatus.OK
 
+
 # ---------------------------
 # Get Current Authenticated User (Auto-create if missing)
 # ---------------------------
 @auth_bp.route("/users/me", methods=["GET"])
 @require_firebase_token
 def get_current_user():
-    """Returns the authenticated user's profile from DB. Creates DB record if missing."""
+    """
+    Returns the authenticated user's profile from DB. Creates DB record if missing.
+    Assumes Firebase user info is available in g.user.
+    """
     with get_session_scope() as session:
-        # Try to find user in DB by Firebase UID
         user = session.query(UserAccount).filter_by(firebase_uid=g.user.firebase_uid).first()
 
         # Auto-create DB record if not found
         if not user:
+            # Defensive fallback username from Firebase email prefix
+            fallback_username = (g.user.username or g.user.email.split("@")[0]).strip()
+
             user = UserAccount(
                 firebase_uid=g.user.firebase_uid,
                 email=g.user.email,
-                username=g.user.username or g.user.email.split("@")[0],
+                username=fallback_username,
                 password_hash=generate_password_hash(secrets.token_hex(8)),  # Random internal password
                 balance=0,
                 goodwill_coins=0
@@ -99,7 +110,6 @@ def get_current_user():
             session.add(user)
             session.flush()
 
-        # Return full user profile
         return jsonify({
             "id": str(user.id),
             "email": user.email,
@@ -107,6 +117,7 @@ def get_current_user():
             "balance": str(user.balance),
             "goodwill_coins": user.goodwill_coins
         }), http.HTTPStatus.OK
+
 
 # ---------------------------
 # Sign-up new user (with reCAPTCHA verification)
@@ -120,23 +131,25 @@ def signup():
     email = data.get("email")
     username = data.get("username")
     password = data.get("password")
-    recaptcha_token = data.get("recaptchaToken")  # Get reCAPTCHA token from frontend
+    recaptcha_token = data.get("recaptchaToken")  # Expect frontend to send token as 'recaptchaToken'
 
     if not email or not username or not password or not recaptcha_token:
         return jsonify({KEY_ERROR: "Email, username, password, and recaptchaToken are required"}), http.HTTPStatus.BAD_REQUEST
 
-    # Verify reCAPTCHA
+    # Verify reCAPTCHA (expects a boolean return)
     RECAPTCHA_EXPECTED_ACTION = "signup"
     user_ip = request.remote_addr
-    user_agent = request.headers.get("User-Agent")
+    user_agent = request.headers.get("User-Agent", "")
 
-    if not verify_recaptcha(recaptcha_token, RECAPTCHA_EXPECTED_ACTION, user_ip, user_agent):
+    is_human = verify_recaptcha(recaptcha_token, RECAPTCHA_EXPECTED_ACTION, user_ip, user_agent)
+    if not is_human:
         return jsonify({KEY_ERROR: "Invalid or failed reCAPTCHA verification"}), http.HTTPStatus.BAD_REQUEST
 
     with get_session_scope() as session:
-        # Check if email or username already exists
+        # Case-insensitive checks for email and username
         existing_user = session.query(UserAccount).filter(
-            (UserAccount.email == email) | (UserAccount.username == username)
+            (func.lower(UserAccount.email) == email.lower()) |
+            (func.lower(UserAccount.username) == username.lower())
         ).first()
 
         if existing_user:
@@ -165,7 +178,9 @@ def signup():
         }), http.HTTPStatus.CREATED
 
 
-
+# ---------------------------
+# Check username availability
+# ---------------------------
 @auth_bp.route("/check-username", methods=["GET"])
 def check_username():
     username = request.args.get("username", "").strip()
@@ -173,8 +188,11 @@ def check_username():
     if not username:
         return jsonify({KEY_ERROR: "Missing 'username' parameter"}), http.HTTPStatus.BAD_REQUEST
 
+    if len(username) > 32:
+        return jsonify({KEY_ERROR: "Username too long (max 32 characters)"}), http.HTTPStatus.BAD_REQUEST
+
     with get_session_scope() as session:
-        exists = session.query(UserAccount).filter_by(username=username).first() is not None
+        exists = session.query(UserAccount).filter(func.lower(UserAccount.username) == username.lower()).first() is not None
 
     return jsonify({"available": not exists}), http.HTTPStatus.OK
 

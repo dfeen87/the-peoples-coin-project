@@ -1,99 +1,87 @@
 import os
 import logging
-from flask import Flask
-
+from flask import Flask, request, jsonify
 from peoples_coin.extensions import db, migrate, cors, limiter, swagger, make_celery
+from peoples_coin.utils.recaptcha_verify import verify_recaptcha
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def create_app():
     """Creates and configures the Flask application."""
+    app = Flask(__name__, instance_relative_config=True)
+
     try:
-        app = Flask(__name__, instance_relative_config=True)
+        db_user = os.environ.get("DB_USER")
+        db_pass = os.environ.get("DB_PASS")
+        db_name = os.environ.get("DB_NAME")
+        instance_connection_name = os.environ.get("INSTANCE_CONNECTION_NAME")
 
-        # --- Dynamic Database URI Configuration ---
-        database_url = None
+        if not all([db_user, db_pass, db_name, instance_connection_name]):
+            raise ValueError("One or more database environment variables are not set.")
+
+        # Correct URI for connecting to the Cloud SQL Auth Proxy socket
+        db_uri = (
+           f"postgresql+pg8000://{db_user}:{db_pass}@/{db_name}"
+           f"?unix_sock=/cloudsql/{instance_connection_name}/.s.PGSQL.5432"
+        )
         
-        if os.environ.get("K_SERVICE"):
-            logger.info("Cloud Run environment detected. Configuring for Cloud SQL with Auth Proxy.")
-            db_user = os.environ.get("DB_USER", "postgres")
-            db_pass = os.environ.get("DB_PASS", "NDfcIdlRk0")
-            db_name = os.environ.get("DB_NAME", "brightacts")
-            instance_connection_name = os.environ.get("INSTANCE_CONNECTION_NAME", "heroic-tide-428421-q7:us-central1:peoples-coin-cluster-final")
-            
-            if not all([db_user, db_pass, db_name, instance_connection_name]):
-                 raise ValueError("Missing database configuration for Cloud Run.")
-
-            database_url = (
-                f"postgresql+psycopg2://{db_user}:{db_pass}@/{db_name}"
-                f"?host=/cloudsql/{instance_connection_name}"
-            )
-        else:
-            logger.info("Local environment detected. Using DATABASE_URL.")
-            database_url = os.environ.get("DATABASE_URL")
-            if not database_url:
-                raise ValueError("DATABASE_URL environment variable is not set for local development.")
-
-        # --- App Configuration ---
-        REDIS_HOST = os.environ.get("REDIS_HOST", "10.128.0.12")
-        CELERY_URL = os.environ.get("CELERY_BROKER_URL", f"redis://{REDIS_HOST}:6379/0")
-
         app.config.from_mapping(
-            SECRET_KEY=os.environ.get("SECRET_KEY", "a-strong-dev-secret-key"),
-            SQLALCHEMY_DATABASE_URI=database_url,
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping": True},
-            CELERY_BROKER_URL=CELERY_URL,
-            CELERY_RESULT_BACKEND=CELERY_URL,
-            RATELIMIT_STORAGE_URI=CELERY_URL,
-            RECAPTCHA_SECRET_KEY=os.environ.get("RECAPTCHA_SECRET_KEY_PROD", "6LeE0pQrAAAAALSMkV1cRCcyJZopTZJYKP1NbGAf"),
+            SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret"),
+            SQLALCHEMY_DATABASE_URI=db_uri,
+            SQLALCHEMY_TRACK_MODIFICATIONS=False, # Set to None for future versions
         )
-        logger.info("✅ App configured.")
+        logger.info("✅ App configured with Cloud SQL Unix socket URI.")
 
-        # --- Initialize Extensions ---
-        db.init_app(app)
-        migrate.init_app(app, db)
-        
-        cors.init_app(
-            app,
-            origins=[
-                "https://brightacts.com",
-                "https://www.brightacts.com",
-                "https://brightacts-frontend-50f58.web.app",
-                "https://brightacts-frontend-50f58.firebaseapp.com",
-                "https://peoples-coin-service-105378934751.us-central1.run.app",
-                "http://localhost:3000",
-                "http://127.0.0.1:3000",
-            ],
-            supports_credentials=True,
-            allow_headers=["Content-Type", "Authorization"],
-            expose_headers=["Content-Type", "Authorization"],
-            methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        )
-        
-        limiter.init_app(app)
-        swagger.init_app(app)
-        logger.info("✅ Extensions initialized.")
+    except Exception as e:
+        logger.critical(f"🚨 FAILED TO CONFIGURE DATABASE: {e}")
+        raise
 
-        # --- Initialize Celery ---
+    # Initialize extensions
+    db.init_app(app)
+    migrate.init_app(app, db)
+    cors.init_app(app)
+    limiter.init_app(app)
+    swagger.init_app(app)
+    logger.info("✅ Extensions initialized.")
+    
+    # Initialize Celery if configured
+    if "CELERY_BROKER_URL" in os.environ:
         make_celery(app)
         logger.info("✅ Celery initialized.")
 
-        # --- Register Blueprints ---
-        from peoples_coin.routes import register_routes
-        register_routes(app)
-        logger.info("✅ Blueprints registered.")
+    # Register blueprints
+    with app.app_context():
+        from peoples_coin.routes import user_api_bp  # Your existing user API blueprint
+        from peoples_coin.routes import status_routes  # New status routes blueprint
 
-        # --- Health Check Endpoint ---
-        @app.route("/health")
-        def health():
-            return {"status": "ok"}, 200
+        app.register_blueprint(user_api_bp)
+        app.register_blueprint(status_routes.status_bp)  # Register status routes blueprint
 
-        logger.info("🚀 Flask app created successfully!")
-        return app
+        logger.info("✅ Blueprints registered successfully.")
 
-    except Exception as e:
-        logger.exception(f"🚨 CRITICAL ERROR DURING APP CREATION: {e}")
-        raise
+    # Health check route
+    @app.route("/health")
+    def health():
+        return {"status": "ok"}, 200
+
+    # Example signup route
+    @app.route("/signup", methods=["POST"])
+    def signup():
+        data = request.json or {}
+        recaptcha_token = data.get("recaptchaToken")
+        if not recaptcha_token:
+            return jsonify({"error": "Missing reCAPTCHA token"}), 400
+        
+        is_valid, message = verify_recaptcha(recaptcha_token, expected_action="submit")
+        
+        if not is_valid:
+            return jsonify({"error": "reCAPTCHA verification failed", "details": message}), 400
+        
+        # Add your user creation logic here
+        
+        return jsonify({"message": "User signed up successfully"}), 201
+
+    logger.info("🚀 Flask app created successfully!")
+    return app
 

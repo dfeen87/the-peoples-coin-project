@@ -2,6 +2,7 @@ import http
 from flask import Blueprint, request, jsonify, current_app
 from pydantic import BaseModel, Field, HttpUrl
 
+from sqlalchemy import func
 from peoples_coin.extensions import db # **FIX**: Import the db instance
 from peoples_coin.models.db_utils import get_session_scope
 from peoples_coin.models.models import ChainBlock

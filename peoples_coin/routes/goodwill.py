@@ -27,7 +27,7 @@ def submit_goodwill():
         logger.info(f"Received goodwill action submission from user_id={g.user.id}")
 
         # Call the goodwill service with combined data dict
-        result = goodwill_service.submit_action(data)
+        result = goodwill_service.submit_and_queue_goodwill_action(data)
 
         return jsonify({
             "message": "Goodwill action accepted and queued for processing.",
@@ -42,11 +42,34 @@ def submit_goodwill():
         logger.exception(f"Unexpected error in goodwill submission: {err}")
         return jsonify({"error": "Internal server error occurred"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
+
+@goodwill_bp.route("/actions/<string:action_id>/status", methods=["GET"])
+@require_firebase_token
+def get_goodwill_status(action_id):
+    """
+    Returns the status of a specific goodwill action for the authenticated user.
+    """
+    user_id = g.user.id
+
+    try:
+        # Query the goodwill service for this action's status
+        status = goodwill_service.get_action_status(user_id=user_id, action_id=action_id)
+        if status is None:
+            return jsonify({"error": "Goodwill action not found"}), http.HTTPStatus.NOT_FOUND
+
+        return jsonify({"status": status}), http.HTTPStatus.OK
+
+    except Exception as err:
+        logger.exception(f"Failed to retrieve status for goodwill action {action_id}: {err}")
+        return jsonify({"error": "Internal server error occurred"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+
 @goodwill_bp.route("/summary", methods=["GET"])
 @require_api_key  # Require API key for admin/internal use
 def goodwill_summary():
     """
     Returns a summary of total goodwill actions and resonance score for a user.
+    Expects a 'user_id' query parameter.
     """
     user_id = request.args.get("user_id")
     if not user_id:
@@ -64,11 +87,13 @@ def goodwill_summary():
         logger.exception(f"Failed to retrieve goodwill summary for user_id={user_id}: {err}")
         return jsonify({"error": "Internal server error occurred"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
+
 @goodwill_bp.route("/history", methods=["GET"])
 @require_api_key  # Require API key for admin/internal use
 def goodwill_history():
     """
     Retrieves paginated goodwill action history for a user.
+    Expects 'user_id' query parameter, optional pagination params.
     """
     user_id = request.args.get("user_id")
     if not user_id:
