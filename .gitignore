@@ -110,3 +110,4 @@ alembic.ini
 
 migrations/
 pyproject.toml
+.DS_Store

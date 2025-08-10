@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify, g, current_app
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token, require_api_key
 from peoples_coin.utils.validation import validate_with
-from peoples_coin.services.goodwill_service import goodwill_service, GoodwillError
+from peoples_coin.services.goodwill_service import goodwill_service, GoodwillSubmissionError
 from peoples_coin.validate.schemas import GoodwillActionSchema
 
 logger = logging.getLogger(__name__)

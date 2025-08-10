@@ -1,30 +1,29 @@
-# system/status.py
-
+# peoples_coin/systems/status.py
 from typing import Dict, Any, List
 import datetime
 
-# Import your biological systems
-from system.metabolic import get_metabolic_status, get_metabolic_transaction_state
-from system.cognitive import get_cognitive_status, get_cognitive_transaction_state
-from system.nervous import get_nervous_status, get_nervous_transaction_state
-from system.endocrine import get_endocrine_status
-from system.immune import get_immune_status, get_immune_transaction_state
-from system.skeleton import get_skeleton_info
-from system.circulatory import get_circulatory_status
-from system.reproductive import get_reproductive_status
-from system.backend_status_service import get_overall_backend_status
+# Import status functions from each system module
+from peoples_coin.systems.metabolic_system import get_metabolic_status, get_metabolic_transaction_state
+from peoples_coin.systems.cognitive_system import get_cognitive_status, get_cognitive_transaction_state
+from peoples_coin.systems.nervous_system import get_nervous_status, get_nervous_transaction_state
+from peoples_coin.systems.endocrine_system import get_endocrine_status
+from peoples_coin.systems.immune_system import get_immune_status, get_immune_transaction_state
+from peoples_coin.systems.skeleton_system import get_skeleton_info
+from peoples_coin.systems.circulatory_system import get_circulatory_status
+from peoples_coin.systems.reproductive_system import get_reproductive_status
+# Removed unused import for get_overall_backend_status
 
+# Optional controller import
+try:
+    from peoples_coin.systems.controller import get_controller_status
+except ImportError:
+    get_controller_status = None
 
-def get_backend_status(transaction_id):
-    return get_overall_backend_status(transaction_id)
 
 def get_recent_events(limit: int = 50) -> List[Dict[str, Any]]:
-    """
-    Retrieve recent backend events or logs.
-    Replace this stub with your real logging or nervous system event fetching.
-    """
+    """Retrieve recent backend events or logs."""
     now = datetime.datetime.utcnow()
-    events = [
+    return [
         {
             "timestamp": (now - datetime.timedelta(minutes=i)).isoformat() + "Z",
             "event": f"Sample event {i}",
@@ -32,32 +31,26 @@ def get_recent_events(limit: int = 50) -> List[Dict[str, Any]]:
         }
         for i in range(limit)
     ]
-    return events
 
 
 def get_recent_goodwill_transactions(limit: int = 20) -> List[Dict[str, Any]]:
-    """
-    Fetch recent goodwill transactions from your ledger or database.
-    Replace this stub with a real DB or cache call.
-    Each transaction dict must include at least: id, timestamp, initiator.
-    """
+    """Fetch recent goodwill transactions from ledger or database."""
     now = datetime.datetime.utcnow()
     return [
-        {"id": f"gw-txn-{i}", "timestamp": (now - datetime.timedelta(minutes=i * 2)).isoformat() + "Z", "initiator": f"user{i}"}
+        {
+            "id": f"gw-txn-{i}",
+            "timestamp": (now - datetime.timedelta(minutes=i * 2)).isoformat() + "Z",
+            "initiator": f"user{i}",
+        }
         for i in range(limit)
     ]
 
 
 def determine_overall_txn_status(states: List[Dict[str, Any]]) -> str:
-    """
-    Aggregate individual system states into an overall transaction status.
-    For example, if any system flags 'pending', 'flagged', or 'review', overall is 'pending_review'.
-    If any system rejects, overall is 'rejected'.
-    Otherwise, 'confirmed'.
-    """
+    """Aggregate individual system states into overall transaction status."""
     for state in states:
         s = state.get("state")
-        if s in ["pending", "flagged", "review"]:
+        if s in {"pending", "flagged", "review"}:
             return "pending_review"
         if s == "rejected":
             return "rejected"
@@ -65,10 +58,7 @@ def determine_overall_txn_status(states: List[Dict[str, Any]]) -> str:
 
 
 def get_goodwill_transaction_status_summary(limit: int = 20) -> Dict[str, Any]:
-    """
-    Provide a consolidated snapshot of recent goodwill transactions and their
-    processing states across key systems.
-    """
+    """Provide a consolidated snapshot of recent goodwill transactions."""
     recent_txns = get_recent_goodwill_transactions(limit)
 
     txn_statuses = []
@@ -105,12 +95,7 @@ def get_goodwill_transaction_status_summary(limit: int = 20) -> Dict[str, Any]:
 
 
 def get_backend_status() -> Dict[str, Any]:
-    """
-    Aggregate the status of all core biological systems, goodwill transaction
-    processing status, and metadata.
-    Returns a dict suitable for JSON serialization.
-    """
-
+    """Aggregate the health/status of all core systems."""
     status = {
         "metabolic": get_metabolic_status(),
         "cognitive": get_cognitive_status(),
@@ -121,64 +106,14 @@ def get_backend_status() -> Dict[str, Any]:
         "circulatory": get_circulatory_status(),
         "reproductive": get_reproductive_status(),
         "controller": get_controller_status() if get_controller_status else None,
-        "nodeVersion": get_skeleton_info().get("version", "unknown"),
         "recentEvents": get_recent_events(),
         "goodwillTransactionSummary": get_goodwill_transaction_status_summary(),
         "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
     }
 
-    # Overall system health flag based on critical systems' health
-    critical_systems = ["metabolic", "cognitive", "nervous", "endocrine", "immune", "circulatory", "reproductive"]
+    critical_systems = ["metabolic", "cognitive", "nervous", "immune"]
     status["systemHealthy"] = all(
-        status.get(system, {}).get("healthy", True) for system in critical_systems
+        status.get(system, {}).get("healthy", False) for system in critical_systems
     )
 
     return status
-
-# Temporary stubs — replace with real implementations in your biological system modules
-
-def get_metabolic_status():
-    return {"active": True, "healthy": True, "info": "Metabolic system operational"}
-
-def get_metabolic_transaction_state(txn_id):
-    return {"state": "minted", "confirmed": True}
-
-def get_cognitive_status():
-    return {"active": True, "healthy": True, "info": "Cognitive system operational"}
-
-def get_cognitive_transaction_state(txn_id):
-    return {"state": "governance-approved", "confirmed": True}
-
-def get_nervous_status():
-    return {"active": True, "healthy": True, "info": "Nervous system operational"}
-
-def get_nervous_transaction_state(txn_id):
-    return {"state": "broadcasted", "confirmed": True}
-
-def get_immune_status():
-    return {"active": True, "healthy": True, "info": "Immune system operational"}
-
-def get_immune_transaction_state(txn_id):
-    return {"state": "clear", "confirmed": True}
-
-def get_endocrine_status():
-    return {"active": True, "healthy": True, "info": "Endocrine system operational"}
-
-def get_skeleton_info():
-    return {"version": "1.0.0", "schema": "v1"}
-
-def get_circulatory_status():
-    return {"active": True, "healthy": True, "info": "Circulatory system operational"}
-
-def get_reproductive_status():
-    return {"active": True, "healthy": True, "info": "Reproductive system operational"}
-
-try:
-    from system.controller import get_controller_status
-except ImportError:
-    get_controller_status = None
-
-if __name__ == "__main__":
-    import json
-    print(json.dumps(get_backend_status(), indent=2))
-

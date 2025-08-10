@@ -10,7 +10,7 @@ from peoples_coin.extensions import db
 
 logger = logging.getLogger(__name__)
 
-class GoodwillError(Exception):
+class GoodwillSubmissionError(Exception):
     """Custom exception raised for goodwill service related issues."""
     pass
 

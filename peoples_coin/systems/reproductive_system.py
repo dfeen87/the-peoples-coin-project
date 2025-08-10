@@ -1,125 +1,63 @@
-# src/peoples_coin/routes/governance_routes.py (example new name)
-
+# peoples_coin/systems/reproductive_system.py
 import logging
-import http
 import uuid
 from decimal import Decimal
+from typing import Optional, Dict, Any
 
-from flask import Blueprint, request, jsonify, Response, g
-from pydantic import BaseModel, Field, ValidationError
-
-# Use our standard, secure decorators
-from peoples_coin.utils.auth import require_firebase_token
-from peoples_coin.utils.validation import validate_with
-
-# Import your services and custom exceptions
-from peoples_coin.services.governance_service import governance_service, ProposalError
-from peoples_coin.services.user_service import user_service # Assuming this exists
-from peoples_coin.models.models import Proposal, Vote # For type hints
+from flask import Flask
+from peoples_coin.extensions import db
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models.models import Proposal, Vote
 
 logger = logging.getLogger(__name__)
-governance_bp = Blueprint('governance', __name__, url_prefix='/api/v1/governance')
 
-# --- Pydantic Input Models ---
-class CreateProposalSchema(BaseModel):
-    title: str = Field(..., min_length=5, max_length=255)
-    description: str = Field(..., min_length=20)
-    proposal_type: str
-    details: dict = Field(default_factory=dict)
+class ReproductiveSystem:
+    """Manages core governance logic and calculations."""
+    def __init__(self):
+        self.app: Optional[Flask] = None
+        self.db = None
+        self._initialized = False
+        logger.info("🌱 ReproductiveSystem instance created.")
 
-class SubmitVoteSchema(BaseModel):
-    vote_choice: str = Field(..., pattern=r"^(YES|NO|ABSTAIN)$")
-    vote_weight: Decimal = Field(..., gt=Decimal('0.0'))
+    def init_app(self, app: Flask, db_instance):
+        if self._initialized:
+            return
+        self.app = app
+        self.db = db_instance
+        self._initialized = True
+        logger.info("🌱 ReproductiveSystem initialized.")
 
+    def calculate_quadratic_vote_power(self, raw_vote_weight: Decimal) -> Decimal:
+        """Calculates vote power using quadratic voting logic."""
+        if raw_vote_weight < 0:
+            return Decimal('0.0')
+        return raw_vote_weight.sqrt()
 
-# --- API Routes ---
+    def get_voting_status(self, proposal_id: uuid.UUID) -> Optional[Dict[str, Any]]:
+        """Retrieves current voting status for a proposal."""
+        with get_session_scope(self.db) as session:
+            proposal = session.query(Proposal).filter_by(id=proposal_id).first()
+            if not proposal:
+                return None
+            
+            # This logic can be further optimized in the future
+            yes_votes = session.query(db.func.sum(Vote.actual_vote_power)).filter_by(proposal_id=proposal_id, vote_choice='YES').scalar() or Decimal('0.0')
+            no_votes = session.query(db.func.sum(Vote.actual_vote_power)).filter_by(proposal_id=proposal_id, vote_choice='NO').scalar() or Decimal('0.0')
 
-@governance_bp.route('/proposals', methods=['POST'])
-@require_firebase_token # **SECURITY**: Authenticate the user making the request
-@validate_with(CreateProposalSchema)
-def create_proposal() -> Tuple[Response, int]:
-    """Creates a new proposal, authored by the authenticated user."""
-    proposal_data: CreateProposalSchema = g.validated_data
-    
-    # The `g.user` object is provided by the @require_firebase_token decorator
-    proposer_user_id = g.user.id
-    logger.info(f"📥 API: Received proposal creation request from user: {proposer_user_id}")
+            return {
+                "proposal_id": str(proposal.id),
+                "status": proposal.status,
+                "total_power_yes": str(yes_votes),
+                "total_power_no": str(no_votes),
+            }
 
-    try:
-        # Pass the validated data and the authenticated user's ID to the service
-        new_proposal = governance_service.create_new_proposal(
-            proposer_user_id=proposer_user_id,
-            proposal_data=proposal_data.model_dump()
-        )
-        return jsonify({
-            "status": "success",
-            "message": "Proposal created successfully.",
-            "proposal": new_proposal # Assuming service returns a serializable dict
-        }), http.HTTPStatus.CREATED
-    except ProposalError as e:
-        logger.warning(f"🚫 API: Proposal creation failed for user {proposer_user_id}. Reason: {e}")
-        return jsonify({"status": "error", "error": str(e)}), http.HTTPStatus.BAD_REQUEST
-    except Exception as e:
-        logger.exception(f"💥 API: Unexpected error creating proposal for user {proposer_user_id}.")
-        return jsonify({"status": "error", "error": "An internal server error occurred."}), http.HTTPStatus.INTERNAL_SERVER_ERROR
+# Singleton instance
+reproductive_system = ReproductiveSystem()
 
-@governance_bp.route('/proposals/<uuid:proposal_id>/vote', methods=['POST'])
-@require_firebase_token # **SECURITY**: Authenticate the user casting the vote
-@validate_with(SubmitVoteSchema)
-def submit_vote(proposal_id: uuid.UUID) -> Tuple[Response, int]:
-    """Submits a vote on a proposal for the authenticated user."""
-    vote_data: SubmitVoteSchema = g.validated_data
-    voter_user_id = g.user.id # Use the authenticated user's ID from the token
-
-    logger.info(f"📥 API: Received vote for proposal {proposal_id} from user {voter_user_id}.")
-
-    try:
-        # The service layer handles all business logic (is proposal open, has user voted, etc.)
-        vote_result = governance_service.submit_user_vote(
-            proposal_id=proposal_id,
-            voter_user_id=voter_user_id,
-            vote_data=vote_data.model_dump()
-        )
-        return jsonify({
-            "status": "success",
-            "message": "Vote submitted successfully.",
-            "vote": vote_result # Assuming service returns a serializable dict
-        }), http.HTTPStatus.CREATED
-    except ProposalError as e:
-        # Catch specific, expected business logic errors from the service
-        logger.warning(f"🚫 API: Vote submission failed for user {voter_user_id} on proposal {proposal_id}. Reason: {e}")
-        # Map specific error types to HTTP status codes
-        status_code = http.HTTPStatus.BAD_REQUEST
-        if "not found" in str(e): status_code = http.HTTPStatus.NOT_FOUND
-        if "already voted" in str(e): status_code = http.HTTPStatus.CONFLICT
-        if "Insufficient balance" in str(e): status_code = http.HTTPStatus.FORBIDDEN
-        return jsonify({"status": "error", "error": str(e)}), status_code
-    except Exception as e:
-        logger.exception(f"💥 API: Unexpected error submitting vote for user {voter_user_id} on proposal {proposal_id}.")
-        return jsonify({"status": "error", "error": "An internal server error occurred."}), http.HTTPStatus.INTERNAL_SERVER_ERROR
-
-
-@governance_bp.route('/proposals', methods=['GET'])
-def list_proposals() -> Tuple[Response, int]:
-    """Lists all proposals, with optional filtering."""
-    # This endpoint can remain public, so no user auth is needed
-    status_filter = request.args.get('status')
-    proposals = governance_service.get_all_proposals(status=status_filter)
-    return jsonify({"status": "success", "proposals": proposals}), http.HTTPStatus.OK
-
-
-@governance_bp.route('/proposals/<uuid:proposal_id>', methods=['GET'])
-def get_proposal_details(proposal_id: uuid.UUID) -> Tuple[Response, int]:
-    """Gets detailed information for a single proposal."""
-    proposal_details = governance_service.get_proposal_by_id(proposal_id)
-    if not proposal_details:
-        return jsonify({"status": "error", "error": "Proposal not found"}), http.HTTPStatus.NOT_FOUND
-    return jsonify({"status": "success", "proposal": proposal_details}), http.HTTPStatus.OK
-
-
-@governance_bp.route('/council_members', methods=['GET'])
-def list_council_members() -> Tuple[Response, int]:
-    """Lists all council members, with optional filtering."""
-    role_filter = request.args.get('role')
-    members = governance_service.get_council_members(role=role_filter)
-    return jsonify({"status": "success", "council_members": members}), http.HTTPStatus.OK
+# --- Function for status page ---
+def get_reproductive_status():
+    """Health check for the Reproductive System."""
+    if reproductive_system._initialized:
+        return {"active": True, "healthy": True, "info": "Reproductive System operational"}
+    else:
+        return {"active": False, "healthy": False, "info": "Reproductive System not initialized"}
