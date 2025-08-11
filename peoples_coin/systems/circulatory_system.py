@@ -3,6 +3,7 @@
 import logging
 import http
 import uuid
+import os
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Tuple, Optional
@@ -35,9 +36,13 @@ class CirculatorySystem:
         self.app = app
         self.db = db
         self.consensus = consensus_instance
-        self.minter_wallet_address = self.app.config.get("MINTER_WALLET_ADDRESS")
+        
+        # Use environment variable instead of app config to avoid missing env on Cloud Run
+        self.minter_wallet_address = os.getenv("MINTER_WALLET_ADDRESS")
+        
         if not self.minter_wallet_address:
             raise RuntimeError("MINTER_WALLET_ADDRESS must be configured in the environment.")
+        
         self._initialized = True
         logger.info("🫀 CirculatorySystem initialized and configured.")
 
@@ -119,3 +124,4 @@ def get_circulatory_status():
         return {"active": True, "healthy": True, "info": "Circulatory System operational"}
     else:
         return {"active": False, "healthy": False, "info": "Circulatory System not initialized"}
+
