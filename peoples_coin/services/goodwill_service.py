@@ -2,7 +2,7 @@ import logging
 from typing import Dict, Any
 from sqlalchemy.exc import IntegrityError
 
-from peoples_coin.models.models import UserAccount
+from peoples_coin.models import UserAccount
 from peoples_coin.models.db_utils import get_session_scope
 from peoples_coin.models.goodwill_action import GoodwillAction
 from peoples_coin.validate.validate_transaction import validate_transaction

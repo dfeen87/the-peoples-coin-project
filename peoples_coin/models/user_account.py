@@ -1,9 +1,7 @@
-# peoples_coin/models/user_account.py
-
 import uuid
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy import Column, String, Integer, Text, DateTime, Numeric, func
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from peoples_coin.extensions import db
 
 class UserAccount(db.Model):
@@ -12,7 +10,8 @@ class UserAccount(db.Model):
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     firebase_uid = Column(String(128), unique=True, nullable=False)
     email = Column(String(256), unique=True, nullable=True)
-    username = Column(String(64), nullable=True)
+    username = Column(String(64), nullable=True, unique=True)
+    password_hash = Column(String(128), nullable=True)
     balance = Column(Numeric(20, 4), nullable=False, default=0.0)
     goodwill_coins = Column(Integer, nullable=False, default=0)
     bio = Column(Text, nullable=True)
@@ -24,7 +23,7 @@ class UserAccount(db.Model):
     # --- ADDED: All relationships to other models ---
 
     # Core
-    wallets = relationship("UserWallet", back_populates="user_account", cascade="all, delete-orphan")
+    user_wallets = relationship("UserWallet", back_populates="user_account", cascade="all, delete-orphan")
     api_keys = relationship("ApiKey", back_populates="user_account", cascade="all, delete-orphan")
     token_assets = relationship("UserTokenAsset", back_populates="user_account", cascade="all, delete-orphan")
     
@@ -66,6 +65,7 @@ class UserAccount(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
-        if include_wallets and self.wallets:
-            user_data["wallets"] = [wallet.to_dict() for wallet in self.wallets]
+        # The relationship property name is now `user_wallets`
+        if include_wallets and self.user_wallets:
+            user_data["wallets"] = [wallet.to_dict() for wallet in self.user_wallets]
         return user_data

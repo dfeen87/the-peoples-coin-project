@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import func
 from peoples_coin.extensions import db # **FIX**: Import the db instance
 from peoples_coin.models.db_utils import get_session_scope
-from peoples_coin.models.models import ChainBlock
+from peoples_coin.models import ChainBlock
 from peoples_coin.utils.auth import require_api_key
 from peoples_coin.utils.validation import validate_with # Import our validator
 # from peoples_coin.tasks import mine_block_task # Import your Celery task

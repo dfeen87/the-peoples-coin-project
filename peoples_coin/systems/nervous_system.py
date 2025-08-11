@@ -8,10 +8,10 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field, ValidationError, parse_obj_as
 from typing_extensions import Literal
 
-from peoples_coin.extensions import cognitive_system, db
+from peoples_coin.systems.cognitive_system import cognitive_system
+from peoples_coin.extensions import db
 from peoples_coin.models.db_utils import get_session_scope
-# CORRECTED: Import AuditLog, which exists in your final schema
-from peoples_coin.models.models import AuditLog
+from peoples_coin.models import AuditLog
 
 logger = logging.getLogger(__name__)
 

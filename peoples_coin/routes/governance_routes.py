@@ -1,10 +1,8 @@
-# peoples_coin/routes/reproductive_routes.py
-
 import logging
 import http
 import uuid
 from decimal import Decimal
-from typing import Tuple, Optional
+from typing import Tuple
 
 from flask import Blueprint, request, jsonify, Response, g
 from pydantic import BaseModel, Field
@@ -14,13 +12,12 @@ from typing_extensions import Literal
 from peoples_coin.utils.auth import require_firebase_token
 from peoples_coin.utils.validation import validate_with
 
-# Import core systems and models
+# Import your services and custom exceptions
 from peoples_coin.services.governance_service import governance_service, ProposalError
-from peoples_coin.systems.reproductive_system import reproductive_system
 from peoples_coin.models import Proposal, Vote # For type hints
 
 logger = logging.getLogger(__name__)
-reproductive_bp = Blueprint('reproductive', __name__, url_prefix='/api/v1/governance')
+governance_bp = Blueprint('governance', __name__, url_prefix='/api/v1/governance')
 
 # --- Pydantic Input Models ---
 # The schema classes are defined here, not imported from a separate file.
@@ -28,19 +25,15 @@ class CreateProposalSchema(BaseModel):
     title: str = Field(..., min_length=5, max_length=255)
     description: str = Field(..., min_length=20)
     proposal_type: str
-    details: Optional[dict] = Field(default_factory=dict)
-    vote_duration_days: Optional[int] = Field(None, ge=1, le=30)
-    required_quorum: Optional[Decimal] = Field(None, ge=Decimal('0.0'), le=Decimal('1.0'))
+    details: dict = Field(default_factory=dict)
 
 class SubmitVoteSchema(BaseModel):
-    proposal_id: uuid.UUID = Field(..., description="ID of the proposal being voted on")
-    voter_user_id: uuid.UUID = Field(..., description="UUID of the user casting the vote")
     vote_choice: str = Field(..., pattern=r"^(YES|NO|ABSTAIN)$")
     vote_weight: Decimal = Field(..., gt=Decimal('0.0'))
 
 # --- API Routes ---
 
-@reproductive_bp.route('/proposals', methods=['POST'])
+@governance_bp.route('/proposals', methods=['POST'])
 @require_firebase_token
 @validate_with(CreateProposalSchema)
 def create_proposal() -> Tuple[Response, int]:
@@ -66,16 +59,13 @@ def create_proposal() -> Tuple[Response, int]:
         logger.exception(f"💥 API: Unexpected error creating proposal for user {proposer_user_id}.")
         return jsonify({"status": "error", "error": "An internal server error occurred."}), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
-@reproductive_bp.route('/proposals/<uuid:proposal_id>/vote', methods=['POST'])
+@governance_bp.route('/proposals/<uuid:proposal_id>/vote', methods=['POST'])
 @require_firebase_token
 @validate_with(SubmitVoteSchema)
 def submit_vote(proposal_id: uuid.UUID) -> Tuple[Response, int]:
     """Submits a vote on a proposal for the authenticated user."""
     vote_data: SubmitVoteSchema = g.validated_data
     voter_user_id = g.user.id
-
-    if vote_data.proposal_id != proposal_id:
-        return jsonify({"status": "error", "error": "Mismatched proposal ID in URL and payload"}), http.HTTPStatus.BAD_REQUEST
 
     logger.info(f"📥 API: Received vote for proposal {proposal_id} from user {voter_user_id}.")
 
@@ -102,7 +92,7 @@ def submit_vote(proposal_id: uuid.UUID) -> Tuple[Response, int]:
         return jsonify({"status": "error", "error": "An internal server error occurred."}), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@reproductive_bp.route('/proposals', methods=['GET'])
+@governance_bp.route('/proposals', methods=['GET'])
 def list_proposals() -> Tuple[Response, int]:
     """Lists all proposals, with optional filtering."""
     status_filter = request.args.get('status')
@@ -110,7 +100,7 @@ def list_proposals() -> Tuple[Response, int]:
     return jsonify({"status": "success", "proposals": proposals}), http.HTTPStatus.OK
 
 
-@reproductive_bp.route('/proposals/<uuid:proposal_id>', methods=['GET'])
+@governance_bp.route('/proposals/<uuid:proposal_id>', methods=['GET'])
 def get_proposal_details(proposal_id: uuid.UUID) -> Tuple[Response, int]:
     """Gets detailed information for a single proposal."""
     proposal_details = governance_service.get_proposal_by_id(proposal_id)
@@ -119,7 +109,7 @@ def get_proposal_details(proposal_id: uuid.UUID) -> Tuple[Response, int]:
     return jsonify({"status": "success", "proposal": proposal_details}), http.HTTPStatus.OK
 
 
-@reproductive_bp.route('/council_members', methods=['GET'])
+@governance_bp.route('/council_members', methods=['GET'])
 def list_council_members() -> Tuple[Response, int]:
     """Lists all council members, with optional filtering."""
     role_filter = request.args.get('role')

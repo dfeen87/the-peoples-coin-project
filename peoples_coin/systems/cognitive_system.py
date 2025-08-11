@@ -12,7 +12,7 @@ from typing import Optional, Dict, Any
 from flask import Flask
 
 from peoples_coin.models.db_utils import get_session_scope
-from peoples_coin.models.models import AuditLog # Correctly uses AuditLog
+from peoples_coin.models import AuditLog # Correctly uses AuditLog
 from peoples_coin.extensions import db
 
 try:

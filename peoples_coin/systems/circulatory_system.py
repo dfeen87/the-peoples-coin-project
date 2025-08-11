@@ -12,7 +12,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from peoples_coin.utils.auth import require_api_key
 from peoples_coin.models.db_utils import get_session_scope
-from peoples_coin.models.models import GoodwillAction, UserAccount, LedgerEntry, UserWallet
+from peoples_coin.models import GoodwillAction, UserAccount, LedgerEntry, UserWallet
 from peoples_coin.consensus import Consensus
 from peoples_coin.extensions import db
 

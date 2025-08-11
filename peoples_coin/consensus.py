@@ -12,7 +12,7 @@ except ImportError:
     Redis = None
 
 from peoples_coin.models.db_utils import get_session_scope
-from peoples_coin.models.models import ChainBlock, LedgerEntry, UserAccount
+from peoples_coin.models import ChainBlock, LedgerEntry, UserAccount
 from peoples_coin.validate.validate_transaction import validate_transaction
 
 logger = logging.getLogger(__name__)
@@ -61,6 +61,20 @@ class Consensus:
             raise RuntimeError("Redis is required for the Consensus transaction pool.")
         self.create_genesis_block_if_needed()
         logger.info("🚀 Consensus initialized.")
+
+    def create_genesis_block_if_needed(self):
+        """
+        Ensures a genesis block exists in the database.
+        This is a placeholder implementation.
+        """
+        with get_session_scope(self.db) as session:
+            # Check if there are any blocks in the database
+            if session.query(ChainBlock).count() == 0:
+                logger.info("No genesis block found. Creating one now.")
+                self.new_block(previous_hash="1")
+            else:
+                logger.info("Genesis block already exists.")
+
 
     def add_transaction(self, transaction: Dict[str, Any]) -> int:
         """
@@ -163,5 +177,3 @@ class Consensus:
         """Gets the most recent block from the database."""
         with get_session_scope(self.db) as session:
             return session.query(ChainBlock).order_by(ChainBlock.height.desc()).first()
-
-    # ... other methods like valid_chain, resolve_conflicts, etc., remain excellent ...

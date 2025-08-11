@@ -18,7 +18,7 @@ class Bounty(db.Model):
     description = Column(Text, nullable=False)
     
     status = Column(
-        ENUM('DRAFT', 'ACTIVE', 'CLOSED', 'REJECTED', name='proposal_status', create_type=False),
+        ENUM('DRAFT', 'ACTIVE', 'CLOSED', 'REJECTED', name='bounty_status', create_type=False),
         nullable=False,
         server_default='ACTIVE'
     )
@@ -30,7 +30,6 @@ class Bounty(db.Model):
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
-    # Relationship to link back to the UserAccount model
     creator = relationship("UserAccount", back_populates="created_bounties")
 
     def to_dict(self):

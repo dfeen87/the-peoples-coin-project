@@ -4,7 +4,7 @@ import uuid
 from sqlalchemy import (
     Column, Text, DateTime, func, ForeignKey, CheckConstraint
 )
-from sqlalchemy.orm import relationship, remote, foreign
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from peoples_coin.extensions import db
 
@@ -15,6 +15,8 @@ class Comment(db.Model):
     author_user_id = Column(PG_UUID(as_uuid=True), ForeignKey("user_accounts.id", ondelete="SET NULL"), nullable=True)
     proposal_id = Column(PG_UUID(as_uuid=True), ForeignKey("proposals.id", ondelete="CASCADE"), nullable=True)
     goodwill_action_id = Column(PG_UUID(as_uuid=True), ForeignKey("goodwill_actions.id", ondelete="CASCADE"), nullable=True)
+    
+    # --- FIXED: Self-referential relationship with ForeignKey to parent_comment_id
     parent_comment_id = Column(PG_UUID(as_uuid=True), ForeignKey("comments.id", ondelete="CASCADE"), nullable=True)
     
     content = Column(Text, nullable=False)
@@ -28,10 +30,10 @@ class Comment(db.Model):
     proposal = relationship("Proposal", back_populates="comments")
     goodwill_action = relationship("GoodwillAction", back_populates="comments")
     
-    # Self-referential relationship for threaded comments
+    # --- FIXED: Self-referential relationship for threaded comments
     parent = relationship("Comment", remote_side=[id], back_populates="replies")
-    replies = relationship("Comment", back_populates="parent", cascade="all, delete-orphan")
-
+    replies = relationship("Comment", back_populates="parent", cascade="all, delete-orphan", primaryjoin="Comment.parent_comment_id == Comment.id")
+    
     # --- Constraints ---
     __table_args__ = (
         CheckConstraint(

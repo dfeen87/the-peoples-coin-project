@@ -6,22 +6,23 @@ from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from sqlalchemy.orm import Session
 
 from peoples_coin.extensions import db  # Centralized SQLAlchemy instance
-from peoples_coin.db_types import JSONType, UUIDType, EnumType
 
 logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def get_session_scope():
+def get_session_scope(db_instance=None):  # <<-- FIX: Added optional db_instance argument
     """
     Provide a transactional scope for database operations.
+    If no db_instance is provided, it defaults to the global db instance.
 
     Usage:
         with get_session_scope() as session:
             session.add(...)
             # commit happens automatically unless an exception occurs
     """
-    session: Session = db.session()
+    db_to_use = db_instance or db
+    session: Session = db_to_use.session()
     try:
         yield session
         session.commit()

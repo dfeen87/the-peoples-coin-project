@@ -1,7 +1,7 @@
 # peoples_coin/models/vote.py
 
 import uuid
-from sqlalchemy import Column, String, Text, DateTime, func, UniqueConstraint, ForeignKey
+from sqlalchemy import Column, String, Text, DateTime, Numeric, func, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, ENUM
 from peoples_coin.extensions import db
@@ -13,14 +13,16 @@ class Vote(db.Model):
     voter_user_id = Column(PG_UUID(as_uuid=True), ForeignKey("user_accounts.id"), nullable=True)
     proposal_id = Column(PG_UUID(as_uuid=True), ForeignKey("proposals.id", ondelete="CASCADE"), nullable=False)
     
-    # This correctly uses the ENUM type defined in your schema
     vote_value = Column(ENUM('FOR', 'AGAINST', 'ABSTAIN', name='vote_option', create_type=False), nullable=False)
+    
+    # --- ADDED: The two missing columns for voting logic ---
+    vote_weight = Column(Numeric(20, 8), nullable=False)
+    actual_vote_power = Column(Numeric(20, 8), nullable=False)
     
     rationale = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     
-    # --- CHANGE: Relationships updated for consistency ---
-    # Use back_populates for a clear, two-way relationship link
+    # --- Relationships updated for consistency ---
     voter = relationship("UserAccount", back_populates="votes")
     proposal = relationship("Proposal", back_populates="votes")
 
@@ -36,6 +38,8 @@ class Vote(db.Model):
             "voter_user_id": str(self.voter_user_id) if self.voter_user_id else None,
             "proposal_id": str(self.proposal_id),
             "vote_value": self.vote_value,
+            "vote_weight": str(self.vote_weight),
+            "actual_vote_power": str(self.actual_vote_power),
             "rationale": self.rationale,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

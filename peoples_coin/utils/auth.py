@@ -8,7 +8,7 @@ from firebase_admin import auth as firebase_auth
 from sqlalchemy import func
 
 from peoples_coin.extensions import db
-from peoples_coin.models.models import ApiKey
+from peoples_coin.models import ApiKey
 
 logger = logging.getLogger(__name__)
 KEY_ERROR = "error"

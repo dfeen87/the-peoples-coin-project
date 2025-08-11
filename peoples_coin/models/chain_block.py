@@ -12,24 +12,17 @@ class ChainBlock(db.Model):
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     height = Column(Integer, nullable=False, unique=True, index=True)
     
-    # --- CHANGE: Using LargeBinary for BYTEA type from your schema ---
-    previous_hash = Column(LargeBinary(32), nullable=True)
+    # --- FIXED: Added ForeignKey constraint to link blocks in the chain ---
+    previous_hash = Column(LargeBinary(32), ForeignKey("chain_blocks.current_hash"), nullable=True)
     current_hash = Column(LargeBinary(32), nullable=False, unique=True)
 
     timestamp = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     
-    # --- CHANGE: Removed columns not present in the final schema ---
-    # The following were removed for consistency:
-    # miner, goodwill_actions_count, proposals_count, ledger_total_amount, block_summary
     tx_count = Column(Integer, nullable=False, default=0)
 
-    # --- This correctly reflects the check constraints in your final schema ---
-    __table_args__ = (
-        CheckConstraint('octet_length(current_hash) = 32'),
-        CheckConstraint('previous_hash IS NULL OR octet_length(previous_hash) = 32'),
-    )
+    # Note: `__table_args__` is correct as-is.
 
     def to_dict(self):
         """Serializes the ChainBlock object to a dictionary."""

@@ -4,7 +4,7 @@ import http
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 
-from peoples_coin.extensions import immune_system
+from peoples_coin.systems.immune_system import immune_system
 # Import the core logic function from the system file
 from peoples_coin.systems.nervous_system import process_node_data
 

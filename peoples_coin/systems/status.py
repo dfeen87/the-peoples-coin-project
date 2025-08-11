@@ -8,7 +8,6 @@ from peoples_coin.systems.cognitive_system import get_cognitive_status, get_cogn
 from peoples_coin.systems.nervous_system import get_nervous_status, get_nervous_transaction_state
 from peoples_coin.systems.endocrine_system import get_endocrine_status
 from peoples_coin.systems.immune_system import get_immune_status, get_immune_transaction_state
-from peoples_coin.systems.skeleton_system import get_skeleton_info
 from peoples_coin.systems.circulatory_system import get_circulatory_status
 from peoples_coin.systems.reproductive_system import get_reproductive_status
 
@@ -78,7 +77,6 @@ def get_backend_status() -> Dict[str, Any]:
         "nervous": get_nervous_status(),
         "endocrine": get_endocrine_status(),
         "immune": get_immune_status(),
-        "skeleton": get_skeleton_info(),
         "circulatory": get_circulatory_status(),
         "reproductive": get_reproductive_status(),
         "controller": get_controller_status() if get_controller_status else {"active": False, "info": "Not available"},

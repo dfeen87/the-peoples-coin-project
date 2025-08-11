@@ -18,7 +18,7 @@ except ImportError:
 
 # Path to production schema SQL
 SCHEMA_SQL_PATH = os.path.join(
-    os.path.dirname(__file__), "schema.sql"
+    os.path.dirname(__file__), "models", "schema.sql"
 )
 
 logger = logging.getLogger(__name__)
