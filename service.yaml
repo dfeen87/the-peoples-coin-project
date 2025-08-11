@@ -1,61 +1,96 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: peoples-coin-service
-  namespace: '105378934751' # Your project number
   annotations:
+    run.googleapis.com/build-enable-automatic-updates: 'false'
+    run.googleapis.com/build-id: 72207616-8de2-42f7-87eb-c8ab8ef9762e
+    run.googleapis.com/build-image-uri: us-central1-docker.pkg.dev/heroic-tide-428421-q7/cloud-run-source-deploy/peoples-coin-service
+    run.googleapis.com/build-name: projects/105378934751/locations/us-central1/builds/72207616-8de2-42f7-87eb-c8ab8ef9762e
+    run.googleapis.com/build-source-location: gs://run-sources-heroic-tide-428421-q7-us-central1/services/peoples-coin-service/1754328368.203497-6f11f4f3eff34a6b8fa2fa5774100fa2.zip#1754328375337548
+    run.googleapis.com/client-name: gcloud
+    run.googleapis.com/client-version: 532.0.0
     run.googleapis.com/ingress: all
     run.googleapis.com/ingress-status: all
-    run.googleapis.com/client-name: gcloud
-    run.googleapis.com/client-version: 531.0.0 # Or your current gcloud version
+    run.googleapis.com/operation-id: b1b2f533-bad2-49fa-aac2-6a9d2eb88c10
+    run.googleapis.com/urls: '["https://peoples-coin-service-105378934751.us-central1.run.app","https://peoples-coin-service-caah4w2jza-uc.a.run.app"]'
+    serving.knative.dev/creator: dfeen87@gmail.com
+    serving.knative.dev/lastModifier: dfeen87@gmail.com
+  creationTimestamp: '2025-07-26T17:41:37.138908Z'
+  generation: 325
   labels:
     cloud.googleapis.com/location: us-central1
-    run.googleapis.com/satisfiesPzs: 'true'
+  name: peoples-coin-service
+  namespace: '105378934751'
+  resourceVersion: AAY8Fx9MuyA
+  selfLink: /apis/serving.knative.dev/v1/namespaces/105378934751/services/peoples-coin-service
+  uid: 490265d5-71ac-431e-8a6f-8692ec7f3060
 spec:
   template:
     metadata:
       annotations:
         autoscaling.knative.dev/maxScale: '20'
+        autoscaling.knative.dev/minScale: '1'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 532.0.0
+        run.googleapis.com/cloudsql-instances: heroic-tide-428421-q7:us-central1:peoples-coin-cluster-final
+        run.googleapis.com/execution-environment: gen2
         run.googleapis.com/startup-cpu-boost: 'true'
         run.googleapis.com/vpc-access-connector: peoples-coin-connector
-        run.googleapis.com/vpc-access-egress: private-ranges-only
+        run.googleapis.com/vpc-access-egress: all-traffic
+      labels:
+        client.knative.dev/nonce: beavpkmdsp
+        run.googleapis.com/startupProbeType: Custom
     spec:
       containerConcurrency: 80
-      timeoutSeconds: 600 # Overall request timeout for a single request
-      serviceAccountName: peoples-coin-sa@heroic-tide-428421-q7.iam.gserviceaccount.com 
       containers:
-      - image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest
+      - env:
+        - name: SECRET_KEY_1
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: NEW_SECRET_KEY
+        - name: DB_USER
+          value: postgres
+        - name: DB_PASS
+          value: Lexisawesome
+        - name: DB_NAME
+          value: brightacts
+        - name: INSTANCE_CONNECTION_NAME
+          value: heroic-tide-428421-q7:us-central1:peoples-coin-cluster-final
+        - name: CELERY_BROKER_URL
+          value: redis://10.128.0.18:6379/0
+        - name: CELERY_RESULT_BACKEND
+          value: redis://10.128.0.18:6379/0
+        - name: REDIS_URL
+          value: redis://10.128.0.18:6379/0
+        - name: RECAPTCHA_SECRET_KEY
+          value: AIzaSyAh-xLoaLZd7ApQ2NML2UW5eHlyWRJz6-w
+        - name: RECAPTCHA_SITE_KEY
+          value: 6LeE0pQrAAAAAML8x8JqtfryKhZ9bpvLRacQzH1F
+        - name: RECAPTCHA_PROJECT_ID
+          value: brightacts-frontend-50f58
+        image: gcr.io/heroic-tide-428421-q7/peoples-coin-service:latest
+        name: peoples-coin-service-1
         ports:
         - containerPort: 8080
           name: http1
-        env:
-        - name: FIREBASE_CREDENTIALS_PATH
-          value: /app/firebase-admin-sdk-key.json
-        - name: REDIS_URL
-          value: redis://10.128.0.12:6379/0 # <<< UPDATED to your new Redis
         resources:
           limits:
-            cpu: '2' # You mentioned 2 vCPU now
-            memory: 4Gi
+            cpu: '1'
+            memory: 1Gi
         startupProbe:
-          httpGet:
-            path: /
-            port: 8080
-          timeoutSeconds: 30
-          periodSeconds: 60
           failureThreshold: 10
-          initialDelaySeconds: 0
-        volumeMounts:
-        - mountPath: /app
-          name: firebase-backend-service-account-bap-lis-woc
-      volumes:
-      - name: firebase-backend-service-account-bap-lis-woc
-        secret:
-          secretName: firebase-backend-service-account
-          items:
-          - key: latest
-            path: firebase-admin-sdk-key.json
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 60
+          timeoutSeconds: 30
+      serviceAccountName: peoples-coin-sa@heroic-tide-428421-q7.iam.gserviceaccount.com
+      timeoutSeconds: 900
   traffic:
   - latestRevision: true
     percent: 100
+status:
+  address:
+    url: https://peoples-coin-service-caah4w2jza-uc.a.run.app
 

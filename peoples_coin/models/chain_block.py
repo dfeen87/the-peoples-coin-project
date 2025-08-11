@@ -1,8 +1,7 @@
 # peoples_coin/models/chain_block.py
 
 import uuid
-from sqlalchemy import Column, Integer, LargeBinary, DateTime, func, CheckConstraint, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, LargeBinary, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from peoples_coin.extensions import db
 
@@ -11,21 +10,17 @@ class ChainBlock(db.Model):
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     height = Column(Integer, nullable=False, unique=True, index=True)
-    
-    # --- FIXED: Added ForeignKey constraint to link blocks in the chain ---
-    previous_hash = Column(LargeBinary(32), ForeignKey("chain_blocks.current_hash"), nullable=True)
+
+    previous_hash = Column(LargeBinary(32), nullable=True)
     current_hash = Column(LargeBinary(32), nullable=False, unique=True)
 
     timestamp = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
-    
+
     tx_count = Column(Integer, nullable=False, default=0)
 
-    # Note: `__table_args__` is correct as-is.
-
     def to_dict(self):
-        """Serializes the ChainBlock object to a dictionary."""
         return {
             "id": str(self.id),
             "height": self.height,
@@ -36,3 +31,4 @@ class ChainBlock(db.Model):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "tx_count": self.tx_count,
         }
+

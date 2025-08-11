@@ -1,7 +1,7 @@
 import hashlib
 import json
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Set
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -23,6 +23,7 @@ def sha256(data: bytes) -> str:
     """Computes a SHA256 hash."""
     return hashlib.sha256(data).hexdigest()
 
+
 def merkle_root_hash(transactions: List[Dict[str, Any]]) -> str:
     """Computes a Merkle root hash for a list of transaction dictionaries."""
     if not transactions:
@@ -31,7 +32,7 @@ def merkle_root_hash(transactions: List[Dict[str, Any]]) -> str:
     while len(txn_hashes) > 1:
         if len(txn_hashes) % 2 != 0:
             txn_hashes.append(txn_hashes[-1])
-        txn_hashes = [sha256((txn_hashes[i] + txn_hashes[i+1]).encode()) for i in range(0, len(txn_hashes), 2)]
+        txn_hashes = [sha256((txn_hashes[i] + txn_hashes[i + 1]).encode()) for i in range(0, len(txn_hashes), 2)]
     return txn_hashes[0]
 
 
@@ -63,18 +64,20 @@ class Consensus:
         logger.info("🚀 Consensus initialized.")
 
     def create_genesis_block_if_needed(self):
-        """
-        Ensures a genesis block exists in the database.
-        This is a placeholder implementation.
-        """
+        """Ensures a genesis block exists in the database."""
         with get_session_scope(self.db) as session:
-            # Check if there are any blocks in the database
             if session.query(ChainBlock).count() == 0:
                 logger.info("No genesis block found. Creating one now.")
-                self.new_block(previous_hash="1")
+                # Create the genesis block with empty transactions
+                genesis_block_data = {
+                    "height": 0,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "previous_hash": "0" * 64,
+                    "merkle_root": merkle_root_hash([]),
+                }
+                self.new_block(genesis_block_data, transactions=[])
             else:
                 logger.info("Genesis block already exists.")
-
 
     def add_transaction(self, transaction: Dict[str, Any]) -> int:
         """
@@ -82,98 +85,126 @@ class Consensus:
         Returns the anticipated block number for this transaction.
         """
         self.redis.rpush(TRANSACTION_POOL_KEY, json.dumps(transaction))
-        logger.info(f"➕ Transaction added to Redis pool (pool size: {self.redis.llen(TRANSACTION_POOL_KEY)}).")
-        
+        pool_size = self.redis.llen(TRANSACTION_POOL_KEY)
+        logger.info(f"➕ Transaction added to Redis pool (pool size: {pool_size}).")
+
         with get_session_scope(self.db) as session:
             last_block_number = session.query(ChainBlock.height).order_by(ChainBlock.height.desc()).scalar()
             return (last_block_number + 1) if last_block_number is not None else 0
 
-    def new_block(self, previous_hash: Optional[str] = None) -> ChainBlock:
+    def calculate_block_hash(self, block_data: Dict[str, Any], transactions: List[Dict[str, Any]]) -> str:
         """
-        Creates a new block, pulling all pending transactions from the shared Redis pool.
+        Calculate the block hash based on block header fields and the Merkle root.
+        Customize this hashing logic as per your blockchain spec.
         """
+        header_str = (
+            str(block_data['height']) +
+            block_data['timestamp'] +
+            block_data['previous_hash'] +
+            block_data['merkle_root']
+        )
+        return sha256(header_str.encode())
+
+    def new_block(self, block_data: Dict[str, Any], transactions: List[Dict[str, Any]]) -> ChainBlock:
+        """
+        Create a new block and save it to the database.
+        Assumes block_data contains 'height', 'timestamp', 'previous_hash', and 'merkle_root'.
+        """
+
+        # Validate block_data fields
+        required_fields = ['height', 'timestamp', 'previous_hash', 'merkle_root']
+        for field in required_fields:
+            if field not in block_data:
+                raise ValueError(f"Missing required block field: {field}")
+
+        # Convert timestamp string to datetime if needed
+        timestamp_val = block_data['timestamp']
+        if isinstance(timestamp_val, str):
+            timestamp_val = datetime.fromisoformat(timestamp_val)
+
+        # Convert hex strings to bytes if needed
+        prev_hash_bytes = (
+            bytes.fromhex(block_data['previous_hash'])
+            if isinstance(block_data['previous_hash'], str)
+            else block_data['previous_hash']
+        )
+
+        merkle_root_bytes = (
+            bytes.fromhex(block_data['merkle_root'])
+            if isinstance(block_data['merkle_root'], str)
+            else block_data['merkle_root']
+        )
+
+        # Calculate current_hash
+        current_hash_hex = self.calculate_block_hash(block_data, transactions)
+        current_hash_bytes = bytes.fromhex(current_hash_hex)
+
+        block = ChainBlock(
+            height=block_data['height'],
+            timestamp=timestamp_val,
+            previous_hash=prev_hash_bytes,
+            current_hash=current_hash_bytes,
+            tx_count=len(transactions),
+        )
+
         with get_session_scope(self.db) as session:
-            last_block_obj = self.last_block()
-            current_block_height = (last_block_obj.height + 1) if last_block_obj else 0
-            
-            # Atomically get all transactions from the Redis list and clear it.
-            pipe = self.redis.pipeline()
-            pipe.lrange(TRANSACTION_POOL_KEY, 0, -1)
-            pipe.delete(TRANSACTION_POOL_KEY)
-            transactions_json, _ = pipe.execute()
-            
-            transactions = [json.loads(tx) for tx in transactions_json]
-
-            block_data = {
-                'height': current_block_height,
-                'timestamp': datetime.now(timezone.utc).isoformat(),
-                'previous_hash': previous_hash or (last_block_obj.block_hash if last_block_obj else '1'),
-                'merkle_root': merkle_root_hash(transactions),
-            }
-            
-            block_hash = sha256(json.dumps(block_data, sort_keys=True).encode())
-
-            block = ChainBlock(
-                height=block_data['height'],
-                timestamp=datetime.fromisoformat(block_data['timestamp']),
-                previous_hash=block_data['previous_hash'],
-                block_hash=block_hash,
-                data={"merkle_root": block_data['merkle_root'], "tx_count": len(transactions)}
-            )
             session.add(block)
-            session.flush() # Flush to get the block ID if needed
+            session.flush()  # get block.id if needed
 
-            for tx_data in transactions:
-                # ... process and create LedgerEntry as before ...
-                pass # Your ledger entry creation logic is good.
-            
-            return block
+            # TODO: Insert LedgerEntry for each transaction here
+            for tx in transactions:
+                # Example:
+                # ledger_entry = LedgerEntry(...)
+                # session.add(ledger_entry)
+                pass
+
+        logger.info(f"🧱 New block created at height {block.height} with {len(transactions)} txns.")
+        return block
 
     def replace_chain(self, chain_data: List[Dict[str, Any]]):
         """
-        Replaces the local chain with a new, valid, longer chain and
-        triggers a recalculation of all derived states.
+        Replace the local chain with a new, valid, longer chain,
+        then recalculate all derived states like balances.
         """
         with get_session_scope(self.db) as session:
             try:
-                # 1. Clear existing chain data
                 session.query(LedgerEntry).delete()
                 session.query(ChainBlock).delete()
-                
-                # 2. Rebuild the chain from the new data
+
                 for block_dict in chain_data:
-                    # ... re-add ChainBlock and LedgerEntry as before ...
+                    # TODO: Re-add ChainBlock and LedgerEntries for each block_dict
                     pass
 
-                # 3. Trigger state reconciliation (CRITICAL)
                 self._recalculate_all_user_balances(session)
 
-                logger.info("✅ Local chain and ledger replaced and state reconciled.")
+                logger.info("✅ Local chain replaced and state reconciled.")
             except Exception as e:
                 logger.exception("💥 Failed to replace chain atomically.")
                 raise
 
     def _recalculate_all_user_balances(self, session):
         """
-        Recalculates all user balances from the ledger.
-        This is a heavy operation and should only run after a chain replacement.
+        Recalculate all user balances from the ledger entries.
         """
-        logger.info("💰 Recalculating all user balances from the new ledger...")
-        # A more optimized approach would be to use GROUP BY queries.
+        logger.info("💰 Recalculating all user balances from ledger...")
+
         session.query(UserAccount).update({"balance": 0})
+
+        balances = {}  # user_id -> balance
         all_entries = session.query(LedgerEntry).all()
-        
-        balances = {} # user_id -> balance
+
         for entry in all_entries:
-            # Logic to update balances dictionary based on entry.amount and type
+            # Update balances[user_id] based on entry fields
+            # e.g. balances[entry.user_id] = balances.get(entry.user_id, 0) + entry.amount
             pass
-        
+
         for user_id, new_balance in balances.items():
             session.query(UserAccount).filter_by(id=user_id).update({"balance": new_balance})
-        
-        logger.info("✅ All user balances have been reconciled.")
+
+        logger.info("✅ All user balances reconciled.")
 
     def last_block(self) -> Optional[ChainBlock]:
-        """Gets the most recent block from the database."""
+        """Get the most recent block from the database."""
         with get_session_scope(self.db) as session:
             return session.query(ChainBlock).order_by(ChainBlock.height.desc()).first()
+
