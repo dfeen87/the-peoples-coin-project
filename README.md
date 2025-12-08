@@ -1,5 +1,7 @@
 The People’s Coin — Backend & System Controller
 
+Disclaimer: The live site is non-functional. Some keys and credentials are included for illustrative purposes only—do not rely on them for operational use.
+
 Project Overview
 The People’s Coin backend forms the resilient heart of the platform, designed to reliably record and process acts of goodwill contributed by users worldwide. Its architecture is built on PostgreSQL 15 for durable, scalable data storage, combined with a RESTful Flask API to expose endpoints for managing user accounts, wallets, goodwill actions, proposals, and governance features like council members. This backend system ensures that every user interaction is securely recorded, validated, and available for auditing, while maintaining high performance even as traffic grows.
 
