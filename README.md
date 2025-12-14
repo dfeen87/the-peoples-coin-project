@@ -4,7 +4,7 @@
 **Stack:** Python (Flask), PostgreSQL 15, SQLAlchemy, Docker  
 **Status:** Working backend · Structure stabilized · Live site currently non-functional
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 The live site is currently non-functional.
 
@@ -114,6 +114,24 @@ In this analogy, the System Controller functions as a central nervous system, in
 - **Kubernetes Python Client (optional)** — Deployment orchestration
 
 All optional components degrade gracefully when unavailable.
+
+## What You Can Build With This Backend Today
+
+This backend is intentionally generic and modular. It can be used immediately as:
+
+- A governance and voting backend for communities, DAOs, or cooperatives (proposals, councils, decision tracking).
+
+- A contribution or reputation ledger to record, score, and audit non-financial actions (volunteer work, moderation, civic engagement).
+
+- A backend template for civic or nonprofit platforms requiring transparency, auditability, and long-term data integrity.
+
+- A system orchestration experiment demonstrating intelligent resource monitoring and adaptive scaling via a centralized controller.
+
+- A research platform for studying incentive alignment, governance dynamics, and system resilience under load.
+
+- A foundation for tokenized or non-tokenized reward systems, independent of any specific blockchain or frontend.
+
+The system is designed to run locally, in containers, or in cloud environments, with optional Redis and Kubernetes integration depending on deployment needs.
 
 ## Getting Started
 
