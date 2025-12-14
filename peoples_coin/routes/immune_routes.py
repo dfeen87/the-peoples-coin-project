@@ -1,45 +1,83 @@
-# peoples_coin/routes/immune_routes.py
+from flask import Blueprint, jsonify, request
+import immune_system  # assuming immune_system.py is in your PYTHONPATH or package
 
-import http
-from flask import Blueprint, request, jsonify
+immune_bp = Blueprint("immune_bp", __name__, url_prefix="/immune")
 
-from peoples_coin.utils.auth import require_api_key
-# Import the singleton instance from the system file
-from peoples_coin.systems.immune_system import immune_system
 
-immune_bp = Blueprint("immune", __name__, url_prefix="/immune")
+@immune_bp.route("/health", methods=["GET"])
+def health_check():
+    """
+    Return immune system health & stats.
+    """
+    stats = {
+        "redis_enabled": immune_system.redis_enabled,
+        "blacklist_count": len(immune_system.get_blacklist()),
+    }
+    return jsonify({"status": "ok", "immune_system": stats}), 200
 
-@immune_bp.route("/status", methods=["GET"])
-@require_api_key
-def immune_status_endpoint():
-    """Returns basic status of the immune system."""
-    status = { "redis_connected": immune_system.connection is not None }
-    return jsonify(status), http.HTTPStatus.OK
-
-@immune_bp.route("/blacklist", methods=["POST"])
-@require_api_key
-def add_to_blacklist_endpoint():
-    """Adds an identifier to the blacklist."""
-    data = request.get_json(silent=True)
-    if not data or "identifier" not in data:
-        return jsonify({"error": "Missing 'identifier' in request body"}), http.HTTPStatus.BAD_REQUEST
-
-    identifier = data["identifier"]
-    immune_system.add_to_blacklist(identifier)
-    return jsonify({"status": "success", "blacklisted": identifier}), http.HTTPStatus.CREATED
 
 @immune_bp.route("/blacklist", methods=["GET"])
-@require_api_key
-def get_blacklist_endpoint():
-    """Returns the list of currently blacklisted identifiers."""
-    blacklist = []
-    if immune_system.connection:
-        try:
-            blacklist = list(immune_system.connection.smembers("immune:blacklist"))
-        except Exception as e:
-            return jsonify({"error": "Failed to retrieve from Redis"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
-    else:
-        with immune_system._in_memory_lock:
-            blacklist = list(immune_system._blacklist.keys())
+def get_blacklist():
+    """
+    Retrieve current blacklist.
+    """
+    bl = immune_system.get_blacklist()
+    return jsonify({"status": "ok", "blacklist": bl, "count": len(bl)}), 200
 
-    return jsonify({"blacklist": blacklist}), http.HTTPStatus.OK
+
+@immune_bp.route("/blacklist/reset", methods=["POST"])
+def reset_blacklist():
+    """
+    Reset the immune system state (blacklist, greylist, ratelimits).
+    """
+    immune_system.reset_immune_system()
+    return jsonify({"status": "reset", "message": "Immune system state reset."}), 200
+
+
+@immune_bp.route("/blacklist/remove", methods=["POST"])
+def remove_from_blacklist():
+    """
+    Remove an identifier from the blacklist.
+    """
+    data = request.get_json(silent=True) or {}
+    identifier = data.get("identifier")
+
+    if not identifier:
+        return jsonify({"status": "error", "error": "Missing 'identifier'"}), 400
+
+    removed = False
+    if immune_system.redis_enabled:
+        removed = bool(immune_system._redis.srem("blacklist", identifier))
+    else:
+        with immune_system._lock:
+            if identifier in immune_system._blacklist:
+                immune_system._blacklist.remove(identifier)
+                removed = True
+
+    if removed:
+        return jsonify({"status": "ok", "message": f"Identifier '{identifier}' removed from blacklist."}), 200
+    else:
+        return jsonify({"status": "not_found", "message": f"Identifier '{identifier}' was not in blacklist."}), 404
+
+
+@immune_bp.route("/auto-heal", methods=["POST"])
+def auto_heal():
+    """
+    Trigger auto-heal on submitted data entries (placeholder).
+    """
+    data = request.get_json(silent=True) or []
+    if not isinstance(data, list):
+        return jsonify({"status": "error", "error": "Expected a JSON array of data entries"}), 400
+
+    healed_count = immune_system.auto_heal_entries(data)
+
+    return jsonify({
+        "status": "ok",
+        "message": "Auto-heal completed.",
+        "healed_entries": healed_count,
+        "submitted_entries": len(data)
+    }), 200
+<<<<<<< HEAD
+
+=======
+>>>>>>> 36760cc (Initial commit of local project to new repository)
