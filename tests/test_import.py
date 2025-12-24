@@ -1,15 +1,15 @@
 # /Users/donfeeney/peoples_coin/test_import.py
 import sys
-import os
+from pathlib import Path
 
 # Ensure the project root is at the beginning of sys.path for running from outside
-project_root = "/Users/donfeeney/peoples_coin"
+project_root = str(Path(__file__).resolve().parents[1])
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 try:
     # Attempt to import the main run.py from the inner peoples_coin package
-    from peoples_coin.import run
+    from peoples_coin import run
     print("Successfully imported peoples_coin.peoples_coin.run!")
 except ImportError as e:
     print(f"ImportError encountered: {e}")
