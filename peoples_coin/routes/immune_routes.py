@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-import immune_system  # assuming immune_system.py is in your PYTHONPATH or package
+from peoples_coin.systems.immune_system import immune_system
 
 immune_bp = Blueprint("immune_bp", __name__, url_prefix="/immune")
 
@@ -77,7 +77,3 @@ def auto_heal():
         "healed_entries": healed_count,
         "submitted_entries": len(data)
     }), 200
-<<<<<<< HEAD
-
-=======
->>>>>>> 36760cc (Initial commit of local project to new repository)
