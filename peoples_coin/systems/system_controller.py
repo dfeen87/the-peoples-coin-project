@@ -1,7 +1,5 @@
 # peoples_coin/systems/controller.py
 
-import os
-import json
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -77,7 +75,7 @@ class SystemController:
         if recommendations.get("scale_up"):
             logger.info(f"🔼 Triggering scale-up action (placeholder). Reason: {recommendations['scale_up']}")
             actions_taken.append("Scale-up triggered.")
-        elif recommendations.get("scale_down"):
+        if recommendations.get("scale_down"):
             logger.info(f"🔽 Triggering scale-down action (placeholder). Reason: {recommendations['scale_down']}")
             actions_taken.append("Scale-down triggered.")
         
@@ -95,17 +93,17 @@ class SystemController:
             
         with self.app.app_context():
             try:
-                with db.engine.connect() as conn:
-                    stmt = db.insert(ControllerAction).values(
-                        timestamp=datetime.now(timezone.utc),
+                db.session.add(
+                    ControllerAction(
                         recommendations=recommendations,
-                        actions_taken=actions_taken
+                        actions_taken=actions_taken,
                     )
-                    conn.execute(stmt)
-                    conn.commit()
-                    logger.info("Logged actions to DB.")
+                )
+                db.session.commit()
+                logger.info("Logged actions to DB.")
             except Exception as e:
-                logger.error(f"Failed to log actions to DB: {e}")
+                db.session.rollback()
+                logger.error(f"Failed to log actions to DB: {e}", exc_info=True)
 
     def run_cycle(self):
         """Runs one full analyze-manage-log cycle."""
