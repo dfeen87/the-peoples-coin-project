@@ -5,7 +5,7 @@ import logging
 import hashlib
 import random
 from functools import wraps
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import Optional, Callable, Dict, Any
 import http
 
@@ -39,7 +39,7 @@ class ImmuneSystem:
         self._in_memory_lock = threading.Lock()
         self._blacklist: Dict[str, float] = {}  # identifier -> expiry timestamp
         self._greylist: Dict[str, Dict[str, Any]] = defaultdict(lambda: {"count": 0, "last_seen": 0})
-        self._rate_limits: Dict[str, list[float]] = defaultdict(list)
+        self._rate_limits: Dict[str, deque[float]] = defaultdict(deque)
         self._pow_cache: Dict[str, float] = {}  # IP -> expiry timestamp for proof-of-work cache
 
         self._stop_event = threading.Event()
@@ -169,10 +169,10 @@ class ImmuneSystem:
         now = time.time()
         with self._in_memory_lock:
             timestamps = self._rate_limits[identifier]
-            # Keep only timestamps within the window
-            timestamps = [ts for ts in timestamps if ts > now - window]
+            cutoff = now - window
+            while timestamps and timestamps[0] <= cutoff:
+                timestamps.popleft()
             timestamps.append(now)
-            self._rate_limits[identifier] = timestamps
             limited = len(timestamps) > max_reqs
             if limited:
                 logger.debug(f"🛡️ Rate limit exceeded for {identifier}: {len(timestamps)} requests in {window} seconds.")
@@ -221,8 +221,15 @@ class ImmuneSystem:
 
                 # Clean old rate limit timestamps outside window
                 window = self.config.get("IMMUNE_RATE_LIMIT_WINDOW_SEC", 60)
+                cutoff = now - window
+                empty_rate_limits = []
                 for id_, timestamps in self._rate_limits.items():
-                    self._rate_limits[id_] = [ts for ts in timestamps if ts > now - window]
+                    while timestamps and timestamps[0] <= cutoff:
+                        timestamps.popleft()
+                    if not timestamps:
+                        empty_rate_limits.append(id_)
+                for id_ in empty_rate_limits:
+                    del self._rate_limits[id_]
 
             self._stop_event.wait(600)  # Sleep for 10 minutes
 
@@ -242,4 +249,3 @@ def get_immune_transaction_state(txn_id: str) -> dict:
     """Placeholder stub to check immune status of a transaction."""
     # You can expand this function based on actual transaction tracking
     return {"state": "clear", "confirmed": True}
-
