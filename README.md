@@ -144,6 +144,30 @@ Cloning this repository gives you a practical, inspectable backend foundation th
 - Migration scripts and tests that make iterative development and schema evolution easier to manage.
 - Optional integrations (Redis, Kubernetes) that degrade gracefully, allowing development without a full production stack.
 
+
+
+## Benefits of Cloning This Repository
+
+Cloning this repository gives you a practical, inspectable backend foundation that you can run and adapt quickly:
+
+- Full access to a modular Flask + SQLAlchemy architecture you can reuse for governance, reputation, or civic platforms.
+- A ready-to-evolve data model covering accounts, wallets, goodwill actions, proposals, votes, and audit logs.
+- Built-in observability and adaptive system-controller logic to experiment with workload-aware backend behavior.
+- Container and infrastructure manifests (Docker, Docker Compose, Kubernetes) to test locally and transition to cloud deployments.
+- Migration scripts and tests that make iterative development and schema evolution easier to manage.
+- Optional integrations (Redis, Kubernetes) that degrade gracefully, allowing development without a full production stack.
+
+## Supporting the Project
+
+This project is MIT-licensed because I want people to learn from it, build with it, and carry it forward.
+
+At the same time, this code reflects a lot of personal effort and care. If you find it useful, please consider supporting the work in one or more of these ways:
+
+- Star and share the repository so more builders can discover it.
+- Keep attribution in place and reference this project in derivative work.
+- Open issues, suggest improvements, or contribute pull requests.
+- Reach out if you want to collaborate, sponsor maintenance, or fund roadmap work.
+
 ## Getting Started
 
 1. Clone the repository
