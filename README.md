@@ -5,6 +5,7 @@
 **Status:** Working backend · Structure stabilized · Live site currently non-functional
 
 ## Disclaimer
+> IMPORTANT NOTE: NOT AFFILIATED WITH ANY CRYPTO COINS. This project does not mind coins that are sold.
 
 The live site is currently non-functional.
 
