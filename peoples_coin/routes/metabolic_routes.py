@@ -115,8 +115,15 @@ def submit_goodwill() -> Response:
         # 1. Validate the incoming data structure
         action_data = GoodwillActionSchema(**request.get_json())
 
-        # 2. Add the authenticated user's ID to the data
-        action_data.performer_user_id = g.user.id
+        # 2. Look up the database user from firebase_uid to get the actual user ID
+        from peoples_coin.models.db_utils import get_session_scope
+        from peoples_coin.models import UserAccount
+        with get_session_scope() as session:
+            db_user = session.query(UserAccount).filter_by(firebase_uid=g.user.firebase_uid).first()
+            if not db_user:
+                log_with_correlation("error", "User account not found in database")
+                return make_response(jsonify(status="error", error="User account not found"), http.HTTPStatus.NOT_FOUND)
+            action_data.performer_user_id = db_user.id
 
         # 3. Calculate goodwill score with new scoring logic
         score = calculate_goodwill_score(

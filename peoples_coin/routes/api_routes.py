@@ -207,19 +207,25 @@ def create_user():
 @user_api_bp.route("/users/<user_id>", methods=["GET"])
 @require_firebase_token
 def get_user_by_id(user_id):
-    # This route logic seems to be trying to get a user profile, 
-    # but uses the authenticated user 'g.user' instead of 'user_id' from the URL.
-    # It works, but might be slightly confusing. No changes needed for the fix.
-    user = g.user
-    if not user:
+    """
+    Get user profile by ID. Users can only access their own profile.
+    """
+    firebase_user = g.user
+    if not firebase_user:
         return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
 
     try:
-        # This check is good, it ensures users can only see their own profile.
-        if str(user.id) != user_id:
-             return jsonify(error="Unauthorized access to user profile"), http.HTTPStatus.FORBIDDEN
-             
-        return jsonify(user.to_dict(include_wallets=True)), http.HTTPStatus.OK
+        # Look up the database user to verify identity and get full profile
+        with get_session_scope() as session:
+            db_user = session.query(UserAccount).filter_by(firebase_uid=firebase_user.firebase_uid).first()
+            if not db_user:
+                return jsonify(error="User account not found in database"), http.HTTPStatus.NOT_FOUND
+            
+            # Ensure users can only see their own profile
+            if str(db_user.id) != user_id:
+                return jsonify(error="Unauthorized access to user profile"), http.HTTPStatus.FORBIDDEN
+                
+            return jsonify(db_user.to_dict(include_wallets=True)), http.HTTPStatus.OK
     except Exception as e:
-        logger.exception(f"Error serializing user profile for ID '{user_id}': {e}")
+        logger.exception(f"Error retrieving user profile for ID '{user_id}': {e}")
         return jsonify(error="Failed to load profile"), http.HTTPStatus.INTERNAL_SERVER_ERROR

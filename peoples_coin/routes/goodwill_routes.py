@@ -22,9 +22,17 @@ def submit_goodwill():
     try:
         # Combine user ID with validated input data for service
         data = g.validated_data.model_dump() if hasattr(g.validated_data, 'model_dump') else dict(g.validated_data)
-        data["user_id"] = g.user.id
+        
+        # Look up the database user from firebase_uid
+        from peoples_coin.models.db_utils import get_session_scope
+        from peoples_coin.models import UserAccount
+        with get_session_scope() as session:
+            db_user = session.query(UserAccount).filter_by(firebase_uid=g.user.firebase_uid).first()
+            if not db_user:
+                return jsonify({"error": "User account not found in database"}), http.HTTPStatus.NOT_FOUND
+            data["user_id"] = db_user.id
 
-        logger.info(f"Received goodwill action submission from user_id={g.user.id}")
+        logger.info(f"Received goodwill action submission from user_id={data['user_id']}")
 
         # Call the goodwill service with combined data dict
         result = goodwill_service.submit_and_queue_goodwill_action(data)
@@ -34,8 +42,8 @@ def submit_goodwill():
             "action_id": result.get("action_id")
         }), http.HTTPStatus.ACCEPTED
 
-    except GoodwillError as err:
-        logger.warning(f"GoodwillError while processing submission: {err}")
+    except GoodwillSubmissionError as err:
+        logger.warning(f"GoodwillSubmissionError while processing submission: {err}")
         return jsonify({"error": str(err)}), http.HTTPStatus.BAD_REQUEST
 
     except Exception as err:
@@ -49,7 +57,14 @@ def get_goodwill_status(action_id):
     """
     Returns the status of a specific goodwill action for the authenticated user.
     """
-    user_id = g.user.id
+    # Look up the database user from firebase_uid
+    from peoples_coin.models.db_utils import get_session_scope
+    from peoples_coin.models import UserAccount
+    with get_session_scope() as session:
+        db_user = session.query(UserAccount).filter_by(firebase_uid=g.user.firebase_uid).first()
+        if not db_user:
+            return jsonify({"error": "User account not found in database"}), http.HTTPStatus.NOT_FOUND
+        user_id = db_user.id
 
     try:
         # Query the goodwill service for this action's status
