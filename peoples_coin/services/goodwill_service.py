@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, Any
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
 
 from peoples_coin.models import UserAccount
 from peoples_coin.models.db_utils import get_session_scope
@@ -133,8 +134,6 @@ class GoodwillService:
             Dict with total_score and action_count
         """
         with get_session_scope(self.db) as session:
-            from sqlalchemy import func
-            
             result = session.query(
                 func.count(GoodwillAction.id).label('action_count'),
                 func.sum(GoodwillAction.loves_value).label('total_score')

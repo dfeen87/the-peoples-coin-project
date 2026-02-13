@@ -224,8 +224,12 @@ def get_user_by_id(user_id):
             # Ensure users can only see their own profile
             if str(db_user.id) != user_id:
                 return jsonify(error="Unauthorized access to user profile"), http.HTTPStatus.FORBIDDEN
-                
-            return jsonify(db_user.to_dict(include_wallets=True)), http.HTTPStatus.OK
+            
+            # Serialize the user data while still in session to avoid detached object issues
+            user_data = db_user.to_dict(include_wallets=True)
+        
+        # Return the data after session is closed
+        return jsonify(user_data), http.HTTPStatus.OK
     except Exception as e:
         logger.exception(f"Error retrieving user profile for ID '{user_id}': {e}")
         return jsonify(error="Failed to load profile"), http.HTTPStatus.INTERNAL_SERVER_ERROR

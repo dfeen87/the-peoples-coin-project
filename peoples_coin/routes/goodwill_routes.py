@@ -3,6 +3,8 @@ import logging
 import uuid
 from flask import Blueprint, request, jsonify, g, current_app
 from peoples_coin.extensions import db
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models import UserAccount
 from peoples_coin.utils.auth import require_firebase_token, require_api_key
 from peoples_coin.utils.validation import validate_with
 from peoples_coin.services.goodwill_service import goodwill_service, GoodwillSubmissionError
@@ -25,8 +27,6 @@ def submit_goodwill():
         data = g.validated_data.model_dump() if hasattr(g.validated_data, 'model_dump') else dict(g.validated_data)
         
         # Look up the database user from firebase_uid
-        from peoples_coin.models.db_utils import get_session_scope
-        from peoples_coin.models import UserAccount
         with get_session_scope() as session:
             db_user = session.query(UserAccount).filter_by(firebase_uid=g.user.firebase_uid).first()
             if not db_user:
@@ -59,8 +59,6 @@ def get_goodwill_status(action_id):
     Returns the status of a specific goodwill action for the authenticated user.
     """
     # Look up the database user from firebase_uid
-    from peoples_coin.models.db_utils import get_session_scope
-    from peoples_coin.models import UserAccount
     with get_session_scope() as session:
         db_user = session.query(UserAccount).filter_by(firebase_uid=g.user.firebase_uid).first()
         if not db_user:
@@ -98,7 +96,7 @@ def goodwill_summary():
         return jsonify({"error": "Invalid user_id format - must be a valid UUID"}), http.HTTPStatus.BAD_REQUEST
 
     try:
-        summary = goodwill_service.get_user_summary(user_id)
+        summary = goodwill_service.get_user_summary(str(user_id))  # Convert UUID to string
         return jsonify({
             "user_id": user_id,
             "total_resonance_score": summary.get("total_score", 0),
@@ -132,7 +130,7 @@ def goodwill_history():
         per_page = request.args.get('per_page', default=20, type=int)
         per_page = min(per_page, 100)  # Limit max per page to 100
 
-        paginated_result = goodwill_service.get_user_history(user_id, page=page, per_page=per_page)
+        paginated_result = goodwill_service.get_user_history(str(user_id), page=page, per_page=per_page)  # Convert UUID to string
 
         return jsonify(paginated_result), http.HTTPStatus.OK
 

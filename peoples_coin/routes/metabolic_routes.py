@@ -12,6 +12,8 @@ from peoples_coin.services.goodwill_service import goodwill_service, GoodwillSub
 from peoples_coin.utils.auth import require_firebase_token  # Example security
 from peoples_coin.validate.schemas import GoodwillActionSchema
 from peoples_coin.validate.exceptions import UserNotFoundError
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models import UserAccount
 
 logger = logging.getLogger(__name__)
 
@@ -116,8 +118,6 @@ def submit_goodwill() -> Response:
         action_data = GoodwillActionSchema(**request.get_json())
 
         # 2. Look up the database user from firebase_uid to get the actual user ID
-        from peoples_coin.models.db_utils import get_session_scope
-        from peoples_coin.models import UserAccount
         with get_session_scope() as session:
             db_user = session.query(UserAccount).filter_by(firebase_uid=g.user.firebase_uid).first()
             if not db_user:
