@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, Any
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
 
 from peoples_coin.models import UserAccount
 from peoples_coin.models.db_utils import get_session_scope
@@ -13,6 +14,9 @@ logger = logging.getLogger(__name__)
 class GoodwillSubmissionError(Exception):
     """Custom exception raised for goodwill service related issues."""
     pass
+
+# Alias for backward compatibility
+GoodwillError = GoodwillSubmissionError
 
 class GoodwillService:
     def __init__(self):
@@ -91,6 +95,102 @@ class GoodwillService:
             except Exception as e:
                 logger.exception("Unexpected error processing goodwill action.")
                 raise GoodwillError(f"Internal server error: {str(e)}") from e
+
+    def get_action_status(self, user_id: str, action_id: str) -> Dict[str, Any]:
+        """
+        Retrieves the status of a specific goodwill action.
+        
+        Args:
+            user_id: The user ID (UUID)
+            action_id: The action ID (UUID)
+            
+        Returns:
+            Dict with action status information or None if not found
+        """
+        with get_session_scope(self.db) as session:
+            action = session.query(GoodwillAction).filter_by(
+                id=action_id,
+                performer_user_id=user_id
+            ).first()
+            
+            if not action:
+                return None
+                
+            return {
+                "action_id": str(action.id),
+                "status": action.status,
+                "action_type": action.action_type,
+                "created_at": action.created_at.isoformat() if action.created_at else None
+            }
+    
+    def get_user_summary(self, user_id: str) -> Dict[str, Any]:
+        """
+        Returns a summary of total goodwill actions and score for a user.
+        
+        Args:
+            user_id: The user ID (UUID)
+            
+        Returns:
+            Dict with total_score and action_count
+        """
+        with get_session_scope(self.db) as session:
+            result = session.query(
+                func.count(GoodwillAction.id).label('action_count'),
+                func.sum(GoodwillAction.loves_value).label('total_score')
+            ).filter(
+                GoodwillAction.performer_user_id == user_id
+            ).first()
+            
+            return {
+                "action_count": result.action_count or 0,
+                "total_score": float(result.total_score) if result.total_score else 0.0
+            }
+    
+    def get_user_history(self, user_id: str, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+        """
+        Retrieves paginated goodwill action history for a user.
+        
+        Args:
+            user_id: The user ID (UUID)
+            page: Page number (1-indexed)
+            per_page: Results per page
+            
+        Returns:
+            Dict with actions list and pagination metadata
+        """
+        with get_session_scope(self.db) as session:
+            query = session.query(GoodwillAction).filter(
+                GoodwillAction.performer_user_id == user_id
+            ).order_by(GoodwillAction.created_at.desc())
+            
+            # Calculate offset
+            offset = (page - 1) * per_page
+            
+            # Get total count
+            total_count = query.count()
+            
+            # Get paginated results
+            actions = query.limit(per_page).offset(offset).all()
+            
+            return {
+                "actions": [
+                    {
+                        "action_id": str(action.id),
+                        "action_type": action.action_type,
+                        "description": action.description,
+                        "loves_value": action.loves_value,
+                        "status": action.status,
+                        "created_at": action.created_at.isoformat() if action.created_at else None
+                    }
+                    for action in actions
+                ],
+                "pagination": {
+                    "page": page,
+                    "per_page": per_page,
+                    "total_count": total_count,
+                    "total_pages": (total_count + per_page - 1) // per_page
+                }
+            }
 
 
 goodwill_service = GoodwillService()

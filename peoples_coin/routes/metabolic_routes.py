@@ -12,6 +12,8 @@ from peoples_coin.services.goodwill_service import goodwill_service, GoodwillSub
 from peoples_coin.utils.auth import require_firebase_token  # Example security
 from peoples_coin.validate.schemas import GoodwillActionSchema
 from peoples_coin.validate.exceptions import UserNotFoundError
+from peoples_coin.models.db_utils import get_session_scope
+from peoples_coin.models import UserAccount
 
 logger = logging.getLogger(__name__)
 
@@ -115,8 +117,13 @@ def submit_goodwill() -> Response:
         # 1. Validate the incoming data structure
         action_data = GoodwillActionSchema(**request.get_json())
 
-        # 2. Add the authenticated user's ID to the data
-        action_data.performer_user_id = g.user.id
+        # 2. Look up the database user from firebase_uid to get the actual user ID
+        with get_session_scope() as session:
+            db_user = session.query(UserAccount).filter_by(firebase_uid=g.user.firebase_uid).first()
+            if not db_user:
+                log_with_correlation("error", "User account not found in database")
+                return make_response(jsonify(status="error", error="User account not found"), http.HTTPStatus.NOT_FOUND)
+            action_data.performer_user_id = db_user.id
 
         # 3. Calculate goodwill score with new scoring logic
         score = calculate_goodwill_score(
@@ -131,8 +138,9 @@ def submit_goodwill() -> Response:
 
         log_with_correlation("info", f"Calculated goodwill score: {score}")
 
-        # 4. Delegate to the service layer for processing
-        result = goodwill_service.submit_and_queue_goodwill_action(action_data)
+        # 4. Convert Pydantic model to dict and delegate to the service layer for processing
+        action_dict = action_data.model_dump() if hasattr(action_data, 'model_dump') else action_data.dict()
+        result = goodwill_service.submit_and_queue_goodwill_action(action_dict)
 
         log_with_correlation("info", f"GoodwillAction ID {result['action_id']} accepted and queued.")
 

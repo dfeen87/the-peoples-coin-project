@@ -68,23 +68,26 @@ def get_user_profile():
 @user_api_bp.route("/profile", methods=["DELETE"])
 @require_firebase_token
 def delete_user_account():
-    user = g.user
-    firebase_user = g.firebase_user
-    if not user:
+    firebase_user = g.user  # g.user is the FirebaseUser object set by @require_firebase_token
+    if not firebase_user:
         return jsonify(error="User not found."), http.HTTPStatus.NOT_FOUND
 
     try:
         # 1. Delete user from Firebase
-        firebase_auth.delete_user(firebase_user['uid'])
-        logger.info(f"Deleted user from Firebase: {firebase_user['uid']}")
+        firebase_auth.delete_user(firebase_user.firebase_uid)
+        logger.info(f"Deleted user from Firebase: {firebase_user.firebase_uid}")
 
         # 2. Delete user and their wallets from our database
         with get_session_scope() as session:
-            session.query(UserWallet).filter(UserWallet.user_id == user.id).delete()
-            session.query(UserAccount).filter(UserAccount.id == user.id).delete()
-            session.commit()
-
-        logger.info(f"Deleted user from database: {user.username}")
+            # Find the user in the database by their Firebase UID
+            db_user = session.query(UserAccount).filter(
+                UserAccount.firebase_uid == firebase_user.firebase_uid
+            ).first()
+            if db_user:
+                session.query(UserWallet).filter(UserWallet.user_id == db_user.id).delete()
+                session.query(UserAccount).filter(UserAccount.id == db_user.id).delete()
+                session.commit()
+                logger.info(f"Deleted user from database: {db_user.username}")
 
         return jsonify(message="Account deleted successfully."), http.HTTPStatus.OK
 
@@ -96,8 +99,8 @@ def delete_user_account():
 @user_api_bp.route("/users/register-wallet", methods=["POST"])
 @require_firebase_token
 def create_user_and_wallet():
-    firebase_user = g.firebase_user
-    logger.info(f"Creating user and wallet for Firebase UID: {firebase_user.get('uid')}")
+    firebase_user = g.user  # g.user is the FirebaseUser object set by @require_firebase_token
+    logger.info(f"Creating user and wallet for Firebase UID: {firebase_user.firebase_uid}")
 
     try:
         payload = request.get_json()
@@ -123,7 +126,7 @@ def create_user_and_wallet():
 
         validated_data = WalletRegistrationSchema(**payload)
 
-        if not firebase_user.get('email'):
+        if not firebase_user.email:
             return jsonify(error="Firebase user email is required"), http.HTTPStatus.BAD_REQUEST
 
         with get_session_scope() as session:
@@ -139,8 +142,8 @@ def create_user_and_wallet():
 
             # 2. Check for existing Firebase UID or email (this was already correct)
             existing_user = session.query(UserAccount).filter(
-                (func.lower(UserAccount.email) == firebase_user['email'].lower()) |
-                (UserAccount.firebase_uid == firebase_user['uid'])
+                (func.lower(UserAccount.email) == firebase_user.email.lower()) |
+                (UserAccount.firebase_uid == firebase_user.firebase_uid)
             ).first()
             if existing_user:
                 return jsonify(error="User with this email or Firebase UID already exists."), http.HTTPStatus.CONFLICT
@@ -155,8 +158,8 @@ def create_user_and_wallet():
                 return jsonify(error="Wallet address already registered."), http.HTTPStatus.CONFLICT
 
             new_user = UserAccount(
-                firebase_uid=firebase_user['uid'],
-                email=firebase_user['email'],
+                firebase_uid=firebase_user.firebase_uid,
+                email=firebase_user.email,
                 username=validated_data.username
             )
             session.add(new_user)
@@ -204,19 +207,29 @@ def create_user():
 @user_api_bp.route("/users/<user_id>", methods=["GET"])
 @require_firebase_token
 def get_user_by_id(user_id):
-    # This route logic seems to be trying to get a user profile, 
-    # but uses the authenticated user 'g.user' instead of 'user_id' from the URL.
-    # It works, but might be slightly confusing. No changes needed for the fix.
-    user = g.user
-    if not user:
+    """
+    Get user profile by ID. Users can only access their own profile.
+    """
+    firebase_user = g.user
+    if not firebase_user:
         return jsonify(error="User not authenticated or found"), http.HTTPStatus.UNAUTHORIZED
 
     try:
-        # This check is good, it ensures users can only see their own profile.
-        if str(user.id) != user_id:
-             return jsonify(error="Unauthorized access to user profile"), http.HTTPStatus.FORBIDDEN
-             
-        return jsonify(user.to_dict(include_wallets=True)), http.HTTPStatus.OK
+        # Look up the database user to verify identity and get full profile
+        with get_session_scope() as session:
+            db_user = session.query(UserAccount).filter_by(firebase_uid=firebase_user.firebase_uid).first()
+            if not db_user:
+                return jsonify(error="User account not found in database"), http.HTTPStatus.NOT_FOUND
+            
+            # Ensure users can only see their own profile
+            if str(db_user.id) != user_id:
+                return jsonify(error="Unauthorized access to user profile"), http.HTTPStatus.FORBIDDEN
+            
+            # Serialize the user data while still in session to avoid detached object issues
+            user_data = db_user.to_dict(include_wallets=True)
+        
+        # Return the data after session is closed
+        return jsonify(user_data), http.HTTPStatus.OK
     except Exception as e:
-        logger.exception(f"Error serializing user profile for ID '{user_id}': {e}")
+        logger.exception(f"Error retrieving user profile for ID '{user_id}': {e}")
         return jsonify(error="Failed to load profile"), http.HTTPStatus.INTERNAL_SERVER_ERROR
