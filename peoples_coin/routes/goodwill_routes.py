@@ -1,5 +1,6 @@
 import http
 import logging
+import uuid
 from flask import Blueprint, request, jsonify, g, current_app
 from peoples_coin.extensions import db
 from peoples_coin.utils.auth import require_firebase_token, require_api_key
@@ -86,9 +87,15 @@ def goodwill_summary():
     Returns a summary of total goodwill actions and resonance score for a user.
     Expects a 'user_id' query parameter.
     """
-    user_id = request.args.get("user_id")
-    if not user_id:
+    user_id_str = request.args.get("user_id")
+    if not user_id_str:
         return jsonify({"error": "Missing required user_id parameter"}), http.HTTPStatus.BAD_REQUEST
+    
+    # Validate UUID format
+    try:
+        user_id = uuid.UUID(user_id_str)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid user_id format - must be a valid UUID"}), http.HTTPStatus.BAD_REQUEST
 
     try:
         summary = goodwill_service.get_user_summary(user_id)
@@ -110,9 +117,15 @@ def goodwill_history():
     Retrieves paginated goodwill action history for a user.
     Expects 'user_id' query parameter, optional pagination params.
     """
-    user_id = request.args.get("user_id")
-    if not user_id:
+    user_id_str = request.args.get("user_id")
+    if not user_id_str:
         return jsonify({"error": "Missing required user_id parameter"}), http.HTTPStatus.BAD_REQUEST
+    
+    # Validate UUID format
+    try:
+        user_id = uuid.UUID(user_id_str)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid user_id format - must be a valid UUID"}), http.HTTPStatus.BAD_REQUEST
 
     try:
         page = request.args.get('page', default=1, type=int)

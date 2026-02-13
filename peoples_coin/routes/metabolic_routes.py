@@ -138,8 +138,9 @@ def submit_goodwill() -> Response:
 
         log_with_correlation("info", f"Calculated goodwill score: {score}")
 
-        # 4. Delegate to the service layer for processing
-        result = goodwill_service.submit_and_queue_goodwill_action(action_data)
+        # 4. Convert Pydantic model to dict and delegate to the service layer for processing
+        action_dict = action_data.model_dump() if hasattr(action_data, 'model_dump') else action_data.dict()
+        result = goodwill_service.submit_and_queue_goodwill_action(action_dict)
 
         log_with_correlation("info", f"GoodwillAction ID {result['action_id']} accepted and queued.")
 
