@@ -22,7 +22,7 @@ def get_session_scope(db_instance=None):  # <<-- FIX: Added optional db_instance
             # commit happens automatically unless an exception occurs
     """
     db_to_use = db_instance or db
-    session: Session = db_to_use.session()
+    session: Session = db_to_use.session  # db.session is a property, not a method
     try:
         yield session
         session.commit()

@@ -27,14 +27,14 @@ def username_check(username):
 @require_firebase_token
 def get_current_user():
     """Returns authenticated user's profile. Creates DB record if missing."""
-    firebase_user_info = g.firebase_user
+    firebase_user_info = g.user  # g.user is the FirebaseUser object set by @require_firebase_token
     with get_session_scope() as session:
-        user = session.query(UserAccount).filter_by(firebase_uid=firebase_user_info['uid']).first()
+        user = session.query(UserAccount).filter_by(firebase_uid=firebase_user_info.firebase_uid).first()
         if not user:
             user = UserAccount(
-                firebase_uid=firebase_user_info['uid'],
-                email=firebase_user_info.get('email'),
-                username=firebase_user_info.get('email', '').split('@')[0]
+                firebase_uid=firebase_user_info.firebase_uid,
+                email=firebase_user_info.email,
+                username=firebase_user_info.username or (firebase_user_info.email.split('@')[0] if firebase_user_info.email else None)
             )
             session.add(user)
             logger.info(f"Auto-created user record for Firebase UID: {user.firebase_uid}")
@@ -82,14 +82,18 @@ def create_user_and_wallet():
 @require_firebase_token
 def delete_user_account():
     """Deletes the authenticated user's account from Firebase and the database."""
-    user = g.user
-    firebase_user = g.firebase_user
+    firebase_user = g.user  # g.user is the FirebaseUser object set by @require_firebase_token
     try:
-        firebase_auth.delete_user(firebase_user['uid'])
+        firebase_auth.delete_user(firebase_user.firebase_uid)
         with get_session_scope() as session:
-            # The ON DELETE CASCADE in the schema handles deleting related items like wallets
-            session.delete(user)
-        logger.info(f"Deleted user from Firebase and DB: {user.id}")
+            # Find the user in the database by their Firebase UID
+            db_user = session.query(UserAccount).filter(
+                UserAccount.firebase_uid == firebase_user.firebase_uid
+            ).first()
+            if db_user:
+                # The ON DELETE CASCADE in the schema handles deleting related items like wallets
+                session.delete(db_user)
+                logger.info(f"Deleted user from Firebase and DB: {db_user.id}")
         return jsonify(message="Account deleted successfully."), http.HTTPStatus.OK
     except Exception:
         logger.exception("Error during account deletion.")

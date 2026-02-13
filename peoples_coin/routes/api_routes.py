@@ -68,23 +68,26 @@ def get_user_profile():
 @user_api_bp.route("/profile", methods=["DELETE"])
 @require_firebase_token
 def delete_user_account():
-    user = g.user
-    firebase_user = g.firebase_user
-    if not user:
+    firebase_user = g.user  # g.user is the FirebaseUser object set by @require_firebase_token
+    if not firebase_user:
         return jsonify(error="User not found."), http.HTTPStatus.NOT_FOUND
 
     try:
         # 1. Delete user from Firebase
-        firebase_auth.delete_user(firebase_user['uid'])
-        logger.info(f"Deleted user from Firebase: {firebase_user['uid']}")
+        firebase_auth.delete_user(firebase_user.firebase_uid)
+        logger.info(f"Deleted user from Firebase: {firebase_user.firebase_uid}")
 
         # 2. Delete user and their wallets from our database
         with get_session_scope() as session:
-            session.query(UserWallet).filter(UserWallet.user_id == user.id).delete()
-            session.query(UserAccount).filter(UserAccount.id == user.id).delete()
-            session.commit()
-
-        logger.info(f"Deleted user from database: {user.username}")
+            # Find the user in the database by their Firebase UID
+            db_user = session.query(UserAccount).filter(
+                UserAccount.firebase_uid == firebase_user.firebase_uid
+            ).first()
+            if db_user:
+                session.query(UserWallet).filter(UserWallet.user_id == db_user.id).delete()
+                session.query(UserAccount).filter(UserAccount.id == db_user.id).delete()
+                session.commit()
+                logger.info(f"Deleted user from database: {db_user.username}")
 
         return jsonify(message="Account deleted successfully."), http.HTTPStatus.OK
 
@@ -96,8 +99,8 @@ def delete_user_account():
 @user_api_bp.route("/users/register-wallet", methods=["POST"])
 @require_firebase_token
 def create_user_and_wallet():
-    firebase_user = g.firebase_user
-    logger.info(f"Creating user and wallet for Firebase UID: {firebase_user.get('uid')}")
+    firebase_user = g.user  # g.user is the FirebaseUser object set by @require_firebase_token
+    logger.info(f"Creating user and wallet for Firebase UID: {firebase_user.firebase_uid}")
 
     try:
         payload = request.get_json()
@@ -123,7 +126,7 @@ def create_user_and_wallet():
 
         validated_data = WalletRegistrationSchema(**payload)
 
-        if not firebase_user.get('email'):
+        if not firebase_user.email:
             return jsonify(error="Firebase user email is required"), http.HTTPStatus.BAD_REQUEST
 
         with get_session_scope() as session:
@@ -139,8 +142,8 @@ def create_user_and_wallet():
 
             # 2. Check for existing Firebase UID or email (this was already correct)
             existing_user = session.query(UserAccount).filter(
-                (func.lower(UserAccount.email) == firebase_user['email'].lower()) |
-                (UserAccount.firebase_uid == firebase_user['uid'])
+                (func.lower(UserAccount.email) == firebase_user.email.lower()) |
+                (UserAccount.firebase_uid == firebase_user.firebase_uid)
             ).first()
             if existing_user:
                 return jsonify(error="User with this email or Firebase UID already exists."), http.HTTPStatus.CONFLICT
@@ -155,8 +158,8 @@ def create_user_and_wallet():
                 return jsonify(error="Wallet address already registered."), http.HTTPStatus.CONFLICT
 
             new_user = UserAccount(
-                firebase_uid=firebase_user['uid'],
-                email=firebase_user['email'],
+                firebase_uid=firebase_user.firebase_uid,
+                email=firebase_user.email,
                 username=validated_data.username
             )
             session.add(new_user)
