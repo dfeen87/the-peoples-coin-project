@@ -57,4 +57,9 @@ cryptography==41.0.0
 # ======================
 APScheduler==3.11.0
 
+# ======================
+# System Monitoring
+# ======================
+psutil==5.9.5
+
 google-cloud-recaptcha-enterprise
