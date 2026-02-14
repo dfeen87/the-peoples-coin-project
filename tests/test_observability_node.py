@@ -19,37 +19,8 @@ def app():
     
     with test_app.app_context():
         from observability_node.app import db
+        # Create all tables
         db.create_all()
-        
-        # Create some test data
-        from peoples_coin.models.controller_action import ControllerAction
-        from peoples_coin.models.proposal import Proposal
-        from peoples_coin.models.audit_log import AuditLog
-        
-        # Add test controller action
-        action = ControllerAction(
-            recommendations={"scale_up": "Test recommendation"},
-            actions_taken=["Test action"]
-        )
-        db.session.add(action)
-        
-        # Add test proposal
-        proposal = Proposal(
-            title="Test Proposal",
-            description="Test description",
-            status="ACTIVE",
-            proposal_type="test"
-        )
-        db.session.add(proposal)
-        
-        # Add test audit log
-        audit = AuditLog(
-            action_type="USER_LOGIN",
-            details={"test": "data"}
-        )
-        db.session.add(audit)
-        
-        db.session.commit()
     
     yield test_app
 

@@ -196,7 +196,7 @@ This provides a stable foundation for continued development and future productio
 
 ## Global Observability Node
 
-The Global Observability Node is a lightweight, read-only REST API that provides safe, non-intrusive access to internal system state. This observability layer follows the same pattern used across the HLV ecosystem, enabling external monitoring without affecting system behavior.
+The Global Observability Node is a lightweight, read-only REST API that provides safe, non-intrusive access to internal system state. This observability layer enables external monitoring without affecting system behavior.
 
 ### Key Features
 
