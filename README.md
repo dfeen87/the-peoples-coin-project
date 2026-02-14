@@ -228,10 +228,11 @@ The API will be available at `http://localhost:8080`
 
 #### Option 3: Run Observability Node Separately
 
-**Note:** The observability node runs on port 8080 by default. If running alongside the main API, configure a different port:
+**Important:** Configure a different port when running alongside the main API to avoid conflicts:
 
 ```bash
-# Set a different port for the observability node
+# The observability node uses port 8080 by default
+# Change this if the main API is also using port 8080
 export OBSERVABILITY_PORT=8081
 
 # Start the observability node for monitoring
@@ -242,7 +243,7 @@ cd observability_node
 python app.py
 ```
 
-The observability node will be available at the configured port (default: `http://localhost:8080`).
+The observability node will be available at the configured port (e.g., `http://localhost:8081`).
 
 ---
 
@@ -321,7 +322,7 @@ The Global Observability Node is a lightweight, read-only REST API that provides
 
 - **Read-Only Access**: All endpoints are GET-only. POST, PUT, PATCH, and DELETE requests are rejected with 405 Method Not Allowed.
 - **Safe Monitoring**: No write operations, no database modifications, no controller actions triggered.
-- **Independent Operation**: Runs on port 8080 by default, separate from the main API.
+- **Independent Operation**: Can run as a standalone service (configure port to avoid conflicts with main API).
 - **Thread-Safe**: Uses read-only database queries and snapshot-based metrics.
 
 ### Endpoints
