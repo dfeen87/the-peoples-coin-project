@@ -40,7 +40,7 @@
 ---
 
 ## Disclaimer
-> ⚠️ **IMPORTANT NOTE:** NOT AFFILIATED WITH ANY CRYPTO COINS. This project does not mind coins that are sold.
+> ⚠️ **IMPORTANT NOTE:** NOT AFFILIATED WITH ANY CRYPTO COINS. This project does not mint coins that are sold.
 
 The live site is currently non-functional.
 
@@ -228,7 +228,12 @@ The API will be available at `http://localhost:8080`
 
 #### Option 3: Run Observability Node Separately
 
+**Note:** The observability node runs on port 8080 by default. If running alongside the main API, configure a different port:
+
 ```bash
+# Set a different port for the observability node
+export OBSERVABILITY_PORT=8081
+
 # Start the observability node for monitoring
 python -m observability_node.run
 
@@ -237,7 +242,7 @@ cd observability_node
 python app.py
 ```
 
-The observability node will be available at `http://localhost:8080` (or the configured port).
+The observability node will be available at the configured port (default: `http://localhost:8080`).
 
 ---
 
