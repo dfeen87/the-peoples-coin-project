@@ -35,6 +35,7 @@
 - [Contributing](#contributing)
 - [Troubleshooting](#troubleshooting)
 - [Supporting the Project](#supporting-the-project)
+- [Acknowledgements](#acknowledgements)
 - [About](#about)
 
 ---
