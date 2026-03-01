@@ -617,6 +617,10 @@ Every contribution, whether code, documentation, or feedback, helps make this pr
 
 ---
 
+## Acknowledgements
+
+I would like to acknowledge **Microsoft Copilot**, and **OpenAI ChatGPT** for their meaningful assistance in refining concepts, improving clarity, and strengthening the overall quality of this work.
+
 ## About
 
 The People's Coin backend is a Flask- and PostgreSQL-based system that securely records goodwill actions, manages user and governance data, and dynamically monitors system health. Its System Controller enables adaptive behavior inspired by biological systems, providing a transparent and scalable foundation for community-driven platforms.
