@@ -635,4 +635,10 @@ The People's Coin backend represents a forward-looking approach to combining pub
 
 Whether you're building a governance system, a reputation ledger, or exploring adaptive backend architectures, this project provides a solid, well-documented foundation to start from.
 
-**Happy Building! 🚀**
+---
+
+## License
+
+This project is available for **non‑commercial use only** under the terms of the included LICENSE file.  
+Commercial use requires a separate paid license.
+
