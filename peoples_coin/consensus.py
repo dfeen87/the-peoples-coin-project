@@ -156,7 +156,7 @@ class Consensus:
                 # Example:
                 # ledger_entry = LedgerEntry(...)
                 # session.add(ledger_entry)
-                pass
+                logger.warning("NOT IMPLEMENTED: LedgerEntry insertion for transaction %s", tx)
 
         logger.info(f"🧱 New block created at height {block.height} with {len(transactions)} txns.")
         return block
@@ -173,7 +173,7 @@ class Consensus:
 
                 for block_dict in chain_data:
                     # TODO: Re-add ChainBlock and LedgerEntries for each block_dict
-                    pass
+                    logger.warning("NOT IMPLEMENTED: ChainBlock and LedgerEntry restoration for block %s", block_dict)
 
                 self._recalculate_all_user_balances(session)
 
@@ -196,7 +196,7 @@ class Consensus:
         for entry in all_entries:
             # Update balances[user_id] based on entry fields
             # e.g. balances[entry.user_id] = balances.get(entry.user_id, 0) + entry.amount
-            pass
+            logger.warning("NOT IMPLEMENTED: balance recalculation for ledger entry %s", entry)
 
         for user_id, new_balance in balances.items():
             session.query(UserAccount).filter_by(id=user_id).update({"balance": new_balance})

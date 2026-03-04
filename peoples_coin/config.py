@@ -1,6 +1,5 @@
 import os
 import secrets
-import sys
 
 class Config:
     """
@@ -26,14 +25,12 @@ class Config:
     if INSTANCE_CONNECTION_NAME:
         parts = INSTANCE_CONNECTION_NAME.split(':')
         if len(parts) != 3 or any(not part.strip() for part in parts):
-            print(
-                f"ERROR: INSTANCE_CONNECTION_NAME must be in 'project:region:instance' format but got '{INSTANCE_CONNECTION_NAME}'",
-                file=sys.stderr
+            import warnings
+            warnings.warn(
+                f"INSTANCE_CONNECTION_NAME must be in 'project:region:instance' format "
+                f"but got '{INSTANCE_CONNECTION_NAME}'",
+                stacklevel=2,
             )
-            sys.exit(1)
-    else:
-        print("ERROR: INSTANCE_CONNECTION_NAME environment variable is NOT set.", file=sys.stderr)
-        sys.exit(1)
 
     if all([DB_USER, DB_PASS, DB_NAME, INSTANCE_CONNECTION_NAME]):
         SQLALCHEMY_DATABASE_URI = (
@@ -44,7 +41,6 @@ class Config:
         # Local fallback: different SQLite DB for dev vs prod
         db_name = 'peoples_coin_dev.db' if DEBUG else 'peoples_coin.db'
         SQLALCHEMY_DATABASE_URI = f"sqlite:///../instance/{db_name}"
-        print(f"WARNING: Cloud SQL environment variables not fully set. Using local SQLite database: {db_name}")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -52,7 +48,7 @@ class Config:
     DB_SUPPORTS_SKIP_LOCKED = os.environ.get("DB_SUPPORTS_SKIP_LOCKED", "true").lower() == "true"
 
     # --- Redis Configuration ---
-    REDIS_HOST = os.environ.get("REDIS_HOST", "10.128.0.12")
+    REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
     REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
     REDIS_DB = int(os.environ.get("REDIS_DB", 0))
     REDIS_URL = os.environ.get("REDIS_URL") or f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
@@ -71,4 +67,3 @@ class Config:
 
     # --- Firebase Admin ---
     FIREBASE_CREDENTIAL_PATH = os.environ.get("FIREBASE_CREDENTIAL_PATH", "serviceAccountKey.json")
-

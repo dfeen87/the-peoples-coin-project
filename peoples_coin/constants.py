@@ -3,8 +3,8 @@
 from enum import Enum
 
 class GoodwillStatus(Enum):
-    PENDING = "PENDING"
-    CONFIRMED = "CONFIRMED"
+    PENDING_VERIFICATION = "PENDING_VERIFICATION"
+    VERIFIED = "VERIFIED"
     REJECTED = "REJECTED"
 
 class ApiResponseStatus(Enum):
