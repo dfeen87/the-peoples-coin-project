@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from peoples_coin.systems.immune_system import immune_system
+from peoples_coin.utils.auth import require_api_key
 
 immune_bp = Blueprint("immune_bp", __name__, url_prefix="/immune")
 
@@ -17,6 +18,7 @@ def health_check():
 
 
 @immune_bp.route("/blacklist", methods=["GET"])
+@require_api_key
 def get_blacklist():
     """
     Retrieve current blacklist.
@@ -26,6 +28,7 @@ def get_blacklist():
 
 
 @immune_bp.route("/blacklist/reset", methods=["POST"])
+@require_api_key
 def reset_blacklist():
     """
     Reset the immune system state (blacklist, greylist, ratelimits).
@@ -35,6 +38,7 @@ def reset_blacklist():
 
 
 @immune_bp.route("/blacklist/remove", methods=["POST"])
+@require_api_key
 def remove_from_blacklist():
     """
     Remove an identifier from the blacklist.
@@ -61,6 +65,7 @@ def remove_from_blacklist():
 
 
 @immune_bp.route("/auto-heal", methods=["POST"])
+@require_api_key
 def auto_heal():
     """
     Trigger auto-heal on submitted data entries (placeholder).

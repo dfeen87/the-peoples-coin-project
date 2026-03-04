@@ -102,6 +102,10 @@ cloud_sql_proxy
 service-account.json
 credentials.json
 
+# Explicitly allow tracked JSON config files
+!chain.json
+!shared_data.json
+
 secrets.yaml
 
 

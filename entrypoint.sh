@@ -5,6 +5,7 @@ echo "📦 Starting container for peoples-coin-service..."
 
 # Wait for Cloud SQL connection
 echo "⏳ Waiting for Cloud SQL to be ready..."
+db_connected=false
 for i in $(seq 1 10); do
   if python - <<'EOF'
 import os
@@ -22,12 +23,18 @@ except Exception as e:
     raise SystemExit(1)
 EOF
   then
+    db_connected=true
     break
   else
     echo "⏳ Retry DB connection in 3s..."
     sleep 3
   fi
 done
+
+if [ "$db_connected" = "false" ]; then
+  echo "❌ Database connection failed after 10 attempts. Aborting."
+  exit 1
+fi
 
 # Run DB initialization
 echo "🛠 Initializing database..."

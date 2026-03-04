@@ -21,8 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY wsgi.py ./
 COPY peoples_coin/ ./peoples_coin/
 
-# Copy the Firebase service account JSON key
-COPY peoples_coin/heroic-tide-428421-q7-9ff07058342c.json /app/peoples_coin/heroic-tide-428421-q7-9ff07058342c.json
+# NOTE: Do NOT copy service account credentials into the image.
+# Inject credentials at runtime via the GOOGLE_APPLICATION_CREDENTIALS environment variable,
+# e.g. by mounting a secret volume or using a Cloud Run secret manager binding.
 
 # Expose the port Cloud Run will use
 EXPOSE 8080

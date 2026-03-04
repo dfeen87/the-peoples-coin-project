@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask, request, jsonify
+from flask import Flask
 
 from peoples_coin.routes import register_routes
 
@@ -20,8 +20,6 @@ from peoples_coin.systems.endocrine_system import endocrine_system
 from peoples_coin.systems.circulatory_system import circulatory_system
 from peoples_coin.consensus import Consensus
 
-from peoples_coin.utils.recaptcha import verify_recaptcha
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -36,6 +34,19 @@ def create_app():
             db_pass = os.environ.get("DB_PASS")
             db_name = os.environ.get("DB_NAME")
             instance_connection_name = os.environ.get("INSTANCE_CONNECTION_NAME")
+            missing = [
+                name for name, val in (
+                    ("DB_USER", db_user),
+                    ("DB_PASS", db_pass),
+                    ("DB_NAME", db_name),
+                    ("INSTANCE_CONNECTION_NAME", instance_connection_name),
+                )
+                if not val
+            ]
+            if missing:
+                raise ValueError(
+                    f"Missing required Cloud Run environment variables: {', '.join(missing)}"
+                )
             db_uri = (
                 f"postgresql+pg8000://{db_user}:{db_pass}@/{db_name}"
                 f"?unix_sock=/cloudsql/{instance_connection_name}/.s.PGSQL.5432"
@@ -48,9 +59,17 @@ def create_app():
                 raise ValueError("DATABASE_URL is not set for local development.")
             logger.info("✅ App configured for local development.")
 
+        # Require SECRET_KEY to be explicitly set — no insecure defaults
+        secret_key = os.environ.get("SECRET_KEY")
+        if not secret_key:
+            raise RuntimeError(
+                "SECRET_KEY environment variable is not set. "
+                "Set a strong, random value before starting the application."
+            )
+
         # Load config from environment variables — no hardcoded URLs
         app.config.from_mapping(
-            SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret"),
+            SECRET_KEY=secret_key,
             SQLALCHEMY_DATABASE_URI=db_uri,
             SQLALCHEMY_TRACK_MODIFICATIONS=False,
             CELERY_BROKER_URL=os.environ.get("CELERY_BROKER_URL"),
